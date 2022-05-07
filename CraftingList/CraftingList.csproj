@@ -20,25 +20,13 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="..\Data\craftingList.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Data\goat.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Visible>false</Visible>
-    </Content>
-  </ItemGroup>
-
   <PropertyGroup>
     <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
     <ClientStructsPath>C:\Users\Kyle\source\repos\FFXIVClientStructs\bin\Debug\</ClientStructsPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.6" />
-    <PackageReference Include="ILRepack" Version="2.0.18" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.18.2" />
+    <PackageReference Include="DalamudPackager" Version="2.1.7" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(ClientStructsPath)FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>
@@ -68,17 +56,5 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
-  <Target Name="ILRepack" AfterTargets="Build">
-    <!-- The ILRepack task will grab all build ouput assemblies
-and merge them into a single exe file for easy distribution and integration
--->
-    <ItemGroup>
-      <ILRepackPackage Include="$(NuGetPackageRoot)\ilrepack\*\tools\ilrepack.exe" />
-      <NetStandardLocation Include="$(NuGetPackageRoot)NETStandard.Library\2.0.1\build\netstandard2.0\ref" />
-    </ItemGroup>
-
-    <Error Condition="!Exists(@(ILRepackPackage->'%(FullPath)'))" Text="You are trying to use the ILRepack&#xD;&#xA; package, but it is not installed or at the correct location" />
-    <Exec Command="@(ILRepackPackage->'%(fullpath)') /out:$(OutputPath)merged\$(AssemblyName).dll &#xD;&#xA;/wildcards /lib:@(NetStandardLocation) /target:dll $(OutputPath)$(AssemblyName).dll $(OutputPath)*.dll" />
-  </Target>
 
 </Project>

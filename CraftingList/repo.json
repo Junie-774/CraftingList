@@ -1,0 +1,17 @@
+{
+  "Author": "Meowdy-do",
+  "Name": "Crafting List",
+  "Punchline": "Craft stuffs",
+  "Description": "Craft your things",
+  "InternalName": "CraftingList",
+  "AssemblyVersion": "0.9",
+  "ApplicableVersion": "any",
+  "Tags": [
+  ],
+  "RepoUrl": "https://github.com/Junie-774/CraftingList",
+  "DalamudApiLevel": 6,
+  "LoadPriority": 69,
+  "DownloadLinkInstall": "https://github.com/Junie-774/CraftingList/raw/main/latest.zip",
+  "DownloadLinkTesting": "https://github.com/Junie-774/CraftingList/raw/main/latest.zip",
+  "DownloadLinkUpdate": "https://github.com/Junie-774/CraftingList/raw/main/latest.zip"
+}
