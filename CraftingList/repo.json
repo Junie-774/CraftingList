@@ -6,7 +6,7 @@
   "InternalName": "CraftingList",
   "AssemblyVersion": "0.9",
   "ApplicableVersion": "any",
-  "Tags": [
+  "Tags": ["craft"
   ],
   "RepoUrl": "https://github.com/Junie-774/CraftingList",
   "DalamudApiLevel": 6,
