@@ -13,8 +13,10 @@
     "RepoUrl": "https://github.com/Junie-774/CraftingList",
     "DalamudApiLevel": 6,
     "LoadPriority": 69,
-    "DownloadLinkInstall": "https://github.com/Junie-774/CraftingList/raw/main/latest.zip",
-    "DownloadLinkTesting": "https://github.com/Junie-774/CraftingList/raw/main/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/Junie-774/CraftingList/raw/main/latest.zip"
+    "IsHide": false,
+    "IsTestingExclusive": false,
+    "DownloadLinkInstall": "https://raw.githubusercontent.com/Junie-774/CraftingList/main/latest.zip",
+    "DownloadLinkTesting": "https://raw.githubusercontent.com/Junie-774/CraftingList/main/latest.zip",
+    "DownloadLinkUpdate": "https://raw.githubusercontent.com/Junie-774/CraftingList/main/latest.zip"
   }
 ]
