@@ -36,6 +36,7 @@ namespace CraftingList.Crafting
                 uint lastUsedFood = 0;
                 foreach (var entry in EntryList)
                 {
+                    PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. FoodId: {entry.FoodId}");
                     if (!m_running) break;
                     var job = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
                         .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
@@ -56,6 +57,7 @@ namespace CraftingList.Crafting
                             await Task.Delay(2000);
                             if (needToChangeFood)
                             {
+                                PluginLog.Debug("Changing food...");
                                 if (entry.FoodId != 0)
                                 {
                                     PluginLog.Information($"Food: {entry.FoodId}");
@@ -75,10 +77,10 @@ namespace CraftingList.Crafting
                                 await Repair();
                             }
 
-                            m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
-                            await Task.Delay(1500);
-
                         }
+
+                        m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
+                        await Task.Delay(1500);
 
 
                         m_seInterface.RecipeNote().Synthesize();
