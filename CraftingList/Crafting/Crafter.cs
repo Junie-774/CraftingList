@@ -36,7 +36,8 @@ namespace CraftingList.Crafting
                 uint lastUsedFood = 0;
                 foreach (var entry in EntryList)
                 {
-                    PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. FoodId: {entry.FoodId}");
+                    PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
+
                     if (!m_running) break;
                     var job = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
                         .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
@@ -50,44 +51,52 @@ namespace CraftingList.Crafting
                         if (!m_running) break;
                         bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.FoodId).Result;
                         bool needToRepair = NeedsRepair();
-
+                        PluginLog.Debug($"Need change food: {needToChangeFood}");
+                        PluginLog.Debug($"Need repair: {needToRepair}");
                         if (needToChangeFood || needToRepair)
                         {
+                            PluginLog.Debug($"Closing crafting log...");
                             m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
+                            PluginLog.Debug($"Closed crafting log.");
                             await Task.Delay(2000);
                             if (needToChangeFood)
                             {
-                                PluginLog.Debug("Changing food...");
+                                PluginLog.Debug($"Changing food to {entry.FoodId}");
                                 if (entry.FoodId != 0)
                                 {
-                                    PluginLog.Information($"Food: {entry.FoodId}");
                                     m_seInterface.UseItem(entry.FoodId);
                                     lastUsedFood = entry.FoodId;
                                     await Task.Delay(3500);
+                                    PluginLog.Debug($"Changed food.");
                                 }
                                 else
                                 {
                                     m_seInterface.RemoveFood();
                                     lastUsedFood = 0;
                                     await Task.Delay(1500);
+                                    PluginLog.Debug($"Removed food.");
                                 }
                             }
                             if (needToRepair)
                             {
+                                PluginLog.Debug($"Repairing...");
                                 await Repair();
+                                PluginLog.Debug($"Repaired!");
                             }
 
                         }
 
+                        PluginLog.Debug($"Opening crafting log to recipe");
                         m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
                         await Task.Delay(1500);
 
-
+                        PluginLog.Debug($"Clicking Synthesize");
                         m_seInterface.RecipeNote().Synthesize();
                         await Task.Delay(2000);
 
+                        PluginLog.Debug($"Executing Macro {entry.Macro.MacroNum}");
                         m_seInterface.ExecuteMacroByNumber(entry.Macro.MacroNum);
-                        await Task.Delay(entry.Macro.DurationSeconds * 1000 + 3000);
+                        await Task.Delay(entry.Macro.DurationSeconds * 1000 + 4000);
 
                         entry.MaxCrafts--;
                     }
