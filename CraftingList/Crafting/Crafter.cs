@@ -56,6 +56,7 @@ namespace CraftingList.Crafting
                             {
                                 if (entry.FoodId != 0)
                                 {
+                                    PluginLog.Information($"Food: {entry.FoodId}");
                                     m_seInterface.UseItem(entry.FoodId);
                                     lastUsedFood = entry.FoodId;
                                     await Task.Delay(3000);

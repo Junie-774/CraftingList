@@ -67,6 +67,11 @@ namespace CraftingList
                 HelpMessage = "Craft all items in your list"
             });
 
+            DalamudApi.CommandManager.AddHandler("/clcancel", new CommandInfo(OnCancel)
+            {
+                HelpMessage = "Cancel current craft."
+            });
+
 
 
             DalamudApi.PluginInterface.UiBuilder.Draw += DrawUI;
@@ -83,6 +88,7 @@ namespace CraftingList
             DalamudApi.CommandManager.RemoveHandler("/craftinglist");
             DalamudApi.CommandManager.RemoveHandler("/craftallitems");
             DalamudApi.CommandManager.RemoveHandler("/clist");
+            DalamudApi.CommandManager.RemoveHandler("/clcancel");
         }
 
 
@@ -104,6 +110,10 @@ namespace CraftingList
             Crafter.CraftAllItems();
         }
 
+        private void OnCancel(string command, string args)
+        {
+            Crafter.Cancel();
+        }
         private void DrawUI()
         {
             try

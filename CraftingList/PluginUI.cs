@@ -105,6 +105,12 @@ namespace CraftingList
             }
             foodNames.Add("None");
             foodNames.Reverse();
+            for (int i = 1; i < foodNames.Count; i++)
+            {
+                string hqFood = "(HQ) " + foodNames[i];
+                foodNames.Insert(i, hqFood);
+                i++;
+            }
             newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntryItemName)).ToList();
         }
 
@@ -125,6 +131,142 @@ namespace CraftingList
             DrawSettingsWindow();
         }
 
+        public void DrawEntryTable()
+        {
+            float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
+
+
+            ImGui.Text("Crafting list:");
+            ImGui.SetWindowFontScale(1.1f);
+            ImGui.BeginTable("meow", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable);
+            ImGui.TableNextColumn();
+
+            ImGui.Text("Item Name");
+            ImGui.TableNextColumn();
+
+            ImGui.Text("Amount");
+            ImGui.TableNextColumn();
+
+            ImGui.Text("Macro");
+            ImGui.TableNextColumn();
+
+            ImGui.Text("Food");
+            ImGui.TableNextColumn();
+            ImGui.TableNextRow();
+            ImGui.SetWindowFontScale(1f);
+            try
+            {
+                foreach (var item in configuration.Crafter.EntryList)
+                {
+                    ImGui.TableNextColumn();
+                    ImGui.SetNextItemWidth(tableSize);
+                    ImGui.Text(item.Name);
+
+                    ImGui.TableNextColumn();
+                    ImGui.SetNextItemWidth(tableSize * 0.3f);
+                    ImGui.Text(item.MaxCrafts.ToString());
+
+                    ImGui.TableNextColumn();
+                    ImGui.SetNextItemWidth(tableSize * 0.4f);
+                    ImGui.Text(item.Macro.Name);
+
+                    ImGui.TableNextColumn();
+
+                    bool HQ = item.FoodId > 1000000;
+                    ImGui.Text((HQ ? "(HQ) " : "")
+                        + DalamudApi.DataManager.GetExcelSheet<Item>()!
+                            .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
+                    );
+
+                    ImGui.TableNextColumn();
+                    ImGui.SetNextItemWidth(50);
+                    if (ImGui.Button("Remove"))
+                    {
+                        item.Complete = true;
+                    }
+
+                    ImGui.TableNextRow();
+                }
+                configuration.Crafter.EntryList.RemoveAll(x => x.Complete);
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error(ex.Message);
+            }
+            ImGui.EndTable();
+        }
+
+        private void DrawNewListEntry()
+        {
+            ImGui.Text("Add item to list:");
+            float dynamicSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Item  ...  Amount  Macro  Food  + ").X;
+
+            ImGui.SetNextItemWidth(dynamicSize * 0.3f);
+            if (ImGui.InputText("Item ", ref newEntryItemName, 25))
+            {
+                newEntryItemNameSearchResults = craftableNames.Where(x => newEntryItemName == "" || x.ToLower().Contains(newEntryItemName.ToLower())).ToList();
+                newEntryShowItemNameList = true;
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("..."))
+            {
+                ImGui.SetKeyboardFocusHere(-1);
+                newEntryShowItemNameList = !newEntryShowItemNameList;
+            }
+            ImGui.SameLine();
+
+            ImGui.SetNextItemWidth(dynamicSize * 0.1f);
+            ImGui.InputInt("Amount  ", ref newEntryCraftAmount, 0);
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(dynamicSize * 0.2f);
+            ImGui.Combo("Macro  ", ref newEntrySelectedMacro, macroNames.ToArray(), macroNames.Count);
+            ImGui.SameLine();
+
+            ImGui.SetNextItemWidth(dynamicSize * 0.3f);
+            ImGui.Combo("Food  ", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
+            ImGui.SameLine();
+
+
+            if (ImGui.Button("+", new Vector2(25f, 25f)))
+            {
+                var items = craftableItems.Where(item => item != null && item.Name == newEntryItemName);
+                var macro = configuration.Macros.Where(x => x.Name == macroNames[newEntrySelectedMacro]);
+                var foodName = foodNames[newEntryFoodNameSelection];
+                bool HQ = false;
+                if (foodName.Substring(0, 4) == "(HQ)")
+                {
+                    HQ = true;
+                    foodName = foodName.Substring(5);
+                }
+                PluginLog.Information(foodName);
+
+                if (items.Count() > 0 && newEntryCraftAmount > 0 && macro.Count() > 0)
+                {
+                    
+
+                    uint foodID = newEntryFoodNameSelection == 0 ? 0 : DalamudApi.DataManager.GetExcelSheet<Item>()!
+                        .Where(x => x!.Name == foodName).First().RowId;
+                    if (HQ) foodID += 1000000;
+                    uint itemID = items.First()!.RowId;
+                    configuration.Crafter.EntryList.Add(new Crafting.CListEntry(newEntryItemName, itemID, newEntryCraftAmount, macro.First(), foodID));
+                }
+            }
+
+            ImGui.SetNextItemWidth(dynamicSize * 0.45f);
+            if (newEntryShowItemNameList)
+            {
+                if (ImGui.ListBox("",
+                    ref newEntryItemNameSelection,
+                    newEntryItemNameSearchResults.ToArray(),
+                    newEntryItemNameSearchResults.Count,
+                    20)
+                || ImGui.IsKeyDown((int)ImGuiKey.Enter))
+                {
+                    newEntryItemName = newEntryItemNameSearchResults[newEntryItemNameSelection];
+                    newEntryShowItemNameList = false;
+                }
+            }
+        }
         public void DrawMainWindow()
         {
             if (!Visible)
@@ -135,122 +277,11 @@ namespace CraftingList
             ImGui.SetNextWindowSizeConstraints(new Vector2(375, 330), new Vector2(float.MaxValue, float.MaxValue));
             if (ImGui.Begin("Crafting List", ref this.visible, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
             {
-                float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
 
-
-                ImGui.Text("Crafting list:");
-                ImGui.SetWindowFontScale(1.1f);
-                ImGui.BeginTable("meow", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable);
-                ImGui.TableNextColumn();
-
-                ImGui.Text("Item Name");
-                ImGui.TableNextColumn();
-
-                ImGui.Text("Amount");
-                ImGui.TableNextColumn();
-
-                ImGui.Text("Macro");
-                ImGui.TableNextColumn();
-
-                ImGui.Text("Food");
-                ImGui.TableNextColumn();
-                ImGui.TableNextRow();
-                ImGui.SetWindowFontScale(1f);
-                try
-                {
-                    foreach (var item in configuration.Crafter.EntryList)
-                    {
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(tableSize);
-                        ImGui.Text(item.Name);
-
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(tableSize * 0.3f);
-                        ImGui.Text(item.MaxCrafts.ToString());
-
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(tableSize * 0.4f);
-                        ImGui.Text(item.Macro.Name);
-
-                        ImGui.TableNextColumn();
-                        ImGui.Text(DalamudApi.DataManager.GetExcelSheet<Item>()!
-                            .Where(x => x.RowId == item.FoodId).First().Name);
-
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(50);
-                        if (ImGui.Button("Remove"))
-                        {
-                            item.Complete = true;
-                        }
-
-                        ImGui.TableNextRow();
-                    }
-                    configuration.Crafter.EntryList.RemoveAll(x => x.Complete);
-                }
-                catch (Exception ex)
-                {
-                    PluginLog.Error(ex.Message);
-                }
-                ImGui.EndTable();
-
+                DrawEntryTable();
                 ImGui.NewLine();
-                ImGui.Text("Add item to list:");
-                float dynamicSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Item  ...  Amount  Macro  Food  + ").X;
 
-                ImGui.SetNextItemWidth(dynamicSize * 0.3f);
-                if (ImGui.InputText("Item ", ref newEntryItemName, 25))
-                {
-                    newEntryItemNameSearchResults = craftableNames.Where(x => newEntryItemName == "" || x.ToLower().Contains(newEntryItemName.ToLower())).ToList();
-                    newEntryShowItemNameList = true;
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("..."))
-                {
-                    ImGui.SetKeyboardFocusHere(-1);
-                    newEntryShowItemNameList = !newEntryShowItemNameList;
-                }
-                ImGui.SameLine();
-
-                ImGui.SetNextItemWidth(dynamicSize * 0.1f);
-                ImGui.InputInt("Amount  ", ref newEntryCraftAmount, 0);
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(dynamicSize * 0.2f);
-                ImGui.Combo("Macro  ", ref newEntrySelectedMacro, macroNames.ToArray(), macroNames.Count);
-                ImGui.SameLine();
-
-                ImGui.SetNextItemWidth(dynamicSize * 0.3f);
-                ImGui.Combo("Food", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
-                ImGui.SameLine();
-
-
-                if (ImGui.Button("+", new Vector2(25f, 25f)))
-                {
-                    var items = craftableItems.Where(item => item != null && item.Name == newEntryItemName);
-                    var macro = configuration.Macros.Where(x => x.Name == macroNames[newEntrySelectedMacro]);
-                    if (items.Count() > 0 && newEntryCraftAmount > 0 && macro.Count() > 0)
-                    {
-
-                        uint foodID = newEntryFoodNameSelection == 0 ? 0 : DalamudApi.DataManager.GetExcelSheet<Item>()!
-                            .Where(x => x!.Name == foodNames[newEntryFoodNameSelection]).First().RowId;
-                        uint itemID = items.First()!.RowId;
-                        configuration.Crafter.EntryList.Add(new Crafting.CListEntry(newEntryItemName, itemID, newEntryCraftAmount, macro.First(), foodID));
-                    }
-                }
-
-                ImGui.SetNextItemWidth(dynamicSize * 0.45f);
-                if (newEntryShowItemNameList)
-                {
-                    if (ImGui.ListBox("",
-                        ref newEntryItemNameSelection,
-                        newEntryItemNameSearchResults.ToArray(),
-                        newEntryItemNameSearchResults.Count,
-                        20)
-                    || ImGui.IsKeyDown((int)ImGuiKey.Enter))
-                    {
-                        newEntryItemName = newEntryItemNameSearchResults[newEntryItemNameSelection];
-                        newEntryShowItemNameList = false;
-                    }
-                }
+                DrawNewListEntry();
                 ImGui.NewLine();
                 if (ImGui.Button("Craft!"))
                 {
