@@ -2,7 +2,6 @@
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
-using Dalamud.Hooking;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
@@ -51,7 +50,7 @@ namespace CraftingList
             this.Configuration.Initialize(DalamudApi.PluginInterface, Crafter);
 
             this.PluginUi = new PluginUI(this.Configuration);
-            
+
 
             DalamudApi.CommandManager.AddHandler("/craftinglist", new CommandInfo(OnCraftingList)
             {
@@ -77,7 +76,7 @@ namespace CraftingList
             DalamudApi.PluginInterface.UiBuilder.Draw += DrawUI;
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
 
-            
+
 
         }
 

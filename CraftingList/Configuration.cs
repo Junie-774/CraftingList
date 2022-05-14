@@ -8,15 +8,14 @@ namespace CraftingList
     [Serializable]
     public class Configuration : IPluginConfiguration
     {
-        public int Version { get; set; } = 0;
+        public int Version { get; set; } = 1;
 
         public Crafting.Crafter Crafter { get; set; } = null!;
 
         public List<Crafting.CraftingMacro> Macros = new();
 
-        public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
-
-        public int DoesThisCountAsAProperty { get; set; } = 32;
+        public int RepairThresholdPercent = 99;
+        public bool OnlyRepairIfBelow99 = true;
 
         // the below exist just to make saving less cumbersome
 

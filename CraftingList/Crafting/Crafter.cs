@@ -12,6 +12,10 @@ namespace CraftingList.Crafting
 {
     public class Crafter
     {
+        public int RepairThresholdPercent = 99;
+        public bool OnlyRepairIfBelow99 = true;
+
+
         private bool m_running = false;
         public List<CListEntry> EntryList { get; set; }
 
@@ -21,6 +25,7 @@ namespace CraftingList.Crafting
         {
             this.m_seInterface = seInterface;
             EntryList = new List<CListEntry>();
+            this.RepairThresholdPercent = 99;
         }
 
         public Task<bool> CraftAllItems()
@@ -38,7 +43,7 @@ namespace CraftingList.Crafting
 
                     m_seInterface.SwapToDOHJob((DoHJob)job);
                     await Task.Delay(1500);
-                   
+
                     while (entry.MaxCrafts > 0)
                     {
                         if (!m_running) break;
@@ -48,7 +53,7 @@ namespace CraftingList.Crafting
                         if (needToChangeFood || needToRepair)
                         {
                             m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
-                            await Task.Delay(4000);
+                            await Task.Delay(2000);
                             if (needToChangeFood)
                             {
                                 if (entry.FoodId != 0)
@@ -56,7 +61,7 @@ namespace CraftingList.Crafting
                                     PluginLog.Information($"Food: {entry.FoodId}");
                                     m_seInterface.UseItem(entry.FoodId);
                                     lastUsedFood = entry.FoodId;
-                                    await Task.Delay(3000);
+                                    await Task.Delay(3500);
                                 }
                                 else
                                 {
@@ -72,7 +77,7 @@ namespace CraftingList.Crafting
 
                             m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
                             await Task.Delay(1500);
-                            
+
                         }
 
 
@@ -80,7 +85,7 @@ namespace CraftingList.Crafting
                         await Task.Delay(2000);
 
                         m_seInterface.ExecuteMacroByNumber(entry.Macro.MacroNum);
-                        await Task.Delay(entry.Macro.DurationSeconds * 1000 + 4000);
+                        await Task.Delay(entry.Macro.DurationSeconds * 1000 + 3000);
 
                         entry.MaxCrafts--;
                     }
@@ -130,16 +135,31 @@ namespace CraftingList.Crafting
             return stat1 == 70 || stat2 == 70;
         }
 
-        public static unsafe bool NeedsRepair()
+        public unsafe bool NeedsRepair()
         {
+            bool existsItemBelowThreshold = false;
+            bool existsItemAbove100 = false;
+            bool existsBrokenItem = false;
             for (int i = 0; i < 13; i++)
             {
-                if (InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition < 29700)
+                var condition = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition;
+                if (condition <= (ushort)30000 * RepairThresholdPercent / 100 || condition == 0)
                 {
-                    return true;
+                    existsItemBelowThreshold = true;
+                }
+                if (condition > 30000)
+                {
+                    existsItemAbove100 = true;
+                }
+                if (condition == 0)
+                {
+                    existsBrokenItem = true;
                 }
             }
-            return false;
+
+            if (existsBrokenItem) return true;
+            if (existsItemAbove100 && OnlyRepairIfBelow99) return false;
+            return existsItemBelowThreshold;
         }
 
         public async Task<bool> Repair()

@@ -44,6 +44,8 @@ namespace CraftingList
         int selectedMacro = 0;
         List<String> macroNames;
 
+        int repairThreshold;
+
         // this extra bool exists for ImGui, since you can't ref a property
         private bool visible = false;
         public bool Visible
@@ -64,6 +66,7 @@ namespace CraftingList
         {
             this.selectedMacro = 0;
             this.configuration = configuration;
+            this.repairThreshold = configuration.RepairThresholdPercent;
             macroNames = new List<String>
             {
                 ""
@@ -112,6 +115,9 @@ namespace CraftingList
                 i++;
             }
             newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntryItemName)).ToList();
+
+            configuration.Crafter.RepairThresholdPercent = configuration.RepairThresholdPercent;
+            configuration.Crafter.OnlyRepairIfBelow99 = configuration.OnlyRepairIfBelow99;
         }
 
         public void Dispose()
@@ -242,7 +248,7 @@ namespace CraftingList
 
                 if (items.Count() > 0 && newEntryCraftAmount > 0 && macro.Count() > 0)
                 {
-                    
+
 
                     uint foodID = newEntryFoodNameSelection == 0 ? 0 : DalamudApi.DataManager.GetExcelSheet<Item>()!
                         .Where(x => x!.Name == foodName).First().RowId;
@@ -291,6 +297,81 @@ namespace CraftingList
             }
         }
 
+        public void DrawSelectedMacro()
+        {
+            ImGui.Text("Current Macro");
+            if (ImGui.Combo("", ref selectedMacro, macroNames.ToArray(), macroNames.Count))
+            {
+                currMacroName = macroNames[selectedMacro];
+                currMacroNum = configuration.Macros[selectedMacro - 1].MacroNum;
+                currMacroDur = configuration.Macros[selectedMacro - 1].DurationSeconds;
+            }
+
+            if (macroNames[selectedMacro] != "")
+            {
+
+                ImGui.SetNextItemWidth((ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Number Duration(s)").X) * 0.45f);
+                if (ImGui.InputText("Name", ref this.currMacroName, 20)) configuration.Macros[selectedMacro - 1].Name = currMacroName;
+
+                ImGui.PushItemWidth((ImGui.GetWindowContentRegionWidth() - 25) * 0.15f);
+                if (ImGui.InputInt("Number", ref currMacroNum, 0)) configuration.Macros[selectedMacro - 1].MacroNum = currMacroNum;
+
+                if (ImGui.InputInt("Duration (s)", ref currMacroDur, 0)) configuration.Macros[selectedMacro - 1].DurationSeconds = currMacroDur;
+
+                ImGui.PopItemWidth();
+
+                if (ImGui.Button("Delete...", new Vector2(60, 25)))
+                {
+                    int toDelete = selectedMacro;
+                    selectedMacro = 0;
+                    configuration.Macros.RemoveAt(toDelete - 1);
+                    macroNames.RemoveAt(toDelete);
+                }
+            }
+        }
+
+        public void DrawNewMacro()
+        {
+            ImGui.Text("New Macro:");
+            float availSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Macro Name  Macro Number  Macro Duration(s) ").X;
+            ImGui.SetNextItemWidth(availSize * 0.45f);
+            ImGui.InputTextWithHint("Macro Name ", "New Macro Name", ref newMacroName, 10);
+            ImGui.SameLine();
+            ImGui.PushItemWidth(availSize * 0.15f);
+            ImGui.InputInt("Macro Number ", ref newMacroNum, 0);
+            ImGui.SameLine();
+            ImGui.InputInt("Macro Duration (s) ", ref newMacroDur, 0);
+            ImGui.SameLine();
+            ImGui.PopItemWidth();
+
+            if (ImGui.Button("+", new Vector2(25, 25)) && newMacroName != "" && !macroNames.Contains(newMacroName))
+            {
+                configuration.Macros.Add(new Crafting.CraftingMacro(newMacroName, newMacroNum, newMacroDur));
+                macroNames.Add(newMacroName);
+                selectedMacro = macroNames.Count - 1;
+                currMacroName = macroNames[selectedMacro];
+                currMacroNum = configuration.Macros[selectedMacro - 1].MacroNum;
+                currMacroDur = configuration.Macros[selectedMacro - 1].DurationSeconds;
+                newMacroName = "";
+                newMacroNum = 0;
+                newMacroDur = 0;
+            }
+        }
+
+        public void DrawOptionsTab()
+        {
+            ImGui.Text("Options");
+            ImGui.NewLine();
+            float availWidth = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("Repair  ").X;
+
+            ImGui.SetNextItemWidth(availWidth * 0.3f);
+            if (ImGui.SliderInt("Repair Threshold ", ref configuration.RepairThresholdPercent, 0, 99))
+            {
+                configuration.Crafter.RepairThresholdPercent = configuration.RepairThresholdPercent;
+            }
+
+            ImGui.Checkbox("Only repair if durability is below 99?", ref configuration.OnlyRepairIfBelow99);
+        }
         public void DrawSettingsWindow()
         {
             if (!SettingsVisible)
@@ -304,67 +385,18 @@ namespace CraftingList
                 ImGui.BeginTabBar("##ConfigTab");
                 if (ImGui.BeginTabItem("Macros"))
                 {
-                    ImGui.Text("Current Macro");
-                    if (ImGui.Combo("", ref selectedMacro, macroNames.ToArray(), macroNames.Count))
-                    {
-                        currMacroName = macroNames[selectedMacro];
-                        currMacroNum = configuration.Macros[selectedMacro - 1].MacroNum;
-                        currMacroDur = configuration.Macros[selectedMacro - 1].DurationSeconds;
-                    }
+                    DrawSelectedMacro();
 
-                    if (macroNames[selectedMacro] != "")
-                    {
-
-                        ImGui.SetNextItemWidth((ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Number Duration(s)").X) * 0.45f);
-                        if (ImGui.InputText("Name", ref this.currMacroName, 20)) configuration.Macros[selectedMacro - 1].Name = currMacroName;
-
-                        ImGui.PushItemWidth((ImGui.GetWindowContentRegionWidth() - 25) * 0.15f);
-                        if (ImGui.InputInt("Number", ref currMacroNum, 0)) configuration.Macros[selectedMacro - 1].MacroNum = currMacroNum;
-
-                        if (ImGui.InputInt("Duration (s)", ref currMacroDur, 0)) configuration.Macros[selectedMacro - 1].DurationSeconds = currMacroDur;
-
-                        ImGui.PopItemWidth();
-
-                        if (ImGui.Button("Delete...", new Vector2(60, 25)))
-                        {
-                            int toDelete = selectedMacro;
-                            selectedMacro = 0;
-                            configuration.Macros.RemoveAt(toDelete - 1);
-                            macroNames.RemoveAt(toDelete);
-                        }
-                    }
                     ImGui.NewLine();
                     ImGui.NewLine();
-                    ImGui.Text("New Macro:");
-                    float availSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Macro Name  Macro Number  Macro Duration(s) ").X;
-                    ImGui.SetNextItemWidth(availSize * 0.45f);
-                    ImGui.InputTextWithHint("Macro Name ", "New Macro Name", ref newMacroName, 10);
-                    ImGui.SameLine();
-                    ImGui.PushItemWidth(availSize * 0.15f);
-                    ImGui.InputInt("Macro Number ", ref newMacroNum, 0);
-                    ImGui.SameLine();
-                    ImGui.InputInt("Macro Duration (s) ", ref newMacroDur, 0);
-                    ImGui.SameLine();
-                    ImGui.PopItemWidth();
 
-                    if (ImGui.Button("+", new Vector2(25, 25)) && newMacroName != "" && !macroNames.Contains(newMacroName))
-                    {
-                        configuration.Macros.Add(new Crafting.CraftingMacro(newMacroName, newMacroNum, newMacroDur));
-                        macroNames.Add(newMacroName);
-                        selectedMacro = macroNames.Count - 1;
-                        currMacroName = macroNames[selectedMacro];
-                        currMacroNum = configuration.Macros[selectedMacro - 1].MacroNum;
-                        currMacroDur = configuration.Macros[selectedMacro - 1].DurationSeconds;
-                        newMacroName = "";
-                        newMacroNum = 0;
-                        newMacroDur = 0;
-                    }
+                    DrawNewMacro();
 
                     ImGui.EndTabItem();
                 }
                 if (ImGui.BeginTabItem("Other"))
                 {
-                    ImGui.Text("Hello");
+                    DrawOptionsTab();
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();
