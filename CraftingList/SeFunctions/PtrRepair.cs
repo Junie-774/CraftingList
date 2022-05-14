@@ -1,10 +1,6 @@
 ﻿using CraftingList.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CraftingList.SeFunctions
 {
@@ -20,11 +16,11 @@ namespace CraftingList.SeFunctions
         {
             return addonRepair.AddonPointer != null;
         }
-        
+
 
         public void ClickRepairAll()
         {
-            Module.ClickAddon(AddonPointer, AddonPointer->RepairAllButton, EventType.Change, repairAllButtonId);
+            Module.ClickAddon(AddonPointer, AddonPointer->RepairAllButton->AtkComponentBase.OwnerNode, EventType.Change, repairAllButtonId);
         }
     }
 }

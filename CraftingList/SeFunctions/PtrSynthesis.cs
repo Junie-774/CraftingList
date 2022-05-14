@@ -50,4 +50,9 @@ public unsafe struct PtrSynthesis
 
     public int Progress
         => _agent == null ? 0 : *(int*)(_agent + OffsetProgress);
+
+    public void Quit()
+    {
+        Module.ClickAddon(Pointer, Pointer->QuitButton->AtkComponentBase.OwnerNode, EventType.Change, 0);
+    }
 }

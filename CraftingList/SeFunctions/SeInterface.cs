@@ -33,6 +33,7 @@ namespace CraftingList.SeFunctions
         private Macro[] ChangeJobMacros;
         private Macro OpenRepairMacro;
         private Macro RemoveFoodMacro;
+        public Macro CloseNoteMacro;
 
         public SeInterface()
         {
@@ -56,6 +57,7 @@ namespace CraftingList.SeFunctions
 
             OpenRepairMacro = new Macro(0, 0, "Open Repair", "/gaction \"Repair\"");
             RemoveFoodMacro = new Macro(0, 0, "Remove Food", "/statusoff \"Well Fed\"");
+            CloseNoteMacro = new Macro(0, 0, "Close", "/craftinglist 0");
         }
 
         public IntPtr GetUiObject(string name, int index = 1)
@@ -85,7 +87,7 @@ namespace CraftingList.SeFunctions
 
         public void SwapToDOHJob(DoHJob job)
         {
-            ExecuteMacro(ChangeJobMacros[(int) job]);
+            ExecuteMacro(ChangeJobMacros[(int)job]);
         }
 
         public void OpenRepair() => ExecuteMacro(OpenRepairMacro);

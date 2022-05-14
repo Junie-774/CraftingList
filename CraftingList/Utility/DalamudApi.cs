@@ -6,8 +6,6 @@ using Dalamud.Game.Gui;
 using Dalamud.Game.Gui.ContextMenus;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets;
 
 namespace CraftingList.Utility
 {

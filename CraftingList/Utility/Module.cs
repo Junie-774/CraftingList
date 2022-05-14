@@ -12,6 +12,7 @@ namespace CraftingList.Utility
         Input = 0x0C,
         Change = 0x19,
         ListIndexChange = 0x23,
+        Focus = 0x26,
         Unk37 = 0x37,
         Unk45 = 0x45,
     }

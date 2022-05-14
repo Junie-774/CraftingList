@@ -1,9 +1,5 @@
 ﻿using Dalamud.Game;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CraftingList.SeFunctions
 {
@@ -11,7 +7,7 @@ namespace CraftingList.SeFunctions
     internal class AddonContextMenuReceiveEvent : SeFunction<AddonContextReceiveEventDelegate>
     {
         public AddonContextMenuReceiveEvent(SigScanner sig)
-            :base(sig, "40 53 55 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 0F B7 C2")
+            : base(sig, "40 53 48 83 EC 30 0F B7 C2 4D 8B D1")
         { }
     }
 }

@@ -37,6 +37,9 @@ namespace CraftingList.Crafting
                         .First().CraftType.Value!.RowId;
                     m_seInterface.SwapToDOHJob((DoHJob)job);
                     await Task.Delay(1500);
+                    m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
+                    await Task.Delay(1500);
+
 
                     for (int i = 0; i < entry.MaxCrafts; i++)
                     {
@@ -47,7 +50,7 @@ namespace CraftingList.Crafting
                         PluginLog.Information($"Repair: {needToRepair}");
                         if (needToChangeFood || needToRepair)
                         {
-                            m_seInterface.RecipeNote().Close();
+                            m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
                             await Task.Delay(4000);
                             if (needToChangeFood)
                             {
@@ -69,9 +72,11 @@ namespace CraftingList.Crafting
                                 await Repair();
                             }
 
+                            m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
+                            await Task.Delay(1500);
+
                         }
-                        m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
-                        await Task.Delay(1500);
+
 
                         m_seInterface.RecipeNote().Synthesize();
                         await Task.Delay(2000);
@@ -79,6 +84,10 @@ namespace CraftingList.Crafting
                         PluginLog.Information("EXECUTING MACRO");
                         m_seInterface.ExecuteMacroByNumber(entry.Macro.MacroNum);
                         await Task.Delay(entry.Macro.DurationSeconds * 1000 + 4000);
+
+                        await Task.Delay(1000);
+
+
                     }
 
                     entry.Complete = true;
@@ -91,7 +100,7 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> NeedToChangeFood(uint lastFood, uint currEntryFoodId)
         {
-            bool hasFood = false;                
+            bool hasFood = false;
             while (DalamudApi.ClientState.LocalPlayer == null)
             {
                 await Task.Delay(20);
@@ -130,7 +139,7 @@ namespace CraftingList.Crafting
         {
             for (int i = 0; i < 13; i++)
             {
-                if (InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition < 30000)
+                if (InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition < 29700)
                 {
                     return true;
                 }
@@ -140,12 +149,16 @@ namespace CraftingList.Crafting
 
         public async Task<bool> Repair()
         {
+            PluginLog.Debug("Opening repair...");
             m_seInterface.OpenRepair();
-            await Task.Delay(1000);
+            await Task.Delay(2000);
+            PluginLog.Debug("Clicking repair all...");
             m_seInterface.Repair().ClickRepairAll();
-            await Task.Delay(1000);
+            await Task.Delay(2000);
             m_seInterface.SelectYesNo().ClickYes();
             await Task.Delay(4000);
+            m_seInterface.OpenRepair();
+            await Task.Delay(2000);
             return true;
         }
 

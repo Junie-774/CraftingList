@@ -19,8 +19,7 @@ namespace CraftingList.SeFunctions
 
         public void Synthesize()
         {
-            //PluginLog.Information($"Pointer: {(IntPtr) Pointer:X16}");
-            Module.ClickAddon(Pointer, Pointer->SynthesizeButton->AtkComponentBase.OwnerNode, EventType.Change, SynthesizeButtonId);
+            Module.ClickAddon(Pointer, null/*Pointer->SynthesizeButton->AtkComponentBase.OwnerNode*/, EventType.Change, SynthesizeButtonId);
         }
 
         public void ClickJob(int which)
@@ -41,7 +40,7 @@ namespace CraftingList.SeFunctions
 
         public void Close()
         {
-            Singleton<AgentRecipeNoteHide>.Get().Invoke((IntPtr)AgentRecipeNote.Instance());
+            AgentRecipeNote.Instance()->AgentInterface.Show();
         }
     }
 }

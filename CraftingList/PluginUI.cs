@@ -34,7 +34,7 @@ namespace CraftingList
         int newEntryItemNameSelection = 0;
         string newEntryItemName = "";
         bool newEntryShowItemNameList = false;
-        
+
 
         int newEntryFoodNameSelection = 0;
 
@@ -156,37 +156,39 @@ namespace CraftingList
                 ImGui.TableNextColumn();
                 ImGui.TableNextRow();
                 ImGui.SetWindowFontScale(1f);
-                try {
-                foreach (var item in configuration.Crafter.EntryList)
+                try
                 {
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(tableSize);
-                    ImGui.Text(item.Name);
-
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(tableSize * 0.3f);
-                    ImGui.Text(item.MaxCrafts.ToString());
-
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(tableSize * 0.4f);
-                    ImGui.Text(item.Macro.Name);
-
-                    ImGui.TableNextColumn();
-                    ImGui.Text(DalamudApi.DataManager.GetExcelSheet<Item>()!
-                        .Where(x => x.RowId == item.FoodId).First().Name);
-
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(50);
-                    if (ImGui.Button("Remove"))
+                    foreach (var item in configuration.Crafter.EntryList)
                     {
-                        item.Complete = true;
-                    }
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(tableSize);
+                        ImGui.Text(item.Name);
 
-                    ImGui.TableNextRow();
-                }
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(tableSize * 0.3f);
+                        ImGui.Text(item.MaxCrafts.ToString());
+
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(tableSize * 0.4f);
+                        ImGui.Text(item.Macro.Name);
+
+                        ImGui.TableNextColumn();
+                        ImGui.Text(DalamudApi.DataManager.GetExcelSheet<Item>()!
+                            .Where(x => x.RowId == item.FoodId).First().Name);
+
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(50);
+                        if (ImGui.Button("Remove"))
+                        {
+                            item.Complete = true;
+                        }
+
+                        ImGui.TableNextRow();
+                    }
                     configuration.Crafter.EntryList.RemoveAll(x => x.Complete);
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     PluginLog.Error(ex.Message);
                 }
                 ImGui.EndTable();
@@ -250,7 +252,8 @@ namespace CraftingList
                     }
                 }
                 ImGui.NewLine();
-                if (ImGui.Button("Craft!")) {
+                if (ImGui.Button("Craft!"))
+                {
                     configuration.Crafter.CraftAllItems();
                 }
                 ImGui.End();
@@ -336,7 +339,7 @@ namespace CraftingList
                 ImGui.EndTabBar();
 
 
-                
+
 
             }
             configuration.Save();

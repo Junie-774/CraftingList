@@ -1,9 +1,5 @@
 ﻿using Dalamud.Game;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CraftingList.SeFunctions
 {
@@ -11,7 +7,7 @@ namespace CraftingList.SeFunctions
     internal class OpenContextMenuForAddon : SeFunction<OpenContextMenuForAddonDelegate>
     {
         public OpenContextMenuForAddon(SigScanner sig)
-            :base(sig, "41 0F B6 C0 89 91")
+            : base(sig, "41 0F B6 C0 89 91")
         {
 
         }

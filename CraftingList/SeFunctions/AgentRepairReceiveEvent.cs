@@ -1,9 +1,5 @@
 ﻿using Dalamud.Game;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CraftingList.SeFunctions
 {
@@ -12,7 +8,7 @@ namespace CraftingList.SeFunctions
     {
 
         public AgentRepairReceiveEvent(SigScanner sig)
-            :base(sig, "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC 20 48 8B 44 24 ?? 49 8B F8 4C 8B F2 48 8B D9")
+            : base(sig, "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC 20 48 8B 44 24 ?? 49 8B F8 4C 8B F2 48 8B D9")
         {
 
         }
