@@ -35,19 +35,16 @@ namespace CraftingList.Crafting
                     var job = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
                         .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
                         .First().CraftType.Value!.RowId;
+
                     m_seInterface.SwapToDOHJob((DoHJob)job);
                     await Task.Delay(1500);
-                    m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
-                    await Task.Delay(1500);
-
-
-                    for (int i = 0; i < entry.MaxCrafts; i++)
+                   
+                    while (entry.MaxCrafts > 0)
                     {
                         if (!m_running) break;
                         bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.FoodId).Result;
                         bool needToRepair = NeedsRepair();
-                        PluginLog.Information($"Change food: {needToChangeFood}");
-                        PluginLog.Information($"Repair: {needToRepair}");
+
                         if (needToChangeFood || needToRepair)
                         {
                             m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
@@ -75,26 +72,23 @@ namespace CraftingList.Crafting
 
                             m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
                             await Task.Delay(1500);
-
+                            
                         }
 
 
                         m_seInterface.RecipeNote().Synthesize();
                         await Task.Delay(2000);
 
-                        PluginLog.Information("EXECUTING MACRO");
                         m_seInterface.ExecuteMacroByNumber(entry.Macro.MacroNum);
                         await Task.Delay(entry.Macro.DurationSeconds * 1000 + 4000);
 
-                        await Task.Delay(1000);
-
-
+                        entry.MaxCrafts--;
                     }
 
                     entry.Complete = true;
                 }
                 EntryList.RemoveAll(x => x.Complete);
-                PluginLog.Information("CRAFTING DONE");
+                PluginLog.Information("Crafting Complete!");
                 return true;
             });
         }
