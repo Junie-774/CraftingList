@@ -2,10 +2,8 @@
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
-using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
-using System;
 
 namespace CraftingList
 {
@@ -75,9 +73,6 @@ namespace CraftingList
 
             DalamudApi.PluginInterface.UiBuilder.Draw += DrawUI;
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
-
-
-
         }
 
         public void Dispose()
@@ -105,7 +100,6 @@ namespace CraftingList
 
         private void OnCraftAllItems(string command, string args)
         {
-
             Crafter.CraftAllItems();
         }
 
@@ -113,16 +107,10 @@ namespace CraftingList
         {
             Crafter.Cancel();
         }
+
         private void DrawUI()
         {
-            try
-            {
-                this.PluginUi.Draw();
-            }
-            catch (Exception ex)
-            {
-                PluginLog.Error(ex.ToString());
-            }
+            this.PluginUi.Draw();
         }
 
         private void DrawConfigUI()

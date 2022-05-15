@@ -4,7 +4,7 @@
     <Authors></Authors>
     <Company></Company>
     <AssemblyName>CraftingList</AssemblyName>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Description>Craft things~.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/Junie-774/CraftingList</PackageProjectUrl>
@@ -56,9 +56,7 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)' == 'Release' ">
-    <Copy SourceFiles="$(OutDir)\CraftingList\latest.zip" DestinationFolder=".\" />
-  </Target>
+  <!--
+  -->
 
 </Project>
