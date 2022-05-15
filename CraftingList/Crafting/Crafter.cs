@@ -102,6 +102,7 @@ namespace CraftingList.Crafting
                     }
 
                     entry.Complete = true;
+                    m_seInterface.RecipeNote().Close();
                 }
                 EntryList.RemoveAll(x => x.Complete);
                 PluginLog.Information("Crafting Complete!");

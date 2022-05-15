@@ -4,10 +4,10 @@
     <Authors></Authors>
     <Company></Company>
     <AssemblyName>CraftingList</AssemblyName>
-    <Version>0.0.0.1</Version>
-    <Description>A sample plugin.</Description>
+    <Version>1.0.3</Version>
+    <Description>Craft things~.</Description>
     <Copyright></Copyright>
-    <PackageProjectUrl>https://github.com/goatcorp/SamplePlugin</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/Junie-774/CraftingList</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -22,13 +22,13 @@
 
   <PropertyGroup>
     <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-    <ClientStructsPath>C:\Users\Kyle\source\repos\FFXIVClientStructs\bin\Debug\</ClientStructsPath>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DalamudPackager" Version="2.1.7" />
     <Reference Include="FFXIVClientStructs">
-      <HintPath>$(ClientStructsPath)FFXIVClientStructs.dll</HintPath>
+      <HintPath>$(AppData)\XivLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -56,5 +56,9 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)' == 'Release' ">
+    <Copy SourceFiles="$(OutDir)\CraftingList\latest.zip" DestinationFolder=".\" />
+  </Target>
 
 </Project>
