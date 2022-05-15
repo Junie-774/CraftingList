@@ -1,5 +1,6 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Utility;
+using Dalamud.Hooking;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -35,6 +36,13 @@ namespace CraftingList.SeFunctions
         private Macro RemoveFoodMacro;
         public Macro CloseNoteMacro;
 
+        public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
+        public void Dispose()
+        {
+            recipeREHook.Disable();
+            recipeREHook.Dispose();
+        }
+
         public SeInterface()
         {
             m_baseUiObject = Singleton<GetBaseUiObject>.Get().Invoke() ?? IntPtr.Zero;
@@ -58,6 +66,15 @@ namespace CraftingList.SeFunctions
             OpenRepairMacro = new Macro(0, 0, "Open Repair", "/gaction \"Repair\"");
             RemoveFoodMacro = new Macro(0, 0, "Remove Food", "/statusoff \"Well Fed\"");
             CloseNoteMacro = new Macro(0, 0, "Close", "/craftinglist 0");
+
+            recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
+            //recipeREHook?.Enable();
+        }
+
+        public void ReceiveEventLogDetour(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused)
+        {
+            PluginLog.Debug($"Receive Event: {atkUnit:X}, eventType: {eventType}, which: {which}, source: {source:X}, unused: {unused:X}");
+            recipeREHook?.Original(atkUnit, eventType, which, source, unused);
         }
 
         public IntPtr GetUiObject(string name, int index = 1)

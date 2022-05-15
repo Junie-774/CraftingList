@@ -38,6 +38,11 @@ namespace CraftingList.SeFunctions
             Singleton<OpenRecipeByItemId>.Get().Invoke((IntPtr)AgentRecipeNote.Instance(), id);
         }
 
+        public void ClickButton(int which)
+        {
+            Module.ClickAddon(Pointer, Pointer->Unk330->AtkComponentBase.OwnerNode, EventType.Change, which);
+        }
+
         public void Close()
         {
             AgentRecipeNote.Instance()->AgentInterface.Show();

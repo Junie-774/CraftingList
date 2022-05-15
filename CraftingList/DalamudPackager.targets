@@ -7,7 +7,7 @@
             AssemblyName="$(AssemblyName)"
             MakeZip="true"/>
   </Target>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(Configuration)' == 'Release' ">
+  <Target Name="PostBuild" AfterTargets="PackagePlugin" Condition=" '$(Configuration)' == 'Release' ">
     <Copy SourceFiles="$(OutDir)CraftingList\latest.zip" DestinationFolder=".\" />
   </Target>
 </Project>

@@ -34,7 +34,7 @@ namespace CraftingList.Crafting
             return Task.Run(async () =>
             {
                 uint lastUsedFood = 0;
-                foreach (var entry in EntryList)
+                foreach (var entry in EntryList.ToList())
                 {
                     PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
 
@@ -44,20 +44,21 @@ namespace CraftingList.Crafting
                         .First().CraftType.Value!.RowId;
 
                     m_seInterface.SwapToDOHJob((DoHJob)job);
-                    await Task.Delay(1500);
+                    await Task.Delay(2500);
 
                     while (entry.MaxCrafts > 0)
                     {
                         if (!m_running) break;
                         bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.FoodId).Result;
                         bool needToRepair = NeedsRepair();
+                        PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {entry.FoodId}");
                         PluginLog.Debug($"Need change food: {needToChangeFood}");
                         PluginLog.Debug($"Need repair: {needToRepair}");
                         if (needToChangeFood || needToRepair)
                         {
-                            PluginLog.Debug($"Closing crafting log...");
+                            PluginLog.Debug($"Closing Recipe Note...");
                             m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
-                            PluginLog.Debug($"Closed crafting log.");
+                            PluginLog.Debug($"Closed Recipe Note.");
                             await Task.Delay(2000);
                             if (needToChangeFood)
                             {
@@ -88,7 +89,7 @@ namespace CraftingList.Crafting
 
                         PluginLog.Debug($"Opening crafting log to recipe");
                         m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
-                        await Task.Delay(1500);
+                        await Task.Delay(2000);
 
                         PluginLog.Debug($"Clicking Synthesize");
                         m_seInterface.RecipeNote().Synthesize();
@@ -100,11 +101,18 @@ namespace CraftingList.Crafting
 
                         entry.MaxCrafts--;
                     }
-
+                    if (!m_running)
+                    {
+                        PluginLog.Information("Stopping execution...");
+                        break;
+                    }
                     entry.Complete = true;
-                    m_seInterface.RecipeNote().Close();
+                    PluginLog.Debug($"Closing Recipe Note...");
+                    m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
+                    PluginLog.Debug($"Recipe Note Closed!");
+                    await Task.Delay(2000);
                 }
-                EntryList.RemoveAll(x => x.Complete);
+                EntryList.RemoveAll(x => x.Complete || x.MaxCrafts == 0);
                 PluginLog.Information("Crafting Complete!");
                 return true;
             });
