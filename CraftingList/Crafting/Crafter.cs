@@ -51,7 +51,7 @@ namespace CraftingList.Crafting
 
                     if (entry.Macro.Name == "(Quick Synth)")
                     {
-                        await OpenRecipeByItem((int) entry.ItemId);
+                        //await OpenRecipeByItem((int) entry.ItemId);
                     }
                     else
                     {
@@ -84,7 +84,7 @@ namespace CraftingList.Crafting
 
                             await ClickSynthesize();
 
-                            await ExecuteMacro(entry.Macro);
+                            await ExecuteMacro(entry.Macro, isCollectible);
                             entry.MaxCrafts--;
                         }
                     }
@@ -155,11 +155,18 @@ namespace CraftingList.Crafting
             return 0;
         }
 
-        public async Task<int> ExecuteMacro(CraftingMacro macro)
+        public async Task<int> ExecuteMacro(CraftingMacro macro, bool collectible)
         {
             PluginLog.Debug($"Executing Macro {macro.MacroNum}");
             m_seInterface.ExecuteMacroByNumber(macro.MacroNum);
-            await Task.Delay(macro.DurationSeconds * 1000 + WaitDurationHelper.AfterCompleteMacroHQ);
+            if (collectible)
+            {
+                await Task.Delay(macro.DurationSeconds * 1000 + WaitDurationHelper.AfterCompleteMacroCollectible);
+            }
+            else
+            {
+                await Task.Delay(macro.DurationSeconds * 1000 + WaitDurationHelper.AfterCompleteMacroHQ);
+            }
             return 0;
         }
 
