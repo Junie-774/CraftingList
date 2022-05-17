@@ -39,8 +39,8 @@ namespace CraftingList.SeFunctions
         public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
         public void Dispose()
         {
-            recipeREHook.Disable();
-            recipeREHook.Dispose();
+            recipeREHook?.Disable();
+            recipeREHook?.Dispose();
         }
 
         public SeInterface()
@@ -68,7 +68,7 @@ namespace CraftingList.SeFunctions
             CloseNoteMacro = new Macro(0, 0, "Close", "/craftinglist 0");
 
             recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
-            //recipeREHook?.Enable();
+            recipeREHook?.Enable();
         }
 
         public void ReceiveEventLogDetour(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused)
@@ -107,7 +107,7 @@ namespace CraftingList.SeFunctions
             ExecuteMacro(ChangeJobMacros[(int)job]);
         }
 
-        public void OpenRepair() => ExecuteMacro(OpenRepairMacro);
+        public void ToggleRepairWindow() => ExecuteMacro(OpenRepairMacro);
 
         public void UseAction(IntPtr AM, uint actionType, uint actionID, long targetID, uint a4, uint a5, int a6, IntPtr a7)
         {

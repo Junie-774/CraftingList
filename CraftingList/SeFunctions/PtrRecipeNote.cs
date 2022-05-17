@@ -8,6 +8,7 @@ namespace CraftingList.SeFunctions
     public unsafe struct PtrRecipeNote
     {
         private const int SynthesizeButtonId = 13;
+        private const int QuickSynthButtonId = 14;
 
         public AddonRecipeNote* Pointer;
 
@@ -20,6 +21,11 @@ namespace CraftingList.SeFunctions
         public void Synthesize()
         {
             Module.ClickAddon(Pointer, null/*Pointer->SynthesizeButton->AtkComponentBase.OwnerNode*/, EventType.Change, SynthesizeButtonId);
+        }
+
+        public void QuickSynthesize()
+        {
+            Module.ClickAddon(Pointer, null, EventType.Click, QuickSynthButtonId);
         }
 
         public void ClickJob(int which)

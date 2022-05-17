@@ -44,8 +44,6 @@ namespace CraftingList
         int selectedMacro = 0;
         List<String> macroNames;
 
-        int repairThreshold;
-
         // this extra bool exists for ImGui, since you can't ref a property
         private bool visible = false;
         public bool Visible
@@ -61,15 +59,13 @@ namespace CraftingList
             set { this.settingsVisible = value; }
         }
 
-        // passing in the image here just for simplicity
         public PluginUI(Configuration configuration)
         {
             this.selectedMacro = 0;
             this.configuration = configuration;
-            this.repairThreshold = configuration.RepairThresholdPercent;
-            macroNames = new List<String>
+            macroNames = new List<string>
             {
-                ""
+                "",
             };
             craftableNames = new List<string>
             {
@@ -239,20 +235,21 @@ namespace CraftingList
                 var macro = configuration.Macros.Where(x => x.Name == macroNames[newEntrySelectedMacro]);
                 var foodName = foodNames[newEntryFoodNameSelection];
                 bool HQ = false;
+
                 if (foodName.Substring(0, 4) == "(HQ)")
                 {
                     HQ = true;
                     foodName = foodName.Substring(5);
                 }
-                PluginLog.Information(foodName);
 
                 if (items.Count() > 0 && newEntryCraftAmount > 0 && macro.Count() > 0)
                 {
 
-
                     uint foodID = newEntryFoodNameSelection == 0 ? 0 : DalamudApi.DataManager.GetExcelSheet<Item>()!
                         .Where(x => x!.Name == foodName).First().RowId;
+
                     if (HQ) foodID += 1000000;
+
                     uint itemID = items.First()!.RowId;
                     configuration.Crafter.EntryList.Add(new Crafting.CListEntry(newEntryItemName, itemID, newEntryCraftAmount, macro.First(), foodID));
                 }
@@ -372,6 +369,23 @@ namespace CraftingList
 
             ImGui.Checkbox("Only repair if durability is below 99?", ref configuration.OnlyRepairIfBelow99);
         }
+
+        public void DrawExperimentalTab()
+        {
+            ImGui.Text(typeof(WaitDurationHelper).GetFields(System.Reflection.BindingFlags.Instance).Length.ToString());
+            object box = configuration.WaitDurations;
+            foreach (var field in typeof(WaitDurationHelper).GetFields())
+            {
+                int toref = (int) (field.GetValue(box) ?? 2000);
+                if (ImGui.InputInt(field.Name, ref toref, 0))
+                {
+                    field.SetValue(box, toref);
+                    configuration.WaitDurations = (WaitDurationHelper)box;
+                    PluginLog.Information($"{field.Name} new value: {toref}. saved?: {field.GetValue(configuration.WaitDurations)}");
+                }
+            }
+
+        }
         public void DrawSettingsWindow()
         {
             if (!SettingsVisible)
@@ -397,6 +411,11 @@ namespace CraftingList
                 if (ImGui.BeginTabItem("Other"))
                 {
                     DrawOptionsTab();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Experimental"))
+                {
+                    DrawExperimentalTab();
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();

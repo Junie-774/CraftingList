@@ -14,7 +14,7 @@ namespace CraftingList.Crafting
     {
         public int RepairThresholdPercent = 99;
         public bool OnlyRepairIfBelow99 = true;
-
+        public WaitDurationHelper WaitDurationHelper = new WaitDurationHelper();
 
         private bool m_running = false;
         public List<CListEntry> EntryList { get; set; }
@@ -43,63 +43,50 @@ namespace CraftingList.Crafting
                         .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
                         .First().CraftType.Value!.RowId;
 
-                    m_seInterface.SwapToDOHJob((DoHJob)job);
-                    await Task.Delay(2500);
+                    bool isCollectible = DalamudApi.DataManager.GetExcelSheet<Item>()!
+                        .Where(item => item.RowId == entry.ItemId)
+                        .First().IsCollectable;
 
-                    while (entry.MaxCrafts > 0)
+                    await ChangeJobs((DoHJob) job);
+
+                    if (entry.Macro.Name == "(Quick Synth)")
                     {
-                        if (!m_running) break;
-                        bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.FoodId).Result;
-                        bool needToRepair = NeedsRepair();
-                        PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {entry.FoodId}");
-                        PluginLog.Debug($"Need change food: {needToChangeFood}");
-                        PluginLog.Debug($"Need repair: {needToRepair}");
-                        if (needToChangeFood || needToRepair)
+                        await OpenRecipeByItem((int) entry.ItemId);
+                    }
+                    else
+                    {
+                        while (entry.MaxCrafts > 0)
                         {
-                            PluginLog.Debug($"Closing Recipe Note...");
-                            m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
-                            PluginLog.Debug($"Closed Recipe Note.");
-                            await Task.Delay(2000);
-                            if (needToChangeFood)
+                            if (!m_running) break;
+
+                            bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.FoodId).Result;
+                            bool needToRepair = NeedsRepair();
+
+                            PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {entry.FoodId}");
+                            PluginLog.Debug($"Need change food: {needToChangeFood}");
+                            PluginLog.Debug($"Need repair: {needToRepair}");
+
+                            if (needToChangeFood || needToRepair)
                             {
-                                PluginLog.Debug($"Changing food to {entry.FoodId}");
-                                if (entry.FoodId != 0)
+                                await ExitCrafting();
+                                if (needToChangeFood)
                                 {
-                                    m_seInterface.UseItem(entry.FoodId);
+                                    await ChangeFood(entry.FoodId);
                                     lastUsedFood = entry.FoodId;
-                                    await Task.Delay(3500);
-                                    PluginLog.Debug($"Changed food.");
                                 }
-                                else
+                                if (needToRepair)
                                 {
-                                    m_seInterface.RemoveFood();
-                                    lastUsedFood = 0;
-                                    await Task.Delay(1500);
-                                    PluginLog.Debug($"Removed food.");
+                                    await Repair();
                                 }
                             }
-                            if (needToRepair)
-                            {
-                                PluginLog.Debug($"Repairing...");
-                                await Repair();
-                                PluginLog.Debug($"Repaired!");
-                            }
 
+                            await OpenRecipeByItem((int)entry.ItemId);
+
+                            await ClickSynthesize();
+
+                            await ExecuteMacro(entry.Macro);
+                            entry.MaxCrafts--;
                         }
-
-                        PluginLog.Debug($"Opening crafting log to recipe");
-                        m_seInterface.RecipeNote().OpenRecipeByItemId((int)entry.ItemId);
-                        await Task.Delay(2000);
-
-                        PluginLog.Debug($"Clicking Synthesize");
-                        m_seInterface.RecipeNote().Synthesize();
-                        await Task.Delay(2000);
-
-                        PluginLog.Debug($"Executing Macro {entry.Macro.MacroNum}");
-                        m_seInterface.ExecuteMacroByNumber(entry.Macro.MacroNum);
-                        await Task.Delay(entry.Macro.DurationSeconds * 1000 + 4000);
-
-                        entry.MaxCrafts--;
                     }
                     if (!m_running)
                     {
@@ -107,15 +94,73 @@ namespace CraftingList.Crafting
                         break;
                     }
                     entry.Complete = true;
-                    PluginLog.Debug($"Closing Recipe Note...");
-                    m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
-                    PluginLog.Debug($"Recipe Note Closed!");
-                    await Task.Delay(2000);
+                    await ExitCrafting();
                 }
                 EntryList.RemoveAll(x => x.Complete || x.MaxCrafts == 0);
                 PluginLog.Information("Crafting Complete!");
                 return true;
             });
+        }
+
+        public async Task<int> ChangeJobs(DoHJob job)
+        {
+            m_seInterface.SwapToDOHJob(job);
+            await Task.Delay(WaitDurationHelper.AfterChangeJobs);
+            return 0;
+        }
+
+        public async Task<int> OpenRecipeByItem(int itemId)
+        {
+            PluginLog.Debug($"Opening crafting log to item {itemId}");
+            m_seInterface.RecipeNote().OpenRecipeByItemId(itemId);
+            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+            return 0;
+        }
+
+        public async Task<int> ExitCrafting()
+        {
+            PluginLog.Debug($"Closing Recipe Note...");
+            m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
+            PluginLog.Debug($"Closed Recipe Note.");
+            await Task.Delay(WaitDurationHelper.AfterExitCrafting);
+            return 0;
+        }
+
+        public async Task<int> ChangeFood(uint newFoodId)
+        {
+            PluginLog.Debug($"Changing food to {newFoodId}");
+            if (newFoodId != 0)
+            {
+                PluginLog.Debug($"Eating food {newFoodId}...");
+                m_seInterface.UseItem(newFoodId);
+                PluginLog.Debug($"Ate Food.");
+                await Task.Delay(WaitDurationHelper.AfterEatFood);
+                
+            }
+            else
+            {
+                PluginLog.Debug($"Removing food...");
+                m_seInterface.RemoveFood();
+                PluginLog.Debug($"Removed food.");
+                await Task.Delay(WaitDurationHelper.AfterClickOffFood);
+            }
+            return 0;
+        }
+
+        public async Task<int> ClickSynthesize()
+        {
+            PluginLog.Debug($"Clicking Synthesize...");
+            m_seInterface.RecipeNote().Synthesize();
+            await Task.Delay(WaitDurationHelper.AfterClickSynthesize);
+            return 0;
+        }
+
+        public async Task<int> ExecuteMacro(CraftingMacro macro)
+        {
+            PluginLog.Debug($"Executing Macro {macro.MacroNum}");
+            m_seInterface.ExecuteMacroByNumber(macro.MacroNum);
+            await Task.Delay(macro.DurationSeconds * 1000 + WaitDurationHelper.AfterCompleteMacroHQ);
+            return 0;
         }
 
         public static async Task<bool> NeedToChangeFood(uint lastFood, uint currEntryFoodId)
@@ -184,16 +229,24 @@ namespace CraftingList.Crafting
 
         public async Task<bool> Repair()
         {
+            PluginLog.Debug($"Repairing...");
             PluginLog.Debug("Opening repair...");
-            m_seInterface.OpenRepair();
-            await Task.Delay(2000);
+            m_seInterface.ToggleRepairWindow();
+            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+
             PluginLog.Debug("Clicking repair all...");
             m_seInterface.Repair().ClickRepairAll();
-            await Task.Delay(2000);
+            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+
+            PluginLog.Debug("Clicking confirm...");
             m_seInterface.SelectYesNo().ClickYes();
-            await Task.Delay(4000);
-            m_seInterface.OpenRepair();
-            await Task.Delay(2000);
+            await Task.Delay(WaitDurationHelper.AfterRepairConfirm);
+
+            PluginLog.Debug("Closing repair window...");
+            m_seInterface.ToggleRepairWindow();
+            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+
+            PluginLog.Debug("Repaired!");
             return true;
         }
 
