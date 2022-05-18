@@ -8,10 +8,10 @@ namespace CraftingList
     [Serializable]
     public struct WaitDurationHelper
     {
-        public int AfterChangeJobs = 1500;
+        public int AfterChangeJobs = 2500;
         public int AfterEatFood = 3000;
-        public int AfterCompleteMacroHQ = 4000;
-        public int AfterCompleteMacroCollectible = 4000;
+        public int AfterCompleteMacroHQ = 3000;
+        public int AfterCompleteMacroCollectible = 3000;
         public int AfterOpenRecipeNote = 1000;
         public int AfterClickSynthesize = 2000;
         public int AfterExitCrafting = 2500;

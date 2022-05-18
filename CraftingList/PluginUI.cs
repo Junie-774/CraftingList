@@ -42,7 +42,7 @@ namespace CraftingList
         int newEntryCraftAmount = 0;
 
         int selectedMacro = 0;
-        List<String> macroNames;
+        List<string> macroNames;
 
         // this extra bool exists for ImGui, since you can't ref a property
         private bool visible = false;
@@ -73,11 +73,6 @@ namespace CraftingList
             };
             foodNames = new List<string>();
 
-            foreach (Crafting.CraftingMacro mac in configuration.Macros)
-            {
-                macroNames.Add(mac.Name);
-            }
-
             var MealIndexes = DalamudApi.DataManager.GetExcelSheet<ItemFood>()!
                 .Select(m => m.RowId);
 
@@ -99,8 +94,13 @@ namespace CraftingList
             }
             foreach (var item in craftingFoods)
             {
-
                 foodNames.Add(item!.Name);
+            }
+
+            foreach (var macro in configuration.Macros)
+            {
+                PluginLog.Information(macro.Name);
+                macroNames.Add(macro.Name);
             }
             foodNames.Add("None");
             foodNames.Reverse();
@@ -297,32 +297,46 @@ namespace CraftingList
         public void DrawSelectedMacro()
         {
             ImGui.Text("Current Macro");
-            if (ImGui.Combo("", ref selectedMacro, macroNames.ToArray(), macroNames.Count))
+            if (ImGui.BeginCombo("Current Macro", currMacroName))
             {
-                currMacroName = macroNames[selectedMacro];
-                currMacroNum = configuration.Macros[selectedMacro - 1].MacroNum;
-                currMacroDur = configuration.Macros[selectedMacro - 1].DurationSeconds;
+                foreach (var macro in macroNames)
+                {
+                    bool isSelected = (currMacroName == macro);
+                    if (ImGui.Selectable(macro, isSelected))
+                    {
+                        PluginLog.Information($"Selected macro: {macro}");
+                        currMacroName = macro;
+                        if (currMacroName != "")
+                        {
+                            currMacroNum = configuration.Macros.Where(m => m.Name == macro).First().MacroNum;
+                            currMacroDur = configuration.Macros.Where(m => m.Name == macro).First().DurationSeconds;
+                        }
+                    }
+                    if (isSelected) ImGui.SetItemDefaultFocus();
+                }
+                ImGui.EndCombo();
             }
 
-            if (macroNames[selectedMacro] != "")
+            if (currMacroName != "")
             {
 
+                var currMacro = configuration.Macros.Where(m => m.Name == currMacroName);
                 ImGui.SetNextItemWidth((ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Number Duration(s)").X) * 0.45f);
-                if (ImGui.InputText("Name", ref this.currMacroName, 20)) configuration.Macros[selectedMacro - 1].Name = currMacroName;
+                if (ImGui.InputText("Name", ref this.currMacroName, 20)) currMacro.First().Name = currMacroName;
 
                 ImGui.PushItemWidth((ImGui.GetWindowContentRegionWidth() - 25) * 0.15f);
-                if (ImGui.InputInt("Number", ref currMacroNum, 0)) configuration.Macros[selectedMacro - 1].MacroNum = currMacroNum;
+                if (ImGui.InputInt("Number", ref currMacroNum, 0)) currMacro.First().MacroNum = currMacroNum;
 
-                if (ImGui.InputInt("Duration (s)", ref currMacroDur, 0)) configuration.Macros[selectedMacro - 1].DurationSeconds = currMacroDur;
+                if (ImGui.InputInt("Duration (s)", ref currMacroDur, 0)) currMacro.First().DurationSeconds = currMacroDur;
 
                 ImGui.PopItemWidth();
 
                 if (ImGui.Button("Delete...", new Vector2(60, 25)))
                 {
-                    int toDelete = selectedMacro;
-                    selectedMacro = 0;
-                    configuration.Macros.RemoveAt(toDelete - 1);
-                    macroNames.RemoveAt(toDelete);
+                    
+                    configuration.Macros.RemoveAll(m => m.Name == currMacroName);
+                    macroNames.Remove(currMacroName);
+                    currMacroName = "";
                 }
             }
         }
@@ -372,6 +386,9 @@ namespace CraftingList
 
         public void DrawExperimentalTab()
         {
+            float availWidth = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("AfterCompleteMacroCollectible").X;
+            //ImGui.PushItemWidth(ImGui.CalcTextSize("000000").X);
+            ImGui.PushItemWidth(availWidth);
             ImGui.Text(typeof(WaitDurationHelper).GetFields(System.Reflection.BindingFlags.Instance).Length.ToString());
             object box = configuration.WaitDurations;
             foreach (var field in typeof(WaitDurationHelper).GetFields())
@@ -384,7 +401,7 @@ namespace CraftingList
                     PluginLog.Information($"{field.Name} new value: {toref}. saved?: {field.GetValue(configuration.WaitDurations)}");
                 }
             }
-
+            ImGui.PopItemWidth();
         }
         public void DrawSettingsWindow()
         {
