@@ -5,9 +5,11 @@ using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
-
+using System.Threading.Tasks;
 
 namespace CraftingList.SeFunctions
 {
@@ -31,6 +33,8 @@ namespace CraftingList.SeFunctions
         private readonly OpenRecipeByRecipeIdDelegate? m_openRecipeDelegate;
         private readonly UseActionDelegate? m_useActionDelegate;
 
+        private AddonWaitlist m_waitlist = new();
+
         private Macro[] ChangeJobMacros;
         private Macro OpenRepairMacro;
         private Macro RemoveFoodMacro;
@@ -42,6 +46,7 @@ namespace CraftingList.SeFunctions
         {
             recipeREHook?.Disable();
             recipeREHook?.Dispose();
+            m_waitlist?.Dispose();
         }
 
         public SeInterface()
@@ -89,6 +94,8 @@ namespace CraftingList.SeFunctions
             return IntPtr.Zero;
         }
 
+        public IntPtr GetUiObjectSolo(string name) => GetUiObject(name);
+
         public void ExecuteMacroByNumber(int macroNum) => RaptureShellModule.Instance->ExecuteMacro(RaptureMacroModule.Instance->Individual[macroNum]);
         public void ExecuteMacro(Macro* m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)m);
         public void ExecuteMacro(Macro m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)&m);
@@ -102,7 +109,25 @@ namespace CraftingList.SeFunctions
         public RaptureMacroModule* MacroManager() => RaptureMacroModule.Instance;
         public InventoryManager* InventoryManager() => FFXIVClientStructs.FFXIV.Client.Game.InventoryManager.Instance();
 
+        public Task<IntPtr> WaitForAddon(string addonName, bool requiresVisible, int timeoutMs)
+        {
+            return m_waitlist.Add(addonName, requiresVisible, timeoutMs, GetUiObjectSolo, IsAddonAvailable);
+        }
 
+        public Task<IntPtr> WaitForCloseAddon(string addonName, bool requiresVisible, int timeoutMs)
+        {
+            return m_waitlist.Add(addonName, requiresVisible, timeoutMs, GetUiObjectSolo, IsAddonUnavailable);
+        }
+
+        public bool IsAddonAvailable(IntPtr addon, bool needsTobeVisible)
+        {
+            return (addon != IntPtr.Zero && (!needsTobeVisible || ((AtkUnitBase*)addon.ToPointer())->IsVisible));
+        }
+
+        public bool IsAddonUnavailable(IntPtr addon, bool needsToBeVisible)
+        {
+            return (addon == IntPtr.Zero || (needsToBeVisible && !((AtkUnitBase*)addon.ToPointer())->IsVisible));
+        }
         public void SwapToDOHJob(DoHJob job)
         {
             ExecuteMacro(ChangeJobMacros[(int)job]);

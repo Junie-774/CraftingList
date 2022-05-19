@@ -1,10 +1,13 @@
 ﻿using CraftingList.SeFunctions;
 using CraftingList.Utility;
+using Dalamud.Game.Text;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.GeneratedSheets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static CraftingList.SeFunctions.SeInterface;
 
@@ -12,10 +15,6 @@ namespace CraftingList.Crafting
 {
     public class Crafter
     {
-        public int RepairThresholdPercent = 99;
-        public bool OnlyRepairIfBelow99 = true;
-        public WaitDurationHelper WaitDurationHelper = new WaitDurationHelper();
-
         private bool m_running = false;
 
         private SeInterface seInterface;
@@ -28,12 +27,18 @@ namespace CraftingList.Crafting
 
         public Task<bool> CraftAllItems()
         {
+           
+
             m_running = true;
             return Task.Run(async () =>
             {
+                var tokenSource = new CancellationTokenSource();
+                var token = tokenSource.Token;
+
                 uint lastUsedFood = 0;
                 foreach (var entry in configuration.EntryList.ToList())
                 {
+                    await Task.Delay(1000);
                     PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
 
                     if (!m_running) break;
@@ -78,11 +83,22 @@ namespace CraftingList.Crafting
                                 }
                             }
 
-                            await OpenRecipeByItem((int)entry.ItemId);
+                            if (!await OpenRecipeByItem((int)entry.ItemId))
+                            {
+                                PluginLog.Debug($"Open Recipe Note failed, stopping craft...");
+                                Cancel();
+                                break;
+                            }
 
-                            await ClickSynthesize();
+                            if(!await ClickSynthesize())
+                            {
+                                PluginLog.Debug($"Click Synthesize failed, stopping craft...");
+                                Cancel();
+                                break;
+                            }
 
-                            await ExecuteMacro(entry.Macro, isCollectible);
+                            var res = ExecuteMacro(entry.Macro, isCollectible);
+                            res.Wait();
                             entry.MaxCrafts--;
                         }
                     }
@@ -92,36 +108,59 @@ namespace CraftingList.Crafting
                         break;
                     }
                     entry.Complete = true;
-                    await ExitCrafting();
+                    if (!await ExitCrafting())
+                    {
+                        PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
+                        Cancel();
+                        break;
+                    }
                 }
                 configuration.EntryList.RemoveAll(x => x.Complete || x.MaxCrafts == 0);
-                PluginLog.Information("Crafting Complete!");
+                TerminationAlert();
                 return true;
             });
         }
 
         public async Task<int> ChangeJobs(DoHJob job)
         {
+            PluginLog.Debug($"Changing jobs to {job}");
             seInterface.SwapToDOHJob(job);
             await Task.Delay(configuration.WaitDurations.AfterChangeJobs);
             return 0;
         }
 
-        public async Task<int> OpenRecipeByItem(int itemId)
+        public async Task<bool> OpenRecipeByItem(int itemId)
         {
+            if (seInterface.RecipeNote().IsVisible())
+            {
+                await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu); return true;
+            }
             PluginLog.Debug($"Opening crafting log to item {itemId}");
             seInterface.RecipeNote().OpenRecipeByItemId(itemId);
+
+            var task = await seInterface.WaitForAddon("RecipeNote", true, 5000);
+            if (task == IntPtr.Zero)
+            {
+                return false;
+            }
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
-            return 0;
+            return true;
         }
 
-        public async Task<int> ExitCrafting()
+        public async Task<bool> ExitCrafting()
         {
             PluginLog.Debug($"Closing Recipe Note...");
             seInterface.ExecuteMacro(seInterface.CloseNoteMacro);
+            var recipeNote = seInterface.WaitForCloseAddon("RecipeNote", true, 5000);
+            recipeNote.Wait();
+            if (recipeNote.IsCanceled)
+            {
+                return false;
+            }
+
             PluginLog.Debug($"Closed Recipe Note.");
             await Task.Delay(configuration.WaitDurations.AfterExitCrafting);
-            return 0;
+            return true;
         }
 
         public async Task<int> ChangeFood(uint newFoodId)
@@ -145,18 +184,31 @@ namespace CraftingList.Crafting
             return 0;
         }
 
-        public async Task<int> ClickSynthesize()
+        public async Task<bool> ClickSynthesize()
         {
             PluginLog.Debug($"Clicking Synthesize...");
             seInterface.RecipeNote().Synthesize();
+            var res = await seInterface.WaitForAddon("Synthesis", true, 5000);
+            if (res == IntPtr.Zero)
+            {
+                return false;
+            }
             await Task.Delay(configuration.WaitDurations.AfterClickSynthesize);
-            return 0;
+            return true;
         }
 
-        public async Task<int> ExecuteMacro(CraftingMacro macro, bool collectible)
+        public async Task<bool> ExecuteMacro(CraftingMacro macro, bool collectible)
         {
             PluginLog.Debug($"Executing Macro {macro.MacroNum}");
             seInterface.ExecuteMacroByNumber(macro.MacroNum);
+            var recipeNote = await seInterface.WaitForAddon("RecipeNote", true, macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroHQ + 5000);
+            if (recipeNote == IntPtr.Zero)
+            {
+                return false;
+            }
+            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
+            //await Task.Delay(collectible ? configuration.WaitDurations.AfterCompleteMacroCollectible : configuration.WaitDurations.AfterCompleteMacroHQ);
+            return true;
             if (collectible)
             {
                 await Task.Delay(macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroCollectible);
@@ -165,9 +217,20 @@ namespace CraftingList.Crafting
             {
                 await Task.Delay(macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroHQ);
             }
-            return 0;
+            return true; ;
         }
 
+        public void TerminationAlert()
+        {
+            if (configuration.EntryList.Count == 0)
+            {
+                SendAlert("List complete!", configuration.SoundEffectListComplete);
+            }
+            else
+            {
+                SendAlert("Crafting stopped.", configuration.SoundEffectListCancel);
+            }
+        }
         public static async Task<bool> NeedToChangeFood(uint lastFood, uint currEntryFoodId)
         {
             bool hasFood = false;
@@ -205,6 +268,12 @@ namespace CraftingList.Crafting
             return stat1 == 70 || stat2 == 70;
         }
 
+        private void SendAlert(string message, int soundEffect)
+        {
+            var mac = new Macro(0, 0, "Alert", new string[] { "/echo <se." + soundEffect + ">", "/echo " + message });
+            seInterface.ExecuteMacro(mac);
+        }
+
         public unsafe bool NeedsRepair()
         {
             bool existsItemBelowThreshold = false;
@@ -213,7 +282,7 @@ namespace CraftingList.Crafting
             for (int i = 0; i < 13; i++)
             {
                 var condition = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition;
-                if (condition <= (ushort)30000 * RepairThresholdPercent / 100 || condition == 0)
+                if (condition <= (ushort)30000 * configuration.RepairThresholdPercent / 100 || condition == 0)
                 {
                     existsItemBelowThreshold = true;
                 }
@@ -228,7 +297,7 @@ namespace CraftingList.Crafting
             }
 
             if (existsBrokenItem) return true;
-            if (existsItemAbove100 && OnlyRepairIfBelow99) return false;
+            if (existsItemAbove100 && configuration.OnlyRepairIfBelow99) return false;
             return existsItemBelowThreshold;
         }
 
@@ -257,6 +326,7 @@ namespace CraftingList.Crafting
 
         public void Cancel()
         {
+            DalamudApi.ChatGui.Print("CraftingList: Cancelling...");
             m_running = false;
         }
     }

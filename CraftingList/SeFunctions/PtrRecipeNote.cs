@@ -56,5 +56,10 @@ namespace CraftingList.SeFunctions
                 AgentRecipeNote.Instance()->AgentInterface.Show();
             }
         }
+
+        public bool IsVisible()
+        {
+            return Pointer == null ? false : Pointer->AtkUnitBase.IsVisible;
+        }
     }
 }

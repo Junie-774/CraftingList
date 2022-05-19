@@ -38,7 +38,9 @@ namespace CraftingList
 
         public WaitDurationHelper WaitDurations = new();
 
-        public int ListCompleteSoundEffect = 6;
+        public int SoundEffectListComplete = 6;
+        public int SoundEffectListCancel = 4;
+        public bool AlertOnTerminate = true;
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

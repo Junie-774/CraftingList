@@ -5,6 +5,7 @@ using Dalamud.Game.Command;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
+using System;
 
 namespace CraftingList
 {
@@ -100,7 +101,7 @@ namespace CraftingList
 
         private void OnCommand(string command, string args)
         {
-            PluginLog.Information($"{Configuration.WaitDurations.AfterChangeJobs}");
+            PluginLog.Information($"Recipe note: {(IntPtr) SeInterface.RecipeNote().Pointer}");
            
         }
 
