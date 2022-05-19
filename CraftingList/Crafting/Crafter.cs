@@ -17,15 +17,13 @@ namespace CraftingList.Crafting
         public WaitDurationHelper WaitDurationHelper = new WaitDurationHelper();
 
         private bool m_running = false;
-        public List<CListEntry> EntryList { get; set; }
 
-        private SeInterface m_seInterface;
-
-        public Crafter(SeInterface seInterface)
+        private SeInterface seInterface;
+        private Configuration configuration;
+        public Crafter(SeInterface seInterface, Configuration config)
         {
-            this.m_seInterface = seInterface;
-            EntryList = new List<CListEntry>();
-            this.RepairThresholdPercent = 99;
+            this.seInterface = seInterface;
+            configuration = config;
         }
 
         public Task<bool> CraftAllItems()
@@ -34,7 +32,7 @@ namespace CraftingList.Crafting
             return Task.Run(async () =>
             {
                 uint lastUsedFood = 0;
-                foreach (var entry in EntryList.ToList())
+                foreach (var entry in configuration.EntryList.ToList())
                 {
                     PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
 
@@ -96,7 +94,7 @@ namespace CraftingList.Crafting
                     entry.Complete = true;
                     await ExitCrafting();
                 }
-                EntryList.RemoveAll(x => x.Complete || x.MaxCrafts == 0);
+                configuration.EntryList.RemoveAll(x => x.Complete || x.MaxCrafts == 0);
                 PluginLog.Information("Crafting Complete!");
                 return true;
             });
@@ -104,25 +102,25 @@ namespace CraftingList.Crafting
 
         public async Task<int> ChangeJobs(DoHJob job)
         {
-            m_seInterface.SwapToDOHJob(job);
-            await Task.Delay(WaitDurationHelper.AfterChangeJobs);
+            seInterface.SwapToDOHJob(job);
+            await Task.Delay(configuration.WaitDurations.AfterChangeJobs);
             return 0;
         }
 
         public async Task<int> OpenRecipeByItem(int itemId)
         {
             PluginLog.Debug($"Opening crafting log to item {itemId}");
-            m_seInterface.RecipeNote().OpenRecipeByItemId(itemId);
-            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+            seInterface.RecipeNote().OpenRecipeByItemId(itemId);
+            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return 0;
         }
 
         public async Task<int> ExitCrafting()
         {
             PluginLog.Debug($"Closing Recipe Note...");
-            m_seInterface.ExecuteMacro(m_seInterface.CloseNoteMacro);
+            seInterface.ExecuteMacro(seInterface.CloseNoteMacro);
             PluginLog.Debug($"Closed Recipe Note.");
-            await Task.Delay(WaitDurationHelper.AfterExitCrafting);
+            await Task.Delay(configuration.WaitDurations.AfterExitCrafting);
             return 0;
         }
 
@@ -132,17 +130,17 @@ namespace CraftingList.Crafting
             if (newFoodId != 0)
             {
                 PluginLog.Debug($"Eating food {newFoodId}...");
-                m_seInterface.UseItem(newFoodId);
+                seInterface.UseItem(newFoodId);
                 PluginLog.Debug($"Ate Food.");
-                await Task.Delay(WaitDurationHelper.AfterEatFood);
+                await Task.Delay(configuration.WaitDurations.AfterEatFood);
                 
             }
             else
             {
                 PluginLog.Debug($"Removing food...");
-                m_seInterface.RemoveFood();
+                seInterface.RemoveFood();
                 PluginLog.Debug($"Removed food.");
-                await Task.Delay(WaitDurationHelper.AfterClickOffFood);
+                await Task.Delay(configuration.WaitDurations.AfterClickOffFood);
             }
             return 0;
         }
@@ -150,22 +148,22 @@ namespace CraftingList.Crafting
         public async Task<int> ClickSynthesize()
         {
             PluginLog.Debug($"Clicking Synthesize...");
-            m_seInterface.RecipeNote().Synthesize();
-            await Task.Delay(WaitDurationHelper.AfterClickSynthesize);
+            seInterface.RecipeNote().Synthesize();
+            await Task.Delay(configuration.WaitDurations.AfterClickSynthesize);
             return 0;
         }
 
         public async Task<int> ExecuteMacro(CraftingMacro macro, bool collectible)
         {
             PluginLog.Debug($"Executing Macro {macro.MacroNum}");
-            m_seInterface.ExecuteMacroByNumber(macro.MacroNum);
+            seInterface.ExecuteMacroByNumber(macro.MacroNum);
             if (collectible)
             {
-                await Task.Delay(macro.DurationSeconds * 1000 + WaitDurationHelper.AfterCompleteMacroCollectible);
+                await Task.Delay(macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroCollectible);
             }
             else
             {
-                await Task.Delay(macro.DurationSeconds * 1000 + WaitDurationHelper.AfterCompleteMacroHQ);
+                await Task.Delay(macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroHQ);
             }
             return 0;
         }
@@ -238,20 +236,20 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Repairing...");
             PluginLog.Debug("Opening repair...");
-            m_seInterface.ToggleRepairWindow();
-            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+            seInterface.ToggleRepairWindow();
+            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
             PluginLog.Debug("Clicking repair all...");
-            m_seInterface.Repair().ClickRepairAll();
-            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+            seInterface.Repair().ClickRepairAll();
+            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
             PluginLog.Debug("Clicking confirm...");
-            m_seInterface.SelectYesNo().ClickYes();
-            await Task.Delay(WaitDurationHelper.AfterRepairConfirm);
+            seInterface.SelectYesNo().ClickYes();
+            await Task.Delay(configuration.WaitDurations.AfterRepairConfirm);
 
             PluginLog.Debug("Closing repair window...");
-            m_seInterface.ToggleRepairWindow();
-            await Task.Delay(WaitDurationHelper.AfterOpenCloseMenu);
+            seInterface.ToggleRepairWindow();
+            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
             PluginLog.Debug("Repaired!");
             return true;

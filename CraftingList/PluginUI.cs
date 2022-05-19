@@ -1,4 +1,5 @@
-﻿using CraftingList.Utility;
+﻿using CraftingList.Crafting;
+using CraftingList.Utility;
 using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
@@ -15,7 +16,7 @@ namespace CraftingList
     unsafe class PluginUI : IDisposable
     {
         private Configuration configuration;
-
+        private Crafter crafter;
         private IEnumerable<Item?> craftableItems;
         private List<string> craftableNames;
         private IEnumerable<Item?> craftingFoods;
@@ -41,7 +42,6 @@ namespace CraftingList
         int newEntrySelectedMacro = 0;
         int newEntryCraftAmount = 0;
 
-        int selectedMacro = 0;
         List<string> macroNames;
 
         // this extra bool exists for ImGui, since you can't ref a property
@@ -59,10 +59,10 @@ namespace CraftingList
             set { this.settingsVisible = value; }
         }
 
-        public PluginUI(Configuration configuration)
+        public PluginUI(Configuration configuration, Crafter crafter)
         {
-            this.selectedMacro = 0;
             this.configuration = configuration;
+            this.crafter = crafter;
             macroNames = new List<string>
             {
                 "",
@@ -112,8 +112,6 @@ namespace CraftingList
             }
             newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntryItemName)).ToList();
 
-            configuration.Crafter.RepairThresholdPercent = configuration.RepairThresholdPercent;
-            configuration.Crafter.OnlyRepairIfBelow99 = configuration.OnlyRepairIfBelow99;
         }
 
         public void Dispose()
@@ -158,7 +156,7 @@ namespace CraftingList
             ImGui.SetWindowFontScale(1f);
             try
             {
-                foreach (var item in configuration.Crafter.EntryList)
+                foreach (var item in configuration.EntryList)
                 {
                     ImGui.TableNextColumn();
                     ImGui.SetNextItemWidth(tableSize);
@@ -189,7 +187,7 @@ namespace CraftingList
 
                     ImGui.TableNextRow();
                 }
-                configuration.Crafter.EntryList.RemoveAll(x => x.Complete);
+                configuration.EntryList.RemoveAll(x => x.Complete);
             }
             catch (Exception ex)
             {
@@ -251,7 +249,7 @@ namespace CraftingList
                     if (HQ) foodID += 1000000;
 
                     uint itemID = items.First()!.RowId;
-                    configuration.Crafter.EntryList.Add(new Crafting.CListEntry(newEntryItemName, itemID, newEntryCraftAmount, macro.First(), foodID));
+                    configuration.EntryList.Add(new Crafting.CListEntry(newEntryItemName, itemID, newEntryCraftAmount, macro.First(), foodID));
                 }
             }
 
@@ -288,7 +286,7 @@ namespace CraftingList
                 ImGui.NewLine();
                 if (ImGui.Button("Craft!"))
                 {
-                    configuration.Crafter.CraftAllItems();
+                    crafter.CraftAllItems();
                 }
                 ImGui.End();
             }
@@ -357,12 +355,11 @@ namespace CraftingList
 
             if (ImGui.Button("+", new Vector2(25, 25)) && newMacroName != "" && !macroNames.Contains(newMacroName))
             {
-                configuration.Macros.Add(new Crafting.CraftingMacro(newMacroName, newMacroNum, newMacroDur));
+                configuration.Macros.Add(new CraftingMacro(newMacroName, newMacroNum, newMacroDur));
                 macroNames.Add(newMacroName);
-                selectedMacro = macroNames.Count - 1;
-                currMacroName = macroNames[selectedMacro];
-                currMacroNum = configuration.Macros[selectedMacro - 1].MacroNum;
-                currMacroDur = configuration.Macros[selectedMacro - 1].DurationSeconds;
+                currMacroName = newMacroName;
+                currMacroNum = newMacroNum;
+                currMacroDur = newMacroDur;
                 newMacroName = "";
                 newMacroNum = 0;
                 newMacroDur = 0;
@@ -376,10 +373,9 @@ namespace CraftingList
             float availWidth = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("Repair  ").X;
 
             ImGui.SetNextItemWidth(availWidth * 0.3f);
-            if (ImGui.SliderInt("Repair Threshold ", ref configuration.RepairThresholdPercent, 0, 99))
-            {
-                configuration.Crafter.RepairThresholdPercent = configuration.RepairThresholdPercent;
-            }
+            ImGui.SliderInt("Repair Threshold ", ref configuration.RepairThresholdPercent, 0, 99);
+            
+            
 
             ImGui.Checkbox("Only repair if durability is below 99?", ref configuration.OnlyRepairIfBelow99);
         }

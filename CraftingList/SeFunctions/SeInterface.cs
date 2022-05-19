@@ -35,6 +35,7 @@ namespace CraftingList.SeFunctions
         private Macro OpenRepairMacro;
         private Macro RemoveFoodMacro;
         public Macro CloseNoteMacro;
+        public Macro AnnounceCompleteMacro;
 
         public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
         public void Dispose()

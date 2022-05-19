@@ -1,4 +1,5 @@
-﻿using Dalamud.Configuration;
+﻿using CraftingList.Crafting;
+using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
@@ -28,31 +29,29 @@ namespace CraftingList
     {
         public int Version { get; set; } = 1;
 
-        public Crafting.Crafter Crafter { get; set; } = null!;
+        public List<CraftingMacro> Macros { get; set; } = new();
+        public List<CListEntry> EntryList { get; set; } = new();
 
-        public List<Crafting.CraftingMacro> Macros = new();
 
         public int RepairThresholdPercent = 99;
         public bool OnlyRepairIfBelow99 = true;
 
         public WaitDurationHelper WaitDurations = new();
 
+        public int ListCompleteSoundEffect = 6;
+
         // the below exist just to make saving less cumbersome
         [NonSerialized]
         private DalamudPluginInterface? pluginInterface;
 
-        public void Initialize(DalamudPluginInterface pluginInterface, Crafting.Crafter crafter)
+        public void Initialize(DalamudPluginInterface pluginInterface, Crafter crafter)
         {
             this.pluginInterface = pluginInterface;
-            this.Crafter = crafter;
         }
 
         public void Save()
         {
-            this.pluginInterface!.SavePluginConfig(this);
-            Crafter.OnlyRepairIfBelow99 = OnlyRepairIfBelow99;
-            Crafter.RepairThresholdPercent = RepairThresholdPercent;
-            Crafter.WaitDurationHelper = WaitDurations;
+            pluginInterface!.SavePluginConfig(this);
         }
     }
 }

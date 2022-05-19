@@ -43,12 +43,13 @@ namespace CraftingList
 
             SeInterface = new SeInterface();
 
-            Crafter = new Crafter(SeInterface);
 
-            this.Configuration = DalamudApi.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            this.Configuration.Initialize(DalamudApi.PluginInterface, Crafter);
+            Configuration = DalamudApi.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Configuration.Initialize(DalamudApi.PluginInterface, Crafter);
+            Crafter = new Crafter(SeInterface, Configuration);
 
-            this.PluginUi = new PluginUI(this.Configuration);
+
+            this.PluginUi = new PluginUI(Configuration, Crafter);
 
 
             DalamudApi.CommandManager.AddHandler("/craftinglist", new CommandInfo(OnCraftingList)
