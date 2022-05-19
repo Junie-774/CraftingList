@@ -43,5 +43,9 @@ namespace CraftingList.Utility
         [RequiredVersion("1.0")]
         public static ContextMenu ContextMenu { get; private set; } = null!;
 
+        [PluginService]
+        [RequiredVersion("1.0")]
+        public static Framework Framework { get; private set; } = null!;
+
     }
 }

@@ -14,19 +14,29 @@ namespace CraftingList.Crafting
         public Lines Line;
 
         public Macro(uint iconId, uint unk, string name, string line)
+            :this(iconId, unk, name, new string[] { line })
         {
-            this.IconId = iconId;
-            this.Unk = unk;
-            this.Name = new Utf8String();
-            this.Line = new Lines();
-            Line[0] = Utf8String.FromString(line);
-            for (int i = 1; i <= 14; i++)
-            {
-                Line[i] = Utf8String.FromString("");
-            }
 
         }
 
+        public Macro(uint iconId, uint unk, string name, string[] lines)
+        {
+            IconId = iconId;
+            Unk = unk;
+            Name = new Utf8String();
+            Line = new Lines();
+            for (int i = 0; i < 14; i++)
+            {
+                if (i >= lines.Length)
+                {
+                    Line[i] = Utf8String.FromString("");
+                }
+                else
+                {
+                    Line[i] = Utf8String.FromString(lines[i]);
+                }
+            }
+        }
         [StructLayout(LayoutKind.Sequential, Size = 0x618)]
         public struct Lines
         {
