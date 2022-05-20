@@ -20,6 +20,7 @@ namespace CraftingList.SeFunctions
 
         public void ClickRepairAll()
         {
+            if (AddonPointer == null) return;
             Module.ClickAddon(AddonPointer, AddonPointer->RepairAllButton->AtkComponentBase.OwnerNode, EventType.Change, repairAllButtonId);
         }
     }

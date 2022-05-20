@@ -19,11 +19,13 @@ namespace CraftingList.SeFunctions
 
         public void ClickYes()
         {
+            if (AddonPointer == null) return;
             Module.ClickAddon(AddonPointer, AddonPointer->YesButton, EventType.Change, yesButtonId);
         }
 
         public void ClickNo()
         {
+            if (AddonPointer == null) return;
             Module.ClickAddon(AddonPointer, AddonPointer->NoButton, EventType.Change, noButtonId);
         }
     }

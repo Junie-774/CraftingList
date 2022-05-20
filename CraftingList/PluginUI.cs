@@ -99,7 +99,6 @@ namespace CraftingList
 
             foreach (var macro in configuration.Macros)
             {
-                PluginLog.Information(macro.Name);
                 macroNames.Add(macro.Name);
             }
             foodNames.Add("None");
@@ -257,7 +256,6 @@ namespace CraftingList
             ImGui.SetNextItemWidth(dynamicSize * 0.45f);
             if (newEntryShowItemNameList)
             {
-                PluginLog.Debug("SHowing item names...");
                 if (ImGui.ListBox("",
                     ref newEntryItemNameSelection,
                     newEntryItemNameSearchResults.ToArray(),
@@ -304,7 +302,6 @@ namespace CraftingList
                     bool isSelected = (currMacroName == macro);
                     if (ImGui.Selectable(macro, isSelected))
                     {
-                        PluginLog.Information($"Selected macro: {macro}");
                         currMacroName = macro;
                         if (currMacroName != "")
                         {
@@ -404,11 +401,18 @@ namespace CraftingList
             }
             ImGui.NewLine();
 
-            int extraTimeout = configuration.MacroExtraTimeoutSeconds;
-            ImGui.SetNextItemWidth((ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("Extra Timeout on Macros").X) * 0.075f);
-            if (ImGui.InputInt("Extra Timeout on Macros", ref extraTimeout, 0))
+            int extraTimeout = configuration.MacroExtraTimeoutMs;
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000000").X);
+            if (ImGui.InputInt("Extra Timeout on Macros (ms)", ref extraTimeout, 0))
             {
-                if (extraTimeout > 0) configuration.MacroExtraTimeoutSeconds = extraTimeout;
+                if (extraTimeout > 0) configuration.MacroExtraTimeoutMs = extraTimeout;
+            }
+
+            int addonTimeout = configuration.AddonTimeout;
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000000").X);
+            if (ImGui.InputInt("Timeout on Waiting for Menus (ms)", ref addonTimeout, 0))
+            {
+                if (addonTimeout > 0) configuration.AddonTimeout = addonTimeout;
             }
         }
 
@@ -416,7 +420,6 @@ namespace CraftingList
         {
             ImGui.Text("Wait durations (ms)");
             ImGui.PushItemWidth(ImGui.CalcTextSize("0000000").X);
-            //ImGui.PushItemWidth(availWidth);
             
             object box = configuration.WaitDurations;
             foreach (var field in typeof(WaitDurationHelper).GetFields())
@@ -426,7 +429,6 @@ namespace CraftingList
                 {
                     field.SetValue(box, toref);
                     configuration.WaitDurations = (WaitDurationHelper)box;
-                    PluginLog.Information($"{field.Name} new value: {toref}. saved?: {field.GetValue(configuration.WaitDurations)}");
                 }
             }
             ImGui.PopItemWidth();

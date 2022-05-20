@@ -11,10 +11,10 @@ namespace CraftingList
     {
         public int AfterChangeJobs = 2500;
         public int AfterEatFood = 3000;
-        public int AfterCompleteMacroHQ = 3000;
-        public int AfterCompleteMacroCollectible = 3000;
-        public int AfterExitCrafting = 2500;
-        public int AfterOpenCloseMenu = 1000;
+        public int AfterCompleteMacroHQ = 3500;
+        public int AfterCompleteMacroCollectible = 2500;
+        public int AfterExitCrafting = 3000;
+        public int AfterOpenCloseMenu = 500;
         public int AfterRepairConfirm = 3250;
         public int AfterClickOffFood = 1000;
         public int QuickSynthPerItem = 3000;
@@ -35,7 +35,8 @@ namespace CraftingList
         public bool OnlyRepairIfBelow99 = true;
 
         public WaitDurationHelper WaitDurations = new();
-        public int MacroExtraTimeoutSeconds = 5;
+        public int AddonTimeout = 3000;
+        public int MacroExtraTimeoutMs = 5000;
 
         public int SoundEffectListComplete = 6;
         public int SoundEffectListCancel = 4;
@@ -45,7 +46,7 @@ namespace CraftingList
         [NonSerialized]
         private DalamudPluginInterface? pluginInterface;
 
-        public void Initialize(DalamudPluginInterface pluginInterface, Crafter crafter)
+        public void Initialize(DalamudPluginInterface pluginInterface)
         {
             this.pluginInterface = pluginInterface;
         }

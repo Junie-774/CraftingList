@@ -46,7 +46,7 @@ namespace CraftingList
 
 
             Configuration = DalamudApi.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            Configuration.Initialize(DalamudApi.PluginInterface, Crafter);
+            Configuration.Initialize(DalamudApi.PluginInterface);
             Crafter = new Crafter(SeInterface, Configuration);
 
 
@@ -123,7 +123,7 @@ namespace CraftingList
 
         private void OnCancel(string command, string args)
         {
-            Crafter.Cancel();
+            Crafter.Cancel("Cancelling craft...");
         }
 
         private void OnOpenConfig(string command, string args)
