@@ -13,11 +13,9 @@ namespace CraftingList
         public int AfterEatFood = 3000;
         public int AfterCompleteMacroHQ = 3000;
         public int AfterCompleteMacroCollectible = 3000;
-        public int AfterOpenRecipeNote = 1000;
-        public int AfterClickSynthesize = 2000;
         public int AfterExitCrafting = 2500;
         public int AfterOpenCloseMenu = 1000;
-        public int AfterRepairConfirm = 3000;
+        public int AfterRepairConfirm = 3250;
         public int AfterClickOffFood = 1000;
         public int QuickSynthPerItem = 3000;
 
@@ -37,6 +35,7 @@ namespace CraftingList
         public bool OnlyRepairIfBelow99 = true;
 
         public WaitDurationHelper WaitDurations = new();
+        public int MacroExtraTimeoutSeconds = 5;
 
         public int SoundEffectListComplete = 6;
         public int SoundEffectListCancel = 4;

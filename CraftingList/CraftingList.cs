@@ -101,7 +101,6 @@ namespace CraftingList
 
         private void OnCommand(string command, string args)
         {
-            PluginLog.Information($"Recipe note: {(IntPtr) SeInterface.RecipeNote().Pointer}");
            
         }
 

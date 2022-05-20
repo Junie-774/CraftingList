@@ -74,7 +74,7 @@ namespace CraftingList.SeFunctions
             CloseNoteMacro = new Macro(0, 0, "Close", "/craftinglist 0");
 
             recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
-            recipeREHook?.Enable();
+            //recipeREHook?.Enable();
         }
 
         public void ReceiveEventLogDetour(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused)

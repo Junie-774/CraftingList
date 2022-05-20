@@ -135,10 +135,10 @@ namespace CraftingList
         {
             float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
 
-
             ImGui.Text("Crafting list:");
             ImGui.SetWindowFontScale(1.1f);
-            ImGui.BeginTable("meow", 5, ImGuiTableFlags.Borders | ImGuiTableFlags.Resizable);
+            ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
+                new Vector2(0.0f, ImGui.GetTextLineHeightWithSpacing() * 6f));
             ImGui.TableNextColumn();
 
             ImGui.Text("Item Name");
@@ -188,6 +188,7 @@ namespace CraftingList
                     ImGui.TableNextRow();
                 }
                 configuration.EntryList.RemoveAll(x => x.Complete);
+                configuration.Save();
             }
             catch (Exception ex)
             {
@@ -202,7 +203,7 @@ namespace CraftingList
             float dynamicSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Item  ...  Amount  Macro  Food  + ").X;
 
             ImGui.SetNextItemWidth(dynamicSize * 0.3f);
-            if (ImGui.InputText("Item ", ref newEntryItemName, 25))
+            if (ImGui.InputText("Item ", ref newEntryItemName, 25, ImGuiInputTextFlags.AllowTabInput))
             {
                 newEntryItemNameSearchResults = craftableNames.Where(x => newEntryItemName == "" || x.ToLower().Contains(newEntryItemName.ToLower())).ToList();
                 newEntryShowItemNameList = true;
@@ -256,12 +257,13 @@ namespace CraftingList
             ImGui.SetNextItemWidth(dynamicSize * 0.45f);
             if (newEntryShowItemNameList)
             {
+                PluginLog.Debug("SHowing item names...");
                 if (ImGui.ListBox("",
                     ref newEntryItemNameSelection,
                     newEntryItemNameSearchResults.ToArray(),
                     newEntryItemNameSearchResults.Count,
-                    20)
-                || ImGui.IsKeyDown((int)ImGuiKey.Enter))
+                    20))
+                /*|| ImGui.IsKeyDown((int)ImGuiKey.Enter))*/
                 {
                     newEntryItemName = newEntryItemNameSearchResults[newEntryItemNameSelection];
                     newEntryShowItemNameList = false;
@@ -374,18 +376,48 @@ namespace CraftingList
 
             ImGui.SetNextItemWidth(availWidth * 0.3f);
             ImGui.SliderInt("Repair Threshold ", ref configuration.RepairThresholdPercent, 0, 99);
-            
-            
-
             ImGui.Checkbox("Only repair if durability is below 99?", ref configuration.OnlyRepairIfBelow99);
+            ImGui.NewLine();
+
+            // auxillary variables to allow for error checking
+            int completeSoundEffect = configuration.SoundEffectListComplete;
+            int cancelSoundEffect = configuration.SoundEffectListCancel;
+            ImGui.Checkbox("Play Sound Effect on Craft Completion or Termination", ref configuration.AlertOnTerminate);
+            if (configuration.AlertOnTerminate)
+            {
+                float width = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("List Cancelled Sound Effect").X;
+                ImGui.PushItemWidth(width * 0.1f);
+                ImGui.Dummy(new Vector2(ImGui.GetWindowContentRegionWidth() * 0.05f, 0));
+                ImGui.SameLine();
+                if (ImGui.InputInt("List Complete Sound Effect", ref completeSoundEffect, 0))
+                {
+                    if (completeSoundEffect >= 1 && completeSoundEffect <= 16) configuration.SoundEffectListComplete = completeSoundEffect;
+                }
+
+                ImGui.Dummy(new Vector2(ImGui.GetWindowContentRegionWidth() * 0.05f, 0));
+                ImGui.SameLine();
+                if (ImGui.InputInt("List Cancelled Sound Effect", ref cancelSoundEffect, 0))
+                {
+                    if (cancelSoundEffect >= 1 && cancelSoundEffect <= 16) configuration.SoundEffectListCancel = cancelSoundEffect;
+                }
+                ImGui.PopItemWidth();
+            }
+            ImGui.NewLine();
+
+            int extraTimeout = configuration.MacroExtraTimeoutSeconds;
+            ImGui.SetNextItemWidth((ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("Extra Timeout on Macros").X) * 0.075f);
+            if (ImGui.InputInt("Extra Timeout on Macros", ref extraTimeout, 0))
+            {
+                if (extraTimeout > 0) configuration.MacroExtraTimeoutSeconds = extraTimeout;
+            }
         }
 
         public void DrawExperimentalTab()
         {
-            float availWidth = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("AfterCompleteMacroCollectible").X;
-            //ImGui.PushItemWidth(ImGui.CalcTextSize("000000").X);
-            ImGui.PushItemWidth(availWidth);
-            ImGui.Text(typeof(WaitDurationHelper).GetFields(System.Reflection.BindingFlags.Instance).Length.ToString());
+            ImGui.Text("Wait durations (ms)");
+            ImGui.PushItemWidth(ImGui.CalcTextSize("0000000").X);
+            //ImGui.PushItemWidth(availWidth);
+            
             object box = configuration.WaitDurations;
             foreach (var field in typeof(WaitDurationHelper).GetFields())
             {

@@ -51,7 +51,7 @@ namespace CraftingList.SeFunctions
 
         public void Close()
         {
-            if (AgentRecipeNote.Instance() != null && Pointer->AtkUnitBase.IsVisible)
+            if (AgentRecipeNote.Instance() != null && Pointer != null &&  Pointer->AtkUnitBase.IsVisible)
             {
                 AgentRecipeNote.Instance()->AgentInterface.Show();
             }

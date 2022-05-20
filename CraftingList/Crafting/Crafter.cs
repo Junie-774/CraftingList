@@ -97,8 +97,13 @@ namespace CraftingList.Crafting
                                 break;
                             }
 
-                            var res = ExecuteMacro(entry.Macro, isCollectible);
-                            res.Wait();
+                            if(!await ExecuteMacro(entry.Macro, isCollectible))
+                            {
+                                PluginLog.Debug($"Executing macro timed out, stopping craft...");
+                                DalamudApi.ChatGui.PrintError($"[CraftingList] Macro timed out, stopping craft...");
+                                Cancel();
+                                break;
+                            }
                             entry.MaxCrafts--;
                         }
                     }
@@ -138,11 +143,9 @@ namespace CraftingList.Crafting
             PluginLog.Debug($"Opening crafting log to item {itemId}");
             seInterface.RecipeNote().OpenRecipeByItemId(itemId);
 
-            var task = await seInterface.WaitForAddon("RecipeNote", true, 5000);
-            if (task == IntPtr.Zero)
-            {
-                return false;
-            }
+            var task = seInterface.WaitForAddon("RecipeNote", true, 5000);
+            try { task.Wait(); }
+            catch { return false;  }
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
         }
@@ -152,11 +155,8 @@ namespace CraftingList.Crafting
             PluginLog.Debug($"Closing Recipe Note...");
             seInterface.ExecuteMacro(seInterface.CloseNoteMacro);
             var recipeNote = seInterface.WaitForCloseAddon("RecipeNote", true, 5000);
-            recipeNote.Wait();
-            if (recipeNote.IsCanceled)
-            {
-                return false;
-            }
+            try { recipeNote.Wait(); }
+            catch { return false; }
 
             PluginLog.Debug($"Closed Recipe Note.");
             await Task.Delay(configuration.WaitDurations.AfterExitCrafting);
@@ -188,12 +188,11 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Clicking Synthesize...");
             seInterface.RecipeNote().Synthesize();
-            var res = await seInterface.WaitForAddon("Synthesis", true, 5000);
-            if (res == IntPtr.Zero)
-            {
-                return false;
-            }
-            await Task.Delay(configuration.WaitDurations.AfterClickSynthesize);
+            var res = seInterface.WaitForAddon("Synthesis", true, 5000);
+            try { res.Wait(); }
+            catch { return false; }
+            PluginLog.Debug($"synthesis: {res}");
+            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
         }
 
@@ -201,14 +200,12 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Executing Macro {macro.MacroNum}");
             seInterface.ExecuteMacroByNumber(macro.MacroNum);
-            var recipeNote = await seInterface.WaitForAddon("RecipeNote", true, macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroHQ + 5000);
-            if (recipeNote == IntPtr.Zero)
-            {
-                return false;
-            }
+            var recipeNote = seInterface.WaitForAddon("RecipeNote", true, macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroHQ + 5000);
+            try { recipeNote.Wait(); }
+            catch { return false; }
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
-            //await Task.Delay(collectible ? configuration.WaitDurations.AfterCompleteMacroCollectible : configuration.WaitDurations.AfterCompleteMacroHQ);
             return true;
+            /*
             if (collectible)
             {
                 await Task.Delay(macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroCollectible);
@@ -218,6 +215,7 @@ namespace CraftingList.Crafting
                 await Task.Delay(macro.DurationSeconds * 1000 + configuration.WaitDurations.AfterCompleteMacroHQ);
             }
             return true; ;
+            */
         }
 
         public void TerminationAlert()
@@ -306,27 +304,46 @@ namespace CraftingList.Crafting
             PluginLog.Debug($"Repairing...");
             PluginLog.Debug("Opening repair...");
             seInterface.ToggleRepairWindow();
+            var repair = seInterface.WaitForAddon("Repair", true, 5000);
+            try { repair.Wait(); }
+            catch {
+                PluginLog.Debug($"Failed to open repair window.");
+                return false;
+            }
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
             PluginLog.Debug("Clicking repair all...");
             seInterface.Repair().ClickRepairAll();
+            var selectYesno = seInterface.WaitForAddon("SelectYesno", true, 5000);
+            try { selectYesno.Wait(); }
+            catch
+            {
+                PluginLog.Debug($"Failed to open YesNo Dialog.");
+                return false;
+            }
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
+            //Can't wait for any addons here because the yesno dialog closes immediately on animation start and the repair window doesn't close
             PluginLog.Debug("Clicking confirm...");
             seInterface.SelectYesNo().ClickYes();
-            await Task.Delay(configuration.WaitDurations.AfterRepairConfirm);
+            var waitForRepairAnim = Task.Delay(configuration.WaitDurations.AfterRepairConfirm);
 
             PluginLog.Debug("Closing repair window...");
             seInterface.ToggleRepairWindow();
-            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
-
+            var closeRepairtask = seInterface.WaitForCloseAddon("Repair", true, 5000);
+            try { closeRepairtask.Wait(); }
+            catch
+            {
+                PluginLog.Debug("Failed to close Repair window.");
+            }
+            await waitForRepairAnim;
             PluginLog.Debug("Repaired!");
             return true;
         }
 
         public void Cancel()
         {
-            DalamudApi.ChatGui.Print("CraftingList: Cancelling...");
+            if (m_running) DalamudApi.ChatGui.Print("CraftingList: cancelling...");
             m_running = false;
         }
     }

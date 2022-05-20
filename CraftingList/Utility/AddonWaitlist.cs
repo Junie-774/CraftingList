@@ -77,7 +77,6 @@ namespace CraftingList.Utility
                 {
                     PluginLog.Debug($"Addon {waitInfo.Name} timed out");
                     waitInfo.TaskCompletionSource.SetCanceled();
-                    waitInfo.TaskCompletionSource.SetResult(IntPtr.Zero);
                     continue;
                 }
                 var res = waitInfo.PollResult(waitInfo.Name);
