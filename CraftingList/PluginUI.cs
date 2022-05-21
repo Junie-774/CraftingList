@@ -160,8 +160,12 @@ namespace CraftingList
 
                 PluginLog.Debug("Printing food");
                 ImGui.Text("Food");
+                PluginLog.Debug("Next column...");
+
                 ImGui.TableNextColumn();
+                PluginLog.Debug("Next row...");
                 ImGui.TableNextRow();
+                PluginLog.Debug("Font scale...");
                 ImGui.SetWindowFontScale(1f);
                 try
                 {
