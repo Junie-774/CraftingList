@@ -134,8 +134,10 @@ namespace CraftingList
         {
             try
             {
+                PluginLog.Debug("Entering draw /clist...");
                 float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
 
+                PluginLog.Debug("Drawing table first row...");
                 ImGui.Text("Crafting list:");
                 ImGui.SetWindowFontScale(1.1f);
                 ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
@@ -157,6 +159,7 @@ namespace CraftingList
                 ImGui.SetWindowFontScale(1f);
                 try
                 {
+                    PluginLog.Debug("Drawing other entries...");
                     foreach (var item in configuration.EntryList)
                     {
                         ImGui.TableNextColumn();
@@ -188,7 +191,9 @@ namespace CraftingList
 
                         ImGui.TableNextRow();
                     }
+                    PluginLog.Debug("Removing complete entries...");
                     configuration.EntryList.RemoveAll(x => x.Complete);
+                    PluginLog.Debug("Saving...");
                     configuration.Save();
                 }
                 catch (Exception ex)
@@ -196,6 +201,7 @@ namespace CraftingList
                     PluginLog.Error(ex.Message);
                 }
                 ImGui.EndTable();
+                PluginLog.Debug("Done drawing table.");
             }
             catch (Exception e)
             {
@@ -205,16 +211,19 @@ namespace CraftingList
 
         private void DrawNewListEntry()
         {
+            PluginLog.Debug("Drawing new list entry...");
             ImGui.Text("Add item to list:");
             float dynamicSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Item  ...  Amount  Macro  Food  + ").X;
 
             ImGui.SetNextItemWidth(dynamicSize * 0.3f);
+            PluginLog.Debug("Drawing item name input");
             if (ImGui.InputText("Item ", ref newEntryItemName, 25, ImGuiInputTextFlags.AllowTabInput))
             {
                 newEntryItemNameSearchResults = craftableNames.Where(x => newEntryItemName == "" || x.ToLower().Contains(newEntryItemName.ToLower())).ToList();
                 newEntryShowItemNameList = true;
             }
             ImGui.SameLine();
+            PluginLog.Debug("Drawing item name button...")
             if (ImGui.Button("..."))
             {
                 ImGui.SetKeyboardFocusHere(-1);
@@ -222,18 +231,23 @@ namespace CraftingList
             }
             ImGui.SameLine();
 
+            PluginLog.Debug("Drawing Amount input...");
             ImGui.SetNextItemWidth(dynamicSize * 0.1f);
             ImGui.InputInt("Amount  ", ref newEntryCraftAmount, 0);
             ImGui.SameLine();
+
             ImGui.SetNextItemWidth(dynamicSize * 0.2f);
+            PluginLog.Debug("Drawing Macro selection...");
             ImGui.Combo("Macro  ", ref newEntrySelectedMacro, macroNames.ToArray(), macroNames.Count);
             ImGui.SameLine();
 
+            PluginLog.Debug("Drawing food...");
             ImGui.SetNextItemWidth(dynamicSize * 0.3f);
             ImGui.Combo("Food  ", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
             ImGui.SameLine();
 
 
+            PluginLog.Debug("Drawing + button...");
             if (ImGui.Button("+", new Vector2(25f, 25f)))
             {
                 var items = craftableItems.Where(item => item != null && item.Name == newEntryItemName);
