@@ -142,75 +142,79 @@ namespace CraftingList
                 ImGui.Text("Crafting list:");
                 ImGui.SetWindowFontScale(1.1f);
                 PluginLog.Debug("Beginning Table...");
-                ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
-                    new Vector2(0.0f, ImGui.GetTextLineHeightWithSpacing() * 6f));
-                ImGui.TableNextColumn();
-
-                PluginLog.Debug("Printing item name");
-                ImGui.Text("Item Name");
-                ImGui.TableNextColumn();
-
-                PluginLog.Debug("Printing amount");
-                ImGui.Text("Amount");
-                ImGui.TableNextColumn();
-
-                PluginLog.Debug("Printing Macro");
-                ImGui.Text("Macro");
-                ImGui.TableNextColumn();
-
-                PluginLog.Debug("Printing food");
-                ImGui.Text("Food");
-                PluginLog.Debug("Next column...");
-
-                ImGui.TableNextColumn();
-                PluginLog.Debug("Next row...");
-                ImGui.TableNextRow();
-                PluginLog.Debug("Font scale...");
-                ImGui.SetWindowFontScale(1f);
-                try
+                if (ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
+                    new Vector2(0.0f, ImGui.GetTextLineHeightWithSpacing() * 6f)))
                 {
-                    PluginLog.Debug("Drawing other entries...");
-                    foreach (var item in configuration.EntryList)
+
+
+                    ImGui.TableNextColumn();
+
+                    PluginLog.Debug("Printing item name");
+                    ImGui.Text("Item Name");
+                    ImGui.TableNextColumn();
+
+                    PluginLog.Debug("Printing amount");
+                    ImGui.Text("Amount");
+                    ImGui.TableNextColumn();
+
+                    PluginLog.Debug("Printing Macro");
+                    ImGui.Text("Macro");
+                    ImGui.TableNextColumn();
+
+                    PluginLog.Debug("Printing food");
+                    ImGui.Text("Food");
+                    PluginLog.Debug("Next column...");
+
+                    ImGui.TableNextColumn();
+                    PluginLog.Debug("Next row...");
+                    ImGui.TableNextRow();
+                    PluginLog.Debug("Font scale...");
+                    ImGui.SetWindowFontScale(1f);
+                    try
                     {
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(tableSize);
-                        ImGui.Text(item.Name);
-
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(tableSize * 0.3f);
-                        ImGui.Text(item.MaxCrafts.ToString());
-
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(tableSize * 0.4f);
-                        ImGui.Text(item.Macro.Name);
-
-                        ImGui.TableNextColumn();
-
-                        bool HQ = item.FoodId > 1000000;
-                        ImGui.Text((HQ ? "(HQ) " : "")
-                            + DalamudApi.DataManager.GetExcelSheet<Item>()!
-                                .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
-                        );
-
-                        ImGui.TableNextColumn();
-                        ImGui.SetNextItemWidth(50);
-                        if (ImGui.Button("Remove"))
+                        PluginLog.Debug("Drawing other entries...");
+                        foreach (var item in configuration.EntryList)
                         {
-                            item.Complete = true;
-                        }
+                            ImGui.TableNextColumn();
+                            ImGui.SetNextItemWidth(tableSize);
+                            ImGui.Text(item.Name);
 
-                        ImGui.TableNextRow();
+                            ImGui.TableNextColumn();
+                            ImGui.SetNextItemWidth(tableSize * 0.3f);
+                            ImGui.Text(item.MaxCrafts.ToString());
+
+                            ImGui.TableNextColumn();
+                            ImGui.SetNextItemWidth(tableSize * 0.4f);
+                            ImGui.Text(item.Macro.Name);
+
+                            ImGui.TableNextColumn();
+
+                            bool HQ = item.FoodId > 1000000;
+                            ImGui.Text((HQ ? "(HQ) " : "")
+                                + DalamudApi.DataManager.GetExcelSheet<Item>()!
+                                    .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
+                            );
+
+                            ImGui.TableNextColumn();
+                            ImGui.SetNextItemWidth(50);
+                            if (ImGui.Button("Remove"))
+                            {
+                                item.Complete = true;
+                            }
+
+                            ImGui.TableNextRow();
+                        }
+                        PluginLog.Debug("Removing complete entries...");
+                        configuration.EntryList.RemoveAll(x => x.Complete);
+                        PluginLog.Debug("Saving...");
+                        configuration.Save();
                     }
-                    PluginLog.Debug("Removing complete entries...");
-                    configuration.EntryList.RemoveAll(x => x.Complete);
-                    PluginLog.Debug("Saving...");
-                    configuration.Save();
+                    catch (Exception ex)
+                    {
+                        PluginLog.Error(ex.Message);
+                    }
+                    ImGui.EndTable();
                 }
-                catch (Exception ex)
-                {
-                    PluginLog.Error(ex.Message);
-                }
-                ImGui.EndTable();
                 PluginLog.Debug("Done drawing table.");
             }
             catch (Exception e)
