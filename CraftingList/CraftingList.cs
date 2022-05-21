@@ -108,10 +108,14 @@ namespace CraftingList
         {
             if (args != "" && int.Parse(args) == 0)
             {
+                PluginLog.Debug("/craftinglist command closing recipe note...");
                 SeInterface.RecipeNote().Close();
+
+                PluginLog.Debug("/craftinglist command closed recip enote...");
             }
             else
             {
+                PluginLog.Debug("Drawing UI...");
                 this.PluginUi.Visible = true;
             }
         }

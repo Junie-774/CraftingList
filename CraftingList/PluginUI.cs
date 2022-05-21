@@ -132,68 +132,75 @@ namespace CraftingList
 
         public void DrawEntryTable()
         {
-            float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
-
-            ImGui.Text("Crafting list:");
-            ImGui.SetWindowFontScale(1.1f);
-            ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
-                new Vector2(0.0f, ImGui.GetTextLineHeightWithSpacing() * 6f));
-            ImGui.TableNextColumn();
-
-            ImGui.Text("Item Name");
-            ImGui.TableNextColumn();
-
-            ImGui.Text("Amount");
-            ImGui.TableNextColumn();
-
-            ImGui.Text("Macro");
-            ImGui.TableNextColumn();
-
-            ImGui.Text("Food");
-            ImGui.TableNextColumn();
-            ImGui.TableNextRow();
-            ImGui.SetWindowFontScale(1f);
             try
             {
-                foreach (var item in configuration.EntryList)
+                float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
+
+                ImGui.Text("Crafting list:");
+                ImGui.SetWindowFontScale(1.1f);
+                ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
+                    new Vector2(0.0f, ImGui.GetTextLineHeightWithSpacing() * 6f));
+                ImGui.TableNextColumn();
+
+                ImGui.Text("Item Name");
+                ImGui.TableNextColumn();
+
+                ImGui.Text("Amount");
+                ImGui.TableNextColumn();
+
+                ImGui.Text("Macro");
+                ImGui.TableNextColumn();
+
+                ImGui.Text("Food");
+                ImGui.TableNextColumn();
+                ImGui.TableNextRow();
+                ImGui.SetWindowFontScale(1f);
+                try
                 {
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(tableSize);
-                    ImGui.Text(item.Name);
-
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(tableSize * 0.3f);
-                    ImGui.Text(item.MaxCrafts.ToString());
-
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(tableSize * 0.4f);
-                    ImGui.Text(item.Macro.Name);
-
-                    ImGui.TableNextColumn();
-
-                    bool HQ = item.FoodId > 1000000;
-                    ImGui.Text((HQ ? "(HQ) " : "")
-                        + DalamudApi.DataManager.GetExcelSheet<Item>()!
-                            .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
-                    );
-
-                    ImGui.TableNextColumn();
-                    ImGui.SetNextItemWidth(50);
-                    if (ImGui.Button("Remove"))
+                    foreach (var item in configuration.EntryList)
                     {
-                        item.Complete = true;
-                    }
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(tableSize);
+                        ImGui.Text(item.Name);
 
-                    ImGui.TableNextRow();
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(tableSize * 0.3f);
+                        ImGui.Text(item.MaxCrafts.ToString());
+
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(tableSize * 0.4f);
+                        ImGui.Text(item.Macro.Name);
+
+                        ImGui.TableNextColumn();
+
+                        bool HQ = item.FoodId > 1000000;
+                        ImGui.Text((HQ ? "(HQ) " : "")
+                            + DalamudApi.DataManager.GetExcelSheet<Item>()!
+                                .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
+                        );
+
+                        ImGui.TableNextColumn();
+                        ImGui.SetNextItemWidth(50);
+                        if (ImGui.Button("Remove"))
+                        {
+                            item.Complete = true;
+                        }
+
+                        ImGui.TableNextRow();
+                    }
+                    configuration.EntryList.RemoveAll(x => x.Complete);
+                    configuration.Save();
                 }
-                configuration.EntryList.RemoveAll(x => x.Complete);
-                configuration.Save();
+                catch (Exception ex)
+                {
+                    PluginLog.Error(ex.Message);
+                }
+                ImGui.EndTable();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                PluginLog.Error(ex.Message);
+                PluginLog.Error(e.Message);
             }
-            ImGui.EndTable();
         }
 
         private void DrawNewListEntry()
