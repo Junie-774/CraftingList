@@ -138,21 +138,27 @@ namespace CraftingList
                 float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
 
                 PluginLog.Debug("Drawing table first row...");
+                
                 ImGui.Text("Crafting list:");
                 ImGui.SetWindowFontScale(1.1f);
+                PluginLog.Debug("Beginning Table...");
                 ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
                     new Vector2(0.0f, ImGui.GetTextLineHeightWithSpacing() * 6f));
                 ImGui.TableNextColumn();
 
+                PluginLog.Debug("Printing item name");
                 ImGui.Text("Item Name");
                 ImGui.TableNextColumn();
 
+                PluginLog.Debug("Printing amount");
                 ImGui.Text("Amount");
                 ImGui.TableNextColumn();
 
+                PluginLog.Debug("Printing Macro");
                 ImGui.Text("Macro");
                 ImGui.TableNextColumn();
 
+                PluginLog.Debug("Printing food");
                 ImGui.Text("Food");
                 ImGui.TableNextColumn();
                 ImGui.TableNextRow();
