@@ -223,7 +223,7 @@ namespace CraftingList
                 newEntryShowItemNameList = true;
             }
             ImGui.SameLine();
-            PluginLog.Debug("Drawing item name button...")
+            PluginLog.Debug("Drawing item name button...");
             if (ImGui.Button("..."))
             {
                 ImGui.SetKeyboardFocusHere(-1);

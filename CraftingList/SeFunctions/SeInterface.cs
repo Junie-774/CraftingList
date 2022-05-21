@@ -73,7 +73,7 @@ namespace CraftingList.SeFunctions
             RemoveFoodMacro = new Macro(0, 0, "Remove Food", "/statusoff \"Well Fed\"");
             CloseNoteMacro = new Macro(0, 0, "Close", "/craftinglist 0");
 
-            recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
+            //recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
             //recipeREHook?.Enable();
         }
 
