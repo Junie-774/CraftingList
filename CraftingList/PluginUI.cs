@@ -206,32 +206,35 @@ namespace CraftingList
         private void DrawNewListEntry()
         {
             ImGui.Text("Add item to list:");
-            float dynamicSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Item  ...  Amount  Macro  Food  + ").X;
+            float dynamicSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Item Name: Amount: Macro: Food:... + ").X;
 
+            ImGui.Text("Item Name:");
+            ImGui.SameLine();
             ImGui.SetNextItemWidth(dynamicSize * 0.3f);
-            if (ImGui.InputText("Item ", ref newEntryItemName, 25, ImGuiInputTextFlags.AllowTabInput))
+            if (ImGui.InputText("##Item", ref newEntryItemName, 25, ImGuiInputTextFlags.AllowTabInput))
             {
                 newEntryItemNameSearchResults = craftableNames.Where(x => newEntryItemName == "" || x.ToLower().Contains(newEntryItemName.ToLower())).ToList();
                 newEntryShowItemNameList = true;
             }
-            ImGui.SameLine();
-            if (ImGui.Button("..."))
-            {
-                ImGui.SetKeyboardFocusHere(-1);
-                newEntryShowItemNameList = !newEntryShowItemNameList;
-            }
+
             ImGui.SameLine();
 
+            ImGui.Text("Amount:");
+            ImGui.SameLine();
             ImGui.SetNextItemWidth(dynamicSize * 0.1f);
-            ImGui.InputInt("Amount  ", ref newEntryCraftAmount, 0);
+            ImGui.InputInt("##Amount", ref newEntryCraftAmount, 0);
             ImGui.SameLine();
 
+            ImGui.Text(" Macro:");
+            ImGui.SameLine();
             ImGui.SetNextItemWidth(dynamicSize * 0.2f);
-            ImGui.Combo("Macro  ", ref newEntrySelectedMacro, macroNames.ToArray(), macroNames.Count);
+            ImGui.Combo("##Macro", ref newEntrySelectedMacro, macroNames.ToArray(), macroNames.Count);
             ImGui.SameLine();
 
+            ImGui.Text(" Food:");
+            ImGui.SameLine();
             ImGui.SetNextItemWidth(dynamicSize * 0.3f);
-            ImGui.Combo("Food  ", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
+            ImGui.Combo("##Food", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
             ImGui.SameLine();
 
 
@@ -302,7 +305,7 @@ namespace CraftingList
 
         public void DrawSelectedMacro()
         {
-            ImGui.Text("Current Macro");
+            ImGui.SetNextItemWidth(ImGui.GetWindowContentRegionWidth() * 0.35f);
             if (ImGui.BeginCombo("Current Macro", currMacroName))
             {
                 foreach (var macro in macroNames)
@@ -348,15 +351,27 @@ namespace CraftingList
 
         public void DrawNewMacro()
         {
-            ImGui.Text("New Macro:");
-            float availSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Macro Name  Macro Number  Macro Duration(s) ").X;
-            ImGui.SetNextItemWidth(availSize * 0.45f);
-            ImGui.InputTextWithHint("Macro Name ", "New Macro Name", ref newMacroName, 10);
+            ImGui.SetWindowFontScale(1.1f);
+            ImGui.Text("New Macro");
+            ImGui.SetWindowFontScale(1f);
+
+            float availSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Macro Name: Macro Number: Macro Duration(s): + ").X;
+
+            ImGui.Text("Macro Name:");
             ImGui.SameLine();
-            ImGui.PushItemWidth(availSize * 0.15f);
-            ImGui.InputInt("Macro Number ", ref newMacroNum, 0);
+            ImGui.SetNextItemWidth(availSize * 0.6f);
+            ImGui.InputTextWithHint("##Macro Name", "New Macro Name", ref newMacroName, 10);
             ImGui.SameLine();
-            ImGui.InputInt("Macro Duration (s) ", ref newMacroDur, 0);
+
+            ImGui.Text(" Macro Number:");
+            ImGui.SameLine();
+            ImGui.PushItemWidth(availSize * 0.125f);
+            ImGui.InputInt("##Macro Number", ref newMacroNum, 0);
+            ImGui.SameLine();
+
+            ImGui.Text(" Macro Duration (s):");
+            ImGui.SameLine();
+            ImGui.InputInt("##Macro Duration", ref newMacroDur, 0);
             ImGui.SameLine();
             ImGui.PopItemWidth();
 
@@ -375,8 +390,10 @@ namespace CraftingList
 
         public void DrawOptionsTab()
         {
+            ImGui.SetWindowFontScale(1.15f);
             ImGui.Text("Options");
-            ImGui.NewLine();
+            ImGui.SetWindowFontScale(1f);
+
             float availWidth = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("Repair  ").X;
 
             ImGui.SetNextItemWidth(availWidth * 0.3f);
