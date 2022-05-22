@@ -123,7 +123,7 @@ namespace CraftingList
 
         private void OnCancel(string command, string args)
         {
-            Crafter.Cancel("Cancelling craft...");
+            Crafter.Cancel("Cancelling craft...", false);
         }
 
         private void OnOpenConfig(string command, string args)

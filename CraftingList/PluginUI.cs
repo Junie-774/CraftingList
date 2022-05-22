@@ -329,8 +329,14 @@ namespace CraftingList
             {
 
                 var currMacro = configuration.Macros.Where(m => m.Name == currMacroName);
+                var currMacroDummyName = currMacroName;
                 ImGui.SetNextItemWidth((ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Number Duration(s)").X) * 0.45f);
-                if (ImGui.InputText("Name", ref this.currMacroName, 20)) currMacro.First().Name = currMacroName;
+                if (ImGui.InputText("Name", ref currMacroDummyName, 20))
+                {
+                    currMacro.First().Name = currMacroDummyName;
+                    macroNames[macroNames.FindIndex(m => m == currMacroName)] = currMacroDummyName;
+                    currMacroName = currMacroDummyName;
+                }
 
                 ImGui.PushItemWidth((ImGui.GetWindowContentRegionWidth() - 25) * 0.15f);
                 if (ImGui.InputInt("Number", ref currMacroNum, 0)) currMacro.First().MacroNum = currMacroNum;
@@ -360,7 +366,7 @@ namespace CraftingList
             ImGui.Text("Macro Name:");
             ImGui.SameLine();
             ImGui.SetNextItemWidth(availSize * 0.6f);
-            ImGui.InputTextWithHint("##Macro Name", "New Macro Name", ref newMacroName, 10);
+            ImGui.InputTextWithHint("##Macro Name", "New Macro Name", ref newMacroName, 20);
             ImGui.SameLine();
 
             ImGui.Text(" Macro Number:");
@@ -472,10 +478,7 @@ namespace CraftingList
                 if (ImGui.BeginTabItem("Macros"))
                 {
                     DrawSelectedMacro();
-
                     ImGui.NewLine();
-                    ImGui.NewLine();
-
                     DrawNewMacro();
 
                     ImGui.EndTabItem();

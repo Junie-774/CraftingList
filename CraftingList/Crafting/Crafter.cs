@@ -32,12 +32,14 @@ namespace CraftingList.Crafting
             m_running = true;
             return Task.Run(async () =>
             {
+                bool skipItem = false;
                 var tokenSource = new CancellationTokenSource();
                 var token = tokenSource.Token;
 
                 uint lastUsedFood = 0;
                 foreach (var entry in configuration.EntryList.ToList())
                 {
+                    entry.running = true;
                     await Task.Delay(1000);
                     PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
 
@@ -60,7 +62,7 @@ namespace CraftingList.Crafting
                     {
                         while (entry.MaxCrafts > 0)
                         {
-                            if (!m_running) break;
+                            if (!m_running || !entry.running) break;
 
                             bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.FoodId).Result;
                             bool needToRepair = NeedsRepair();
@@ -86,21 +88,21 @@ namespace CraftingList.Crafting
                             if (!await OpenRecipeByItem((int)entry.ItemId))
                             {
                                 PluginLog.Debug($"Open Recipe Note failed, stopping craft...");
-                                Cancel("[CraftingList] A problem occurred while trying to open crafting log, cancelling...");
+                                Cancel("[CraftingList] A problem occurred while trying to open crafting log, cancelling...", true);
                                 break;
                             }
 
                             if(!await ClickSynthesize())
                             {
-                                PluginLog.Debug($"Click Synthesize failed, stopping craft...");
-                                Cancel("[CraftingList] A problem occurred while attempting to start craft, cancelling...");
+                                PluginLog.Debug($"Click Synthesize failed, stopping current entry...");
+                                DalamudApi.ChatGui.PrintError("[CraftingList] A problem occured starting craft, moving on to next item in the list...");
                                 break;
                             }
 
                             if(!await ExecuteMacro(entry.Macro, isCollectible))
                             {
                                 PluginLog.Debug($"Executing macro timed out, stopping craft...");
-                                Cancel($"[CraftingList] Macro {entry.Macro.Name} timed out before completing the craft, cancelling...");
+                                Cancel($"[CraftingList] Macro {{{entry.Macro.Name}, {entry.Macro.MacroNum}, {entry.Macro.DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
                                 break;
                             }
                             entry.MaxCrafts--;
@@ -110,11 +112,11 @@ namespace CraftingList.Crafting
                     {
                         break;
                     }
-                    entry.Complete = true;
+                    if (entry.MaxCrafts == 0) entry.Complete = true;
                     if (!await ExitCrafting())
                     {
                         PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
-                        Cancel("[CraftingList] A problem occurred trying to close the crafting log, cancelling...");
+                        Cancel("[CraftingList] A problem occurred trying to close the crafting log, cancelling...", true);
                         break;
                     }
                 }
@@ -190,7 +192,6 @@ namespace CraftingList.Crafting
             var res = seInterface.WaitForAddon("Synthesis", true, configuration.AddonTimeout);
             try { res.Wait(); }
             catch { return false; }
-            PluginLog.Debug($"synthesis: {res}");
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
         }
@@ -334,10 +335,14 @@ namespace CraftingList.Crafting
             return true;
         }
 
-        public void Cancel(string cancelMessage)
+        public void Cancel(string cancelMessage, bool error)
         {
-            if (m_running) DalamudApi.ChatGui.Print(cancelMessage);
+            if (m_running) {
+                if (error) DalamudApi.ChatGui.PrintError(cancelMessage);
+                else DalamudApi.ChatGui.Print(cancelMessage);
+            }
             m_running = false;
         }
+
     }
 }

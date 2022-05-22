@@ -9,6 +9,7 @@
         public bool Complete = false;
         public CraftingMacro Macro;
         public uint FoodId = 0;
+        public bool running = false;
 
         public CListEntry(string name, uint itemId, int maxCrafts, CraftingMacro macro, uint food)
         {
