@@ -41,7 +41,7 @@ namespace CraftingList.Crafting
                 {
                     entry.running = true;
                     await Task.Delay(1000);
-                    PluginLog.Debug($"Crafting {entry.MaxCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
+                    PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
 
                     if (!m_running) break;
                     var job = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
@@ -60,7 +60,7 @@ namespace CraftingList.Crafting
                     }
                     else
                     {
-                        while (entry.MaxCrafts > 0)
+                        while (entry.NumCrafts == "max" || int.Parse(entry.NumCrafts) > 0)
                         {
                             if (!m_running || !entry.running) break;
 
@@ -94,8 +94,16 @@ namespace CraftingList.Crafting
 
                             if(!await ClickSynthesize())
                             {
-                                PluginLog.Debug($"Click Synthesize failed, stopping current entry...");
-                                DalamudApi.ChatGui.PrintError("[CraftingList] A problem occured starting craft, moving on to next item in the list...");
+                                if (entry.NumCrafts == "max")
+                                {
+                                    entry.Complete = true;
+                                }
+                                else
+                                {
+                                    PluginLog.Debug($"Click Synthesize failed, stopping current entry...");
+                                    DalamudApi.ChatGui.PrintError("[CraftingList] A problem occured starting craft, moving on to next item in the list...");
+                                }
+                                
                                 break;
                             }
 
@@ -105,14 +113,14 @@ namespace CraftingList.Crafting
                                 Cancel($"[CraftingList] Macro {{{entry.Macro.Name}, {entry.Macro.MacroNum}, {entry.Macro.DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
                                 break;
                             }
-                            entry.MaxCrafts--;
+                            if (entry.NumCrafts != "max") entry.NumCrafts = (int.Parse(entry.NumCrafts) - 1).ToString();
                         }
                     }
                     if (!m_running)
                     {
                         break;
                     }
-                    if (entry.MaxCrafts == 0) entry.Complete = true;
+                    if (entry.NumCrafts == "0") entry.Complete = true;
                     if (!await ExitCrafting())
                     {
                         PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
@@ -120,7 +128,7 @@ namespace CraftingList.Crafting
                         break;
                     }
                 }
-                configuration.EntryList.RemoveAll(x => x.Complete || x.MaxCrafts == 0);
+                configuration.EntryList.RemoveAll(x => x.Complete);
                 await Task.Delay(500);
                 TerminationAlert();
                 return true;
@@ -223,7 +231,7 @@ namespace CraftingList.Crafting
 
         private void SendAlert(string message, int soundEffect)
         {
-            var mac = new Macro(0, 0, "Alert", new string[] { "/echo [CraftingList]" + message + " <se." + soundEffect + ">" });
+            var mac = new Macro(0, 0, "Alert", new string[] { "/echo [CraftingList] " + message + " <se." + soundEffect + ">" });
             seInterface.ExecuteMacro(mac);
         }
 

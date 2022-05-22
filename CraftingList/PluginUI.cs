@@ -40,7 +40,7 @@ namespace CraftingList
         int newEntryFoodNameSelection = 0;
 
         int newEntrySelectedMacro = 0;
-        int newEntryCraftAmount = 0;
+        string newEntryCraftAmount = "";
 
         List<string> macroNames;
 
@@ -169,7 +169,7 @@ namespace CraftingList
 
                             ImGui.TableNextColumn();
                             ImGui.SetNextItemWidth(tableSize * 0.3f);
-                            ImGui.Text(item.MaxCrafts.ToString());
+                            ImGui.Text(item.NumCrafts.ToString());
 
                             ImGui.TableNextColumn();
                             ImGui.SetNextItemWidth(tableSize * 0.4f);
@@ -222,7 +222,11 @@ namespace CraftingList
             ImGui.Text("Amount:");
             ImGui.SameLine();
             ImGui.SetNextItemWidth(dynamicSize * 0.1f);
-            ImGui.InputInt("##Amount", ref newEntryCraftAmount, 0);
+            ImGui.InputText("##Amount", ref newEntryCraftAmount, 6);
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Number of crafts. Enter \"max\" to craft until you run out of materials or inventory space.");
+            }
             ImGui.SameLine();
 
             ImGui.Text(" Macro:");
@@ -251,7 +255,7 @@ namespace CraftingList
                     foodName = foodName.Substring(5);
                 }
 
-                if (items.Count() > 0 && newEntryCraftAmount > 0 && macro.Count() > 0)
+                if (items.Count() > 0 && (newEntryCraftAmount.ToLower() == "max" || int.TryParse(newEntryCraftAmount, out _)) && macro.Count() > 0)
                 {
 
                     uint foodID = newEntryFoodNameSelection == 0 ? 0 : DalamudApi.DataManager.GetExcelSheet<Item>()!
@@ -260,7 +264,7 @@ namespace CraftingList
                     if (HQ) foodID += 1000000;
 
                     uint itemID = items.First()!.RowId;
-                    configuration.EntryList.Add(new Crafting.CListEntry(newEntryItemName, itemID, newEntryCraftAmount, macro.First(), foodID));
+                    configuration.EntryList.Add(new CListEntry(newEntryItemName, itemID, newEntryCraftAmount.ToLower(), macro.First(), foodID));
                 }
             }
 
