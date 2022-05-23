@@ -1,8 +1,6 @@
 ﻿using Dalamud.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace CraftingList.Utility
@@ -23,7 +21,7 @@ namespace CraftingList.Utility
             {
                 Name = name;
                 NeedsToBeVisible = needsVisible;
-                TimeOut = start + (ulong) timeoutMS;
+                TimeOut = start + (ulong)timeoutMS;
                 PollResult = pollResult;
                 CheckResult = checkResult;
                 TaskCompletionSource = completionSource;
@@ -44,7 +42,7 @@ namespace CraftingList.Utility
                 return completionSource.Task;
             }
 
-            var start = (ulong) DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            var start = (ulong)DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             var waitInfo = new AddonWaitInfo(name, needsVisible, start, timeoutMs, pollResult, checkResult, completionSource);
             lock (Waitlist)
             {

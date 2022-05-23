@@ -1,11 +1,8 @@
 ﻿using CraftingList.SeFunctions;
 using CraftingList.Utility;
-using Dalamud.Game.Text;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.GeneratedSheets;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +24,7 @@ namespace CraftingList.Crafting
 
         public Task<bool> CraftAllItems()
         {
-           
+
 
             m_running = true;
             return Task.Run(async () =>
@@ -52,7 +49,7 @@ namespace CraftingList.Crafting
                         .Where(item => item.RowId == entry.ItemId)
                         .First().IsCollectable;
 
-                    await ChangeJobs((DoHJob) job);
+                    await ChangeJobs((DoHJob)job);
 
                     if (entry.Macro.Name == "(Quick Synth)")
                     {
@@ -92,7 +89,7 @@ namespace CraftingList.Crafting
                                 break;
                             }
 
-                            if(!await ClickSynthesize())
+                            if (!await ClickSynthesize())
                             {
                                 if (entry.NumCrafts == "max")
                                 {
@@ -103,11 +100,11 @@ namespace CraftingList.Crafting
                                     PluginLog.Debug($"Click Synthesize failed, stopping current entry...");
                                     DalamudApi.ChatGui.PrintError("[CraftingList] A problem occured starting craft, moving on to next item in the list...");
                                 }
-                                
+
                                 break;
                             }
 
-                            if(!await ExecuteMacro(entry.Macro, isCollectible))
+                            if (!await ExecuteMacro(entry.Macro, isCollectible))
                             {
                                 PluginLog.Debug($"Executing macro timed out, stopping craft...");
                                 Cancel($"[CraftingList] Macro {{{entry.Macro.Name}, {entry.Macro.MacroNum}, {entry.Macro.DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
@@ -154,7 +151,7 @@ namespace CraftingList.Crafting
 
             var task = seInterface.WaitForAddon("RecipeNote", true, configuration.AddonTimeout);
             try { task.Wait(); }
-            catch { return false;  }
+            catch { return false; }
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
         }
@@ -181,7 +178,7 @@ namespace CraftingList.Crafting
                 seInterface.UseItem(newFoodId);
                 PluginLog.Debug($"Ate Food.");
                 await Task.Delay(configuration.WaitDurations.AfterEatFood);
-                
+
             }
             else
             {
@@ -308,7 +305,8 @@ namespace CraftingList.Crafting
             seInterface.ToggleRepairWindow();
             var repair = seInterface.WaitForAddon("Repair", true, 5000);
             try { repair.Wait(); }
-            catch {
+            catch
+            {
                 PluginLog.Debug($"Failed to open repair window.");
                 return false;
             }
@@ -345,7 +343,8 @@ namespace CraftingList.Crafting
 
         public void Cancel(string cancelMessage, bool error)
         {
-            if (m_running) {
+            if (m_running)
+            {
                 if (error) DalamudApi.ChatGui.PrintError(cancelMessage);
                 else DalamudApi.ChatGui.Print(cancelMessage);
             }

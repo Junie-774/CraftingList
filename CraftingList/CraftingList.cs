@@ -2,10 +2,8 @@
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
-using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
-using System;
 
 namespace CraftingList
 {
@@ -101,7 +99,7 @@ namespace CraftingList
 
         private void OnCommand(string command, string args)
         {
-           
+
         }
 
         private void OnCraftingList(string command, string args)

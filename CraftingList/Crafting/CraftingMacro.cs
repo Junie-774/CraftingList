@@ -14,7 +14,7 @@ namespace CraftingList.Crafting
         public Lines Line;
 
         public Macro(uint iconId, uint unk, string name, string line)
-            :this(iconId, unk, name, new string[] { line })
+            : this(iconId, unk, name, new string[] { line })
         {
 
         }

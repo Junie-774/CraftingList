@@ -133,115 +133,93 @@ namespace CraftingList
         public void DrawEntryTable()
         {
 
-                float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
+            float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
 
-                
-                ImGui.Text("Crafting list:");
-                ImGui.SetWindowFontScale(1.1f);
-                if (ImGui.BeginTable("meow", 5, ImGuiTableFlags.BordersV | ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg | ImGuiTableFlags.Resizable | ImGuiTableFlags.ScrollY,
-                    new Vector2(0.0f, ImGui.GetTextLineHeightWithSpacing() * 6f)))
+
+            ImGui.Text("Crafting list:");
+            ImGui.Columns(5);
+            ImGui.Separator();
+            ImGui.SetWindowFontScale(1.1f);
+
+            ImGui.Text("Item Name");
+            ImGui.NextColumn();
+
+            ImGui.Text("Amount");
+            ImGui.NextColumn();
+
+            ImGui.Text("Macro");
+            ImGui.NextColumn();
+
+            ImGui.Text("Food");
+            ImGui.SetWindowFontScale(1f);
+            ImGui.Separator();
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+            try
+            {
+                foreach (var item in configuration.EntryList)
                 {
+                    ImGui.Text(item.Name);
+                    ImGui.NextColumn();
 
+                    ImGui.Text(item.NumCrafts.ToString());
+                    ImGui.NextColumn();
 
-                    ImGui.TableNextColumn();
+                    ImGui.Text(item.Macro.Name);
+                    ImGui.NextColumn();
 
-                    ImGui.Text("Item Name");
-                    ImGui.TableNextColumn();
+                    bool HQ = item.FoodId > 1000000;
+                    ImGui.Text((HQ ? "(HQ) " : "")
+                        + DalamudApi.DataManager.GetExcelSheet<Item>()!
+                            .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
+                    );
+                    ImGui.NextColumn();
 
-                    ImGui.Text("Amount");
-                    ImGui.TableNextColumn();
-
-                    ImGui.Text("Macro");
-                    ImGui.TableNextColumn();
-
-                    ImGui.Text("Food");
-
-                    ImGui.TableNextColumn();
-                    ImGui.TableNextRow();
-                    ImGui.SetWindowFontScale(1f);
-                    try
+                    if (ImGui.Button("Remove"))
                     {
-                        foreach (var item in configuration.EntryList)
-                        {
-                            ImGui.TableNextColumn();
-                            ImGui.SetNextItemWidth(tableSize);
-                            ImGui.Text(item.Name);
-
-                            ImGui.TableNextColumn();
-                            ImGui.SetNextItemWidth(tableSize * 0.3f);
-                            ImGui.Text(item.NumCrafts.ToString());
-
-                            ImGui.TableNextColumn();
-                            ImGui.SetNextItemWidth(tableSize * 0.4f);
-                            ImGui.Text(item.Macro.Name);
-
-                            ImGui.TableNextColumn();
-
-                            bool HQ = item.FoodId > 1000000;
-                            ImGui.Text((HQ ? "(HQ) " : "")
-                                + DalamudApi.DataManager.GetExcelSheet<Item>()!
-                                    .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
-                            );
-
-                            ImGui.TableNextColumn();
-                            ImGui.SetNextItemWidth(50);
-                            if (ImGui.Button("Remove"))
-                            {
-                                item.Complete = true;
-                            }
-
-                            ImGui.TableNextRow();
-                        }
-                        configuration.EntryList.RemoveAll(x => x.Complete);
-                        configuration.Save();
+                        item.Complete = true;
                     }
-                    catch (Exception ex)
-                    {
-                        PluginLog.Error(ex.Message);
-                    }
-                    ImGui.EndTable();
+                    ImGui.NextColumn();
+
+                    ImGui.Separator();
                 }
+                configuration.EntryList.RemoveAll(x => x.Complete);
+                configuration.Save();
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error(ex.Message);
+            }
         }
 
         private void DrawNewListEntry()
         {
-            ImGui.Text("Add item to list:");
-            float dynamicSize = ImGui.GetWindowContentRegionWidth() - 25 - ImGui.CalcTextSize("Item Name: Amount: Macro: Food:... + ").X;
-
-            ImGui.Text("Item Name:");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(dynamicSize * 0.3f);
-            if (ImGui.InputText("##Item", ref newEntryItemName, 25, ImGuiInputTextFlags.AllowTabInput))
+            ImGui.SetNextItemWidth(-1);
+            if (ImGui.InputText("##Item", ref newEntryItemName, 65535, ImGuiInputTextFlags.AllowTabInput))
             {
                 newEntryItemNameSearchResults = craftableNames.Where(x => newEntryItemName == "" || x.ToLower().Contains(newEntryItemName.ToLower())).ToList();
                 newEntryShowItemNameList = true;
             }
+            ImGui.NextColumn();
 
-            ImGui.SameLine();
 
-            ImGui.Text("Amount:");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(dynamicSize * 0.1f);
-            ImGui.InputText("##Amount", ref newEntryCraftAmount, 6);
+            ImGui.SetNextItemWidth(-1);
+            ImGui.InputText("##Amount", ref newEntryCraftAmount, 65535);
             if (ImGui.IsItemHovered())
             {
                 ImGui.SetTooltip("Number of crafts. Enter \"max\" to craft until you run out of materials or inventory space.");
             }
-            ImGui.SameLine();
+            ImGui.NextColumn();
 
-            ImGui.Text(" Macro:");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(dynamicSize * 0.2f);
+            ImGui.SetNextItemWidth(-1);
             ImGui.Combo("##Macro", ref newEntrySelectedMacro, macroNames.ToArray(), macroNames.Count);
-            ImGui.SameLine();
+            ImGui.NextColumn();
 
-            ImGui.Text(" Food:");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(dynamicSize * 0.3f);
+            ImGui.SetNextItemWidth(-1);
             ImGui.Combo("##Food", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
-            ImGui.SameLine();
+            ImGui.NextColumn();
 
-
+            ImGui.SetNextItemWidth(-1);
             if (ImGui.Button("+", new Vector2(25f, 25f)))
             {
                 var items = craftableItems.Where(item => item != null && item.Name == newEntryItemName);
@@ -265,10 +243,17 @@ namespace CraftingList
 
                     uint itemID = items.First()!.RowId;
                     configuration.EntryList.Add(new CListEntry(newEntryItemName, itemID, newEntryCraftAmount.ToLower(), macro.First(), foodID));
+                    newEntryItemName = "";
+                    newEntryCraftAmount = "";
+                    newEntrySelectedMacro = 0;
+                    newEntryFoodNameSelection = 0;
                 }
             }
+            ImGui.Separator();
+            ImGui.NextColumn();
+            ImGui.Columns(1);
 
-            ImGui.SetNextItemWidth(dynamicSize * 0.45f);
+
             if (newEntryShowItemNameList)
             {
                 if (ImGui.ListBox("",
@@ -276,12 +261,12 @@ namespace CraftingList
                     newEntryItemNameSearchResults.ToArray(),
                     newEntryItemNameSearchResults.Count,
                     20))
-                /*|| ImGui.IsKeyDown((int)ImGuiKey.Enter))*/
                 {
                     newEntryItemName = newEntryItemNameSearchResults[newEntryItemNameSelection];
                     newEntryShowItemNameList = false;
                 }
             }
+
         }
         public void DrawMainWindow()
         {
@@ -295,8 +280,6 @@ namespace CraftingList
             {
 
                 DrawEntryTable();
-                ImGui.NewLine();
-
                 DrawNewListEntry();
                 ImGui.NewLine();
                 if (ImGui.Button("Craft!"))
@@ -351,7 +334,7 @@ namespace CraftingList
 
                 if (ImGui.Button("Delete...", new Vector2(60, 25)))
                 {
-                    
+
                     configuration.Macros.RemoveAll(m => m.Name == currMacroName);
                     macroNames.Remove(currMacroName);
                     currMacroName = "";
@@ -455,11 +438,11 @@ namespace CraftingList
         {
             ImGui.Text("Wait durations (ms)");
             ImGui.PushItemWidth(ImGui.CalcTextSize("0000000").X);
-            
+
             object box = configuration.WaitDurations;
             foreach (var field in typeof(WaitDurationHelper).GetFields())
             {
-                int toref = (int) (field.GetValue(box) ?? 2000);
+                int toref = (int)(field.GetValue(box) ?? 2000);
                 if (ImGui.InputInt(field.Name, ref toref, 0))
                 {
                     field.SetValue(box, toref);
