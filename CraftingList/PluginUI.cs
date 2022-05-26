@@ -138,8 +138,16 @@ namespace CraftingList
 
             ImGui.Text("Crafting list:");
             ImGui.Columns(6);
+            float dynamicAvailWidth = ImGui.GetWindowContentRegionWidth() - (18 + 18 + 12) - (ImGui.CalcTextSize("Amount").X + ImGui.CalcTextSize("HQ Mats?").X + ImGui.CalcTextSize("Remove").X);
+            ImGui.SetColumnWidth(0, dynamicAvailWidth * 0.5f);
+            ImGui.SetColumnWidth(1, 18 + ImGui.CalcTextSize("Amount").X);
+            ImGui.SetColumnWidth(2, dynamicAvailWidth * 0.25f);
+            ImGui.SetColumnWidth(3, dynamicAvailWidth * 0.25f);
+            ImGui.SetColumnWidth(4, 18 + ImGui.CalcTextSize("HQ Mats?").X);
+            
             ImGui.Separator();
             ImGui.SetWindowFontScale(1.1f);
+            ImGui.SetColumnWidth(5, 12 + ImGui.CalcTextSize("Remove").X);
 
             ImGui.Text("Item Name");
             ImGui.NextColumn();
@@ -168,6 +176,7 @@ namespace CraftingList
                 ImGui.Text(item.Name);
                 ImGui.NextColumn();
 
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 12);
                 ImGui.Text(item.NumCrafts.ToString());
                 ImGui.NextColumn();
 
@@ -180,7 +189,7 @@ namespace CraftingList
                         .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
                 );
                 ImGui.NextColumn();
-
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 20);
                 ImGui.Checkbox("##HQ" + item.Name, ref item.HQMats);
                 ImGui.NextColumn();
 
@@ -224,9 +233,12 @@ namespace CraftingList
             ImGui.Combo("##Food", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
             ImGui.NextColumn();
 
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 20);
             ImGui.Checkbox("##HQNewItem", ref newEntryHQmats);
             ImGui.NextColumn();
             ImGui.SetNextItemWidth(-1);
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 18);
+
             if (ImGui.Button("+", new Vector2(25f, 25f)))
             {
                 var items = craftableItems.Where(item => item != null && item.Name == newEntryItemName);
@@ -276,6 +288,7 @@ namespace CraftingList
             }
 
         }
+
         public void DrawMainWindow()
         {
             if (!Visible)

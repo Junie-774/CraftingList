@@ -16,7 +16,7 @@ namespace CraftingList.Crafting
     {
 
         private bool m_running = false;
-        public  bool waitingForHQSelection = false;
+        public bool waitingForHQSelection = false;
 
 
         private SeInterface seInterface;
@@ -87,7 +87,7 @@ namespace CraftingList.Crafting
                                 }
                                 if (entry.HQMats)
                                 {
-                                    await PromptForHqMats((int) entry.ItemId);
+                                    await PromptForHqMats((int)entry.ItemId);
                                 }
                             }
                             if (!m_running) break;
@@ -176,7 +176,7 @@ namespace CraftingList.Crafting
             catch { return false; }
 
             PluginLog.Debug($"Closed Recipe Note.");
-            
+
             await Task.Delay(configuration.WaitDurations.AfterExitCrafting);
             return true;
         }
@@ -273,7 +273,7 @@ namespace CraftingList.Crafting
             }
             //CurrFood == 0.
             var foodEntry = DalamudApi.DataManager.GetExcelSheet<ItemFood>()!
-                        .Where(x => x.RowId == DalamudApi.DataManager.GetExcelSheet<Item>()!.Where(x => x.RowId == lastFood).First().ItemAction.Value!.DataHQ[1])
+                        .Where(x => x.RowId == DalamudApi.DataManager.GetExcelSheet<Item>()!.Where(x => x.RowId == lastFood || x.RowId == lastFood - 1000000).First().ItemAction.Value!.DataHQ[1])
                         .First();
 
             var stat1 = foodEntry.UnkData1[0].BaseParam;
