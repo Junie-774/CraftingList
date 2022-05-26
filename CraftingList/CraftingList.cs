@@ -19,7 +19,7 @@ namespace CraftingList
 
         private Crafter Crafter { get; init; }
 
-        public void InitializeSingletons()
+        public static void InitializeSingletons()
         {
             Singleton<OpenRecipebyRecipeId>.Set(DalamudApi.SigScanner);
             Singleton<GetBaseUiObject>.Set(DalamudApi.SigScanner);
@@ -87,8 +87,8 @@ namespace CraftingList
 
         public void Dispose()
         {
-            this.SeInterface.Dispose();
-            this.PluginUi.Dispose();
+            SeInterface.Dispose();
+            PluginUi.Dispose();
             DalamudApi.CommandManager.RemoveHandler("/craftinglist");
             DalamudApi.CommandManager.RemoveHandler("/craftallitems");
             DalamudApi.CommandManager.RemoveHandler("/clist");

@@ -9,7 +9,7 @@ namespace CraftingList
     [Serializable]
     public struct WaitDurationHelper
     {
-        public int AfterChangeJobs = 2500;
+        public int AfterChangeJobs = 1500;
         public int AfterEatFood = 3000;
         public int AfterCompleteMacroHQ = 3500;
         public int AfterCompleteMacroCollectible = 2500;
@@ -30,6 +30,7 @@ namespace CraftingList
         public List<CraftingMacro> Macros { get; set; } = new();
         public List<CListEntry> EntryList { get; set; } = new();
 
+        public bool FlashWindowOnHQPrompt = true;
 
         public int RepairThresholdPercent = 99;
         public bool OnlyRepairIfBelow99 = true;

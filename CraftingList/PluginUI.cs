@@ -1,6 +1,5 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Utility;
-using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -35,6 +34,7 @@ namespace CraftingList
         int newEntryItemNameSelection = 0;
         string newEntryItemName = "";
         bool newEntryShowItemNameList = false;
+        bool newEntryHQmats = false;
 
 
         int newEntryFoodNameSelection = 0;
@@ -133,11 +133,11 @@ namespace CraftingList
         public void DrawEntryTable()
         {
 
-            float tableSize = ImGui.GetWindowContentRegionWidth() - 25;
+            float tableSize = ImGui.GetWindowContentRegionWidth();
 
 
             ImGui.Text("Crafting list:");
-            ImGui.Columns(5);
+            ImGui.Columns(6);
             ImGui.Separator();
             ImGui.SetWindowFontScale(1.1f);
 
@@ -151,45 +151,50 @@ namespace CraftingList
             ImGui.NextColumn();
 
             ImGui.Text("Food");
+            ImGui.NextColumn();
+
+            ImGui.Text("HQ Mats?");
+
             ImGui.SetWindowFontScale(1f);
+
+
             ImGui.Separator();
             ImGui.NextColumn();
+
             ImGui.NextColumn();
-            try
+
+            foreach (var item in configuration.EntryList)
             {
-                foreach (var item in configuration.EntryList)
+                ImGui.Text(item.Name);
+                ImGui.NextColumn();
+
+                ImGui.Text(item.NumCrafts.ToString());
+                ImGui.NextColumn();
+
+                ImGui.Text(item.Macro.Name);
+                ImGui.NextColumn();
+
+                bool HQ = item.FoodId > 1000000;
+                ImGui.Text((HQ ? "(HQ) " : "")
+                    + DalamudApi.DataManager.GetExcelSheet<Item>()!
+                        .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
+                );
+                ImGui.NextColumn();
+
+                ImGui.Checkbox("##HQ" + item.Name, ref item.HQMats);
+                ImGui.NextColumn();
+
+                if (ImGui.Button("Remove"))
                 {
-                    ImGui.Text(item.Name);
-                    ImGui.NextColumn();
-
-                    ImGui.Text(item.NumCrafts.ToString());
-                    ImGui.NextColumn();
-
-                    ImGui.Text(item.Macro.Name);
-                    ImGui.NextColumn();
-
-                    bool HQ = item.FoodId > 1000000;
-                    ImGui.Text((HQ ? "(HQ) " : "")
-                        + DalamudApi.DataManager.GetExcelSheet<Item>()!
-                            .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
-                    );
-                    ImGui.NextColumn();
-
-                    if (ImGui.Button("Remove"))
-                    {
-                        item.Complete = true;
-                    }
-                    ImGui.NextColumn();
-
-                    ImGui.Separator();
+                    item.Complete = true;
                 }
-                configuration.EntryList.RemoveAll(x => x.Complete);
-                configuration.Save();
+                ImGui.NextColumn();
+
+                ImGui.Separator();
             }
-            catch (Exception ex)
-            {
-                PluginLog.Error(ex.Message);
-            }
+            configuration.EntryList.RemoveAll(x => x.Complete);
+            configuration.Save();
+
         }
 
         private void DrawNewListEntry()
@@ -219,6 +224,8 @@ namespace CraftingList
             ImGui.Combo("##Food", ref newEntryFoodNameSelection, foodNames.ToArray(), foodNames.Count);
             ImGui.NextColumn();
 
+            ImGui.Checkbox("##HQNewItem", ref newEntryHQmats);
+            ImGui.NextColumn();
             ImGui.SetNextItemWidth(-1);
             if (ImGui.Button("+", new Vector2(25f, 25f)))
             {
@@ -242,11 +249,12 @@ namespace CraftingList
                     if (HQ) foodID += 1000000;
 
                     uint itemID = items.First()!.RowId;
-                    configuration.EntryList.Add(new CListEntry(newEntryItemName, itemID, newEntryCraftAmount.ToLower(), macro.First(), foodID));
+                    configuration.EntryList.Add(new CListEntry(newEntryItemName, itemID, newEntryCraftAmount.ToLower(), macro.First(), foodID, newEntryHQmats));
                     newEntryItemName = "";
                     newEntryCraftAmount = "";
                     newEntrySelectedMacro = 0;
                     newEntryFoodNameSelection = 0;
+                    newEntryHQmats = false;
                 }
             }
             ImGui.Separator();
@@ -285,6 +293,19 @@ namespace CraftingList
                 if (ImGui.Button("Craft!"))
                 {
                     crafter.CraftAllItems();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Cancel"))
+                {
+                    crafter.Cancel("Cancelling craft...", false);
+                }
+                if (crafter.waitingForHQSelection)
+                {
+                    ImGui.Text("Waiting for you to select the HQ mats for your craft, please press the button below when finished.");
+                    if (ImGui.Button("I've Selected My HQ Mats"))
+                    {
+                        crafter.SignalHQMatsSelected();
+                    }
                 }
                 ImGui.End();
             }
@@ -386,7 +407,7 @@ namespace CraftingList
             ImGui.SetWindowFontScale(1.15f);
             ImGui.Text("Options");
             ImGui.SetWindowFontScale(1f);
-
+            ImGui.Columns(2);
             float availWidth = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("Repair  ").X;
 
             ImGui.SetNextItemWidth(availWidth * 0.3f);
@@ -397,7 +418,7 @@ namespace CraftingList
             // auxillary variables to allow for error checking
             int completeSoundEffect = configuration.SoundEffectListComplete;
             int cancelSoundEffect = configuration.SoundEffectListCancel;
-            ImGui.Checkbox("Play Sound Effect on Craft Completion or Termination", ref configuration.AlertOnTerminate);
+            ImGui.Checkbox("Play Sound effect when crafting terminates?", ref configuration.AlertOnTerminate);
             if (configuration.AlertOnTerminate)
             {
                 float width = ImGui.GetWindowContentRegionWidth() - ImGui.CalcTextSize("List Cancelled Sound Effect").X;
@@ -432,6 +453,8 @@ namespace CraftingList
             {
                 if (addonTimeout > 0) configuration.AddonTimeout = addonTimeout;
             }
+            ImGui.NextColumn();
+            ImGui.Checkbox("Flash window when prompting to select HQ Materials?", ref configuration.FlashWindowOnHQPrompt);
         }
 
         public void DrawExperimentalTab()

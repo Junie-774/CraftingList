@@ -3,7 +3,9 @@ using CraftingList.Utility;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.GeneratedSheets;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using static CraftingList.SeFunctions.SeInterface;
@@ -12,7 +14,10 @@ namespace CraftingList.Crafting
 {
     public class Crafter
     {
+
         private bool m_running = false;
+        public  bool waitingForHQSelection = false;
+
 
         private SeInterface seInterface;
         private Configuration configuration;
@@ -29,7 +34,7 @@ namespace CraftingList.Crafting
             m_running = true;
             return Task.Run(async () =>
             {
-                bool skipItem = false;
+
                 var tokenSource = new CancellationTokenSource();
                 var token = tokenSource.Token;
 
@@ -80,7 +85,12 @@ namespace CraftingList.Crafting
                                 {
                                     await Repair();
                                 }
+                                if (entry.HQMats)
+                                {
+                                    await PromptForHqMats((int) entry.ItemId);
+                                }
                             }
+                            if (!m_running) break;
 
                             if (!await OpenRecipeByItem((int)entry.ItemId))
                             {
@@ -88,6 +98,7 @@ namespace CraftingList.Crafting
                                 Cancel("[CraftingList] A problem occurred while trying to open crafting log, cancelling...", true);
                                 break;
                             }
+                            if (!m_running) break;
 
                             if (!await ClickSynthesize())
                             {
@@ -160,11 +171,12 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Closing Recipe Note...");
             seInterface.ExecuteMacro(seInterface.CloseNoteMacro);
-            var recipeNote = seInterface.WaitForCloseAddon("RecipeNote", true, configuration.AddonTimeout);
-            try { recipeNote.Wait(); }
+            var recipeNoteClosed = seInterface.WaitForCloseAddon("RecipeNote", true, configuration.AddonTimeout);
+            try { recipeNoteClosed.Wait(); }
             catch { return false; }
 
             PluginLog.Debug($"Closed Recipe Note.");
+            
             await Task.Delay(configuration.WaitDurations.AfterExitCrafting);
             return true;
         }
@@ -298,6 +310,32 @@ namespace CraftingList.Crafting
             return existsItemBelowThreshold;
         }
 
+        public async Task<bool> PromptForHqMats(int itemId)
+        {
+            PluginLog.Debug("Waiting for HQ Material Selection...");
+            if (!await OpenRecipeByItem(itemId))
+            {
+                PluginLog.Debug("Failed to open recipe note."); return false;
+            }
+            if (configuration.FlashWindowOnHQPrompt && !FlashWindow.ApplicationIsActivated())
+            {
+                var flashInfo = new FlashWindow.FLASHWINFO
+                {
+                    cbSize = (uint)Marshal.SizeOf<FlashWindow.FLASHWINFO>(),
+                    uCount = uint.MaxValue,
+                    dwTimeout = 0,
+                    dwFlags = FlashWindow.FLASHW_ALL | FlashWindow.FLASHW_TIMERNOFG,
+                    hwnd = Process.GetCurrentProcess().MainWindowHandle,
+
+                };
+                FlashWindow.FlashWindowEx(ref flashInfo);
+            }
+            
+            waitingForHQSelection = true;
+            while (waitingForHQSelection && m_running) { }
+            PluginLog.Debug("Materials selected!.");
+            return true;
+        }
         public async Task<bool> Repair()
         {
             PluginLog.Debug($"Repairing...");
@@ -349,6 +387,11 @@ namespace CraftingList.Crafting
                 else DalamudApi.ChatGui.Print(cancelMessage);
             }
             m_running = false;
+        }
+
+        public void SignalHQMatsSelected()
+        {
+            waitingForHQSelection = false;
         }
 
     }
