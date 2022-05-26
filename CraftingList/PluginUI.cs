@@ -455,6 +455,7 @@ namespace CraftingList
             }
             ImGui.NextColumn();
             ImGui.Checkbox("Flash window when prompting to select HQ Materials?", ref configuration.FlashWindowOnHQPrompt);
+            ImGui.Columns(1);
         }
 
         public void DrawExperimentalTab()
