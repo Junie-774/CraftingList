@@ -1,5 +1,6 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Utility;
+using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -189,11 +190,12 @@ namespace CraftingList
                         .Where(x => x.RowId == (HQ ? item.FoodId - 1000000 : item.FoodId)).First().Name
                 );
                 ImGui.NextColumn();
+
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 20);
                 ImGui.Checkbox("##HQ" + item.Name, ref item.HQMats);
                 ImGui.NextColumn();
 
-                if (ImGui.Button("Remove"))
+                if (ImGui.Button("Remove##" + configuration.EntryList.IndexOf(item)))
                 {
                     item.Complete = true;
                 }

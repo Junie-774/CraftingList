@@ -5,7 +5,7 @@
         public string Name;
         public uint ItemId;
         public string NumCrafts;
-        public bool Complete = false;
+        public bool Complete { get; set; } = false;
         public CraftingMacro Macro;
         public uint FoodId = 0;
         public bool running = false;

@@ -29,7 +29,11 @@ namespace CraftingList.Crafting
 
         public Task<bool> CraftAllItems()
         {
-
+            if (m_running)
+            {
+                DalamudApi.ChatGui.PrintError("[CraftingList] A craft is already running!");
+                return Task.FromResult(false);
+            }
 
             m_running = true;
             return Task.Run(async () =>
