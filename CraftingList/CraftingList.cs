@@ -73,16 +73,17 @@ namespace CraftingList
             {
                 ShowInHelp = false
             });
+            /*
             DalamudApi.CommandManager.AddHandler("/clconfig", new CommandInfo(OnOpenConfig)
             {
                 HelpMessage = "Open CraftingList Config"
-            });
+            });*/
 
 
 
 
             DalamudApi.PluginInterface.UiBuilder.Draw += DrawUI;
-            DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
+            //DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
         }
 
         public void Dispose()
@@ -94,7 +95,7 @@ namespace CraftingList
             DalamudApi.CommandManager.RemoveHandler("/clist");
             DalamudApi.CommandManager.RemoveHandler("/clcancel");
             DalamudApi.CommandManager.RemoveHandler("/command");
-            DalamudApi.CommandManager.RemoveHandler("/clconfig");
+            //DalamudApi.CommandManager.RemoveHandler("/clconfig");
         }
 
         private void OnCommand(string command, string args)

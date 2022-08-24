@@ -127,7 +127,6 @@ namespace CraftingList
             // There are other ways to do this, but it is generally best to keep the number of
             // draw delegates as low as possible.
 
-            DrawMainWindow();
             DrawSettingsWindow();
         }
 
@@ -136,8 +135,6 @@ namespace CraftingList
 
             float tableSize = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X);
 
-
-            ImGui.Text("Crafting list:");
             ImGui.Columns(6);
             float dynamicAvailWidth = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - (18 + 18 + 12) - (ImGui.CalcTextSize("Amount").X + ImGui.CalcTextSize("HQ Mats?").X + ImGui.CalcTextSize("Remove").X);
             ImGui.SetColumnWidth(0, dynamicAvailWidth * 0.5f);
@@ -291,38 +288,27 @@ namespace CraftingList
 
         }
 
-        public void DrawMainWindow()
+        public void DrawCraftingList()
         {
-            if (!Visible)
+            DrawEntryTable();
+            DrawNewListEntry();
+            ImGui.NewLine();
+            if (ImGui.Button("Craft!"))
             {
-                return;
+                crafter.CraftAllItems();
             }
-
-            ImGui.SetNextWindowSizeConstraints(new Vector2(375, 330), new Vector2(float.MaxValue, float.MaxValue));
-            if (ImGui.Begin("Crafting List", ref this.visible, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
+            ImGui.SameLine();
+            if (ImGui.Button("Cancel"))
             {
-
-                DrawEntryTable();
-                DrawNewListEntry();
-                ImGui.NewLine();
-                if (ImGui.Button("Craft!"))
+                crafter.Cancel("Cancelling craft...", false);
+            }
+            if (crafter.waitingForHQSelection)
+            {
+                ImGui.Text("Waiting for you to select the HQ mats for your craft, please press the button below when finished.");
+                if (ImGui.Button("I've Selected My HQ Mats"))
                 {
-                    crafter.CraftAllItems();
+                    crafter.SignalHQMatsSelected();
                 }
-                ImGui.SameLine();
-                if (ImGui.Button("Cancel"))
-                {
-                    crafter.Cancel("Cancelling craft...", false);
-                }
-                if (crafter.waitingForHQSelection)
-                {
-                    ImGui.Text("Waiting for you to select the HQ mats for your craft, please press the button below when finished.");
-                    if (ImGui.Button("I've Selected My HQ Mats"))
-                    {
-                        crafter.SignalHQMatsSelected();
-                    }
-                }
-                ImGui.End();
             }
         }
 
@@ -492,15 +478,20 @@ namespace CraftingList
         }
         public void DrawSettingsWindow()
         {
-            if (!SettingsVisible)
+            if (!Visible)
             {
                 return;
             }
 
-            if (ImGui.Begin("A Wonderful Configuration Window", ref this.settingsVisible,
+            if (ImGui.Begin("Crafting List", ref this.visible,
                  ImGuiWindowFlags.None))
             {
                 ImGui.BeginTabBar("##ConfigTab");
+                if (ImGui.BeginTabItem("Crafting List"))
+                {
+                    DrawCraftingList();
+                    ImGui.EndTabItem();
+                }
                 if (ImGui.BeginTabItem("Macros"))
                 {
                     DrawSelectedMacro();
