@@ -3,7 +3,6 @@ using Dalamud.Game;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
-using Dalamud.Game.Gui.ContextMenus;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 
@@ -39,9 +38,6 @@ namespace CraftingList.Utility
         [RequiredVersion("1.0")]
         public static ClientState ClientState { get; private set; } = null!;
 
-        [PluginService]
-        [RequiredVersion("1.0")]
-        public static ContextMenu ContextMenu { get; private set; } = null!;
 
         [PluginService]
         [RequiredVersion("1.0")]

@@ -7,7 +7,7 @@ namespace CraftingList.SeFunctions
     internal class OpenRecipeByItemId : SeFunction<OpenRecipeByItemIdDelegate>
     {
         public OpenRecipeByItemId(SigScanner sigScanner)
-            : base(sigScanner, "E8 ?? ?? ?? ?? EB 7A 48 83 F8 06")
+            : base(sigScanner, "E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 83 F8 06")
         {
         }
     }
