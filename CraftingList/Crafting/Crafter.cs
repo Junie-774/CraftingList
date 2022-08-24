@@ -60,6 +60,11 @@ namespace CraftingList.Crafting
 
                     await ChangeJobs((DoHJob)job);
 
+
+                    if (entry.HQMats)
+                    {
+                        await PromptForHqMats((int)entry.ItemId);
+                    }
                     if (entry.Macro.Name == "(Quick Synth)")
                     {
                         //await OpenRecipeByItem((int) entry.ItemId);
