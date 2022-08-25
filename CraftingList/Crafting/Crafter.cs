@@ -349,7 +349,6 @@ namespace CraftingList.Crafting
                 };
                 FlashWindow.FlashWindowEx(ref flashInfo);
             }
-            
             waitingForHQSelection = true;
             while (waitingForHQSelection && m_running) { }
             PluginLog.Debug("Materials selected!.");
