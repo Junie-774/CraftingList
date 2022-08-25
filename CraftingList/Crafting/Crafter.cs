@@ -353,8 +353,11 @@ namespace CraftingList.Crafting
             PluginLog.Debug("Waiting...");
             waitingForHQSelection = true;
             while (waitingForHQSelection && m_running) {
-                PluginLog.Debug("waiting...");
 
+                if (!waitingForHQSelection)
+                {
+                    break;
+                }
             }
             PluginLog.Debug("Materials selected!.");
             return true;
