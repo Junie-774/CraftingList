@@ -228,7 +228,10 @@ namespace CraftingList.Crafting
 
             seInterface.ExecuteMacroByNumber(macro.Macro1Num);
             await Task.Delay(macro.Macro1DurationSeconds * 1000 + 500);
-            seInterface.ExecuteMacroByNumber(macro.Macro2Num);
+            if (macro.Macro2Num != -1)
+            {
+                seInterface.ExecuteMacroByNumber(macro.Macro2Num);
+            }
 
             int completionAnimationTime = collectible ? configuration.WaitDurations.AfterCompleteMacroCollectible : configuration.WaitDurations.AfterCompleteMacroHQ;
             var recipeNote = seInterface.WaitForAddon("RecipeNote", true, macro.Macro2DurationSeconds * 1000 + completionAnimationTime + configuration.MacroExtraTimeoutMs);
