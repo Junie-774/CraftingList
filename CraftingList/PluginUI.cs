@@ -296,7 +296,6 @@ namespace CraftingList
                 ImGui.Text("Waiting for you to select the HQ mats for your craft, please press the button below when finished.");
                 if (ImGui.Button("I've Selected My HQ Mats"))
                 {
-                    PluginLog.Debug("SIgnalling!");
                     crafter.SignalHQMatsSelected();
                 }
             }
