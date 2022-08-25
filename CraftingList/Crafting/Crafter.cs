@@ -148,6 +148,7 @@ namespace CraftingList.Crafting
                 configuration.EntryList.RemoveAll(x => x.Complete);
                 await Task.Delay(500);
                 TerminationAlert();
+                m_running = false;
                 return true;
             });
         }
