@@ -336,6 +336,7 @@ namespace CraftingList.Crafting
             {
                 PluginLog.Debug("Failed to open recipe note."); return false;
             }
+            PluginLog.Debug("Flashing window");
             if (configuration.FlashWindowOnHQPrompt && !FlashWindow.ApplicationIsActivated())
             {
                 var flashInfo = new FlashWindow.FLASHWINFO
@@ -349,6 +350,7 @@ namespace CraftingList.Crafting
                 };
                 FlashWindow.FlashWindowEx(ref flashInfo);
             }
+            PluginLog.Debug("Waiting...");
             waitingForHQSelection = true;
             while (waitingForHQSelection && m_running) { }
             PluginLog.Debug("Materials selected!.");
@@ -410,6 +412,7 @@ namespace CraftingList.Crafting
 
         public void SignalHQMatsSelected()
         {
+            PluginLog.Debug("HQ Mats signalled!");
             waitingForHQSelection = false;
         }
 
