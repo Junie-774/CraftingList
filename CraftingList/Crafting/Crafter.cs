@@ -406,6 +406,7 @@ namespace CraftingList.Crafting
                 else DalamudApi.ChatGui.Print(cancelMessage);
             }
             m_running = false;
+            waitingForHQSelection = false;
         }
 
         public void SignalHQMatsSelected()

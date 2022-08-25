@@ -291,15 +291,6 @@ namespace CraftingList
             DrawEntryTable();
             DrawNewListEntry();
             ImGui.NewLine();
-            if (ImGui.Button("Craft!"))
-            {
-                crafter.CraftAllItems();
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Cancel"))
-            {
-                crafter.Cancel("Cancelling craft...", false);
-            }
             if (crafter.waitingForHQSelection)
             {
                 ImGui.Text("Waiting for you to select the HQ mats for your craft, please press the button below when finished.");
@@ -307,6 +298,18 @@ namespace CraftingList
                 {
                     crafter.SignalHQMatsSelected();
                 }
+            }
+            else
+            {
+                if (ImGui.Button("Craft!"))
+                {
+                    crafter.CraftAllItems();
+                }
+                ImGui.SameLine();
+            }
+            if (ImGui.Button("Cancel"))
+            {
+                crafter.Cancel("Cancelling craft...", false);
             }
         }
 
