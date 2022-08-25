@@ -127,7 +127,7 @@ namespace CraftingList.Crafting
                             if (!await ExecuteMacro(entry.Macro, isCollectible))
                             {
                                 PluginLog.Debug($"Executing macro timed out, stopping craft...");
-                                Cancel($"[CraftingList] Macro {{{entry.Macro.Name}, {entry.Macro.MacroNum}, {entry.Macro.DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
+                                Cancel($"[CraftingList] Macro {{{entry.Macro.Name}, {entry.Macro.Macro1Num}, {entry.Macro.Macro1DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
                                 break;
                             }
                             if (entry.NumCrafts != "max") entry.NumCrafts = (int.Parse(entry.NumCrafts) - 1).ToString();
@@ -224,12 +224,18 @@ namespace CraftingList.Crafting
 
         public async Task<bool> ExecuteMacro(CraftingMacro macro, bool collectible)
         {
-            PluginLog.Debug($"Executing Macro {macro.MacroNum}");
-            seInterface.ExecuteMacroByNumber(macro.MacroNum);
+            PluginLog.Debug($"Executing Macro {macro.Macro1Num}");
+
+            seInterface.ExecuteMacroByNumber(macro.Macro1Num);
+            await Task.Delay(macro.Macro1DurationSeconds * 1000 + 500);
+            seInterface.ExecuteMacroByNumber(macro.Macro2Num);
+
             int completionAnimationTime = collectible ? configuration.WaitDurations.AfterCompleteMacroCollectible : configuration.WaitDurations.AfterCompleteMacroHQ;
-            var recipeNote = seInterface.WaitForAddon("RecipeNote", true, macro.DurationSeconds * 1000 + completionAnimationTime + configuration.MacroExtraTimeoutMs);
+            var recipeNote = seInterface.WaitForAddon("RecipeNote", true, macro.Macro2DurationSeconds * 1000 + completionAnimationTime + configuration.MacroExtraTimeoutMs);
+
             try { recipeNote.Wait(); }
             catch { return false; }
+
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
 

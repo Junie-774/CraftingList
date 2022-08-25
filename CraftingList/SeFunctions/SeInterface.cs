@@ -98,7 +98,7 @@ namespace CraftingList.SeFunctions
         public void ExecuteMacroByNumber(int macroNum) => RaptureShellModule.Instance->ExecuteMacro(RaptureMacroModule.Instance->Individual[macroNum]);
         public void ExecuteMacro(Macro* m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)m);
         public void ExecuteMacro(Macro m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)&m);
-        public void ExecuteMacro(CraftingMacro m) => ExecuteMacroByNumber(m.MacroNum);
+        public void ExecuteMacro(CraftingMacro m) => ExecuteMacroByNumber(m.Macro1Num);
 
 
         public PtrRecipeNote RecipeNote() => GetUiObject("RecipeNote");

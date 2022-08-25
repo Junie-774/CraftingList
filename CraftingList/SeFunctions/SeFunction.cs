@@ -43,7 +43,7 @@ namespace CraftingList.SeFunctions
         {
             if (Address != IntPtr.Zero)
             {
-                var hook = new Hook<T>(Address, detour);
+                var hook = Hook<T>.FromAddress(Address, detour);
                 PluginLog.Debug($"Hooking {GetType().Name} at 0x{Address.ToInt64():X16}.");
                 return hook;
             }

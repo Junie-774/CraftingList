@@ -1,6 +1,5 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Utility;
-using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -23,12 +22,16 @@ namespace CraftingList
         private List<string> foodNames;
 
         private string newMacroName = "";
-        private int newMacroNum = 0;
+        private int newMacroNum = -1;
         private int newMacroDur = 0;
+        private int newMacroNum2 = -1;
+        private int newMacroDur2 = 0;
 
         private string currMacroName = "";
         private int currMacroNum = 0;
         private int currMacroDur = 0;
+        private int currMacroNum2 = 0;
+        private int currMacroDur2 = 0;
 
 
         private List<string> newEntryItemNameSearchResults;
@@ -314,8 +317,14 @@ namespace CraftingList
 
         public void DrawSelectedMacro()
         {
-            ImGui.SetNextItemWidth((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) * 0.35f);
-            if (ImGui.BeginCombo("Current Macro", currMacroName))
+            ImGui.SetWindowFontScale(1.1f);
+            ImGui.Text("Select Macro");
+            ImGui.SetWindowFontScale(1f);
+
+            float availSize = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
+
+            ImGui.SetNextItemWidth(availSize * 0.75f);
+            if (ImGui.BeginCombo("##Current Macro", currMacroName))
             {
                 foreach (var macro in macroNames)
                 {
@@ -325,8 +334,11 @@ namespace CraftingList
                         currMacroName = macro;
                         if (currMacroName != "")
                         {
-                            currMacroNum = configuration.Macros.Where(m => m.Name == macro).First().MacroNum;
-                            currMacroDur = configuration.Macros.Where(m => m.Name == macro).First().DurationSeconds;
+                            var mac = configuration.Macros.Where(m => m.Name == macro).First();
+                            currMacroNum = mac.Macro1Num;
+                            currMacroDur = mac.Macro1DurationSeconds;
+                            currMacroNum2 = mac.Macro2Num;
+                            currMacroDur2 = mac.Macro2DurationSeconds;
                         }
                     }
                     if (isSelected) ImGui.SetItemDefaultFocus();
@@ -339,18 +351,36 @@ namespace CraftingList
 
                 var currMacro = configuration.Macros.Where(m => m.Name == currMacroName);
                 var currMacroDummyName = currMacroName;
-                ImGui.SetNextItemWidth(((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - 25 - ImGui.CalcTextSize("Number Duration(s)").X) * 0.45f);
-                if (ImGui.InputText("Name", ref currMacroDummyName, 20))
+                ImGui.Text("Name:");
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth((availSize * 0.75f) - ImGui.CalcTextSize("Name:  ").X);
+
+                if (ImGui.InputText("##CurrMacroName", ref currMacroDummyName, 50))
                 {
                     currMacro.First().Name = currMacroDummyName;
                     macroNames[macroNames.FindIndex(m => m == currMacroName)] = currMacroDummyName;
                     currMacroName = currMacroDummyName;
                 }
 
-                ImGui.PushItemWidth(((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - 25) * 0.15f);
-                if (ImGui.InputInt("Number", ref currMacroNum, 0)) currMacro.First().MacroNum = currMacroNum;
+                ImGui.PushItemWidth(availSize * 0.085f);
 
-                if (ImGui.InputInt("Duration (s)", ref currMacroDur, 0)) currMacro.First().DurationSeconds = currMacroDur;
+                ImGui.Text("Macro 1 Number: ");
+                ImGui.SameLine();
+                if (ImGui.InputInt("##CurrMacroNum1", ref currMacroNum, 0)) currMacro.First().Macro1Num = currMacroNum;
+                ImGui.SameLine();
+
+                ImGui.Text("Macro 1 Duration (s): ");
+                ImGui.SameLine();
+                if (ImGui.InputInt("##CurrMacroDur1", ref currMacroDur, 0)) currMacro.First().Macro1DurationSeconds = currMacroDur;
+
+                ImGui.Text("Macro 2 Number: ");
+                ImGui.SameLine();
+                if (ImGui.InputInt("##CurrMacroNum2", ref currMacroNum2, 0)) currMacro.First().Macro2Num = currMacroNum2;
+                ImGui.SameLine();
+
+                ImGui.Text("Macro 2 Duration (s): ");
+                ImGui.SameLine();
+                if (ImGui.InputInt("##CurrMacroDur2", ref currMacroDur2, 0)) currMacro.First().Macro2DurationSeconds = currMacroDur2;
 
                 ImGui.PopItemWidth();
 
@@ -370,29 +400,37 @@ namespace CraftingList
             ImGui.Text("New Macro");
             ImGui.SetWindowFontScale(1f);
 
-            float availSize = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - 25 - ImGui.CalcTextSize("Macro Name: Macro Number: Macro Duration(s): + ").X;
+            float availSize = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X);
 
             ImGui.Text("Macro Name:");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(availSize * 0.6f);
-            ImGui.InputTextWithHint("##Macro Name", "New Macro Name", ref newMacroName, 20);
+            ImGui.SetNextItemWidth((availSize * 0.75f) - ImGui.CalcTextSize("Macro Name:").X);
+            ImGui.InputTextWithHint("##Macro Name", "New Macro Name", ref newMacroName, 50);
+
+            ImGui.PushItemWidth(availSize * 0.085f);
+
+            ImGui.Text("Macro 1 Number: ");
+            ImGui.SameLine();
+            ImGui.InputInt("##Macro 1 Number", ref newMacroNum, 0);
             ImGui.SameLine();
 
-            ImGui.Text(" Macro Number:");
-            ImGui.SameLine();
-            ImGui.PushItemWidth(availSize * 0.125f);
-            ImGui.InputInt("##Macro Number", ref newMacroNum, 0);
-            ImGui.SameLine();
-
-            ImGui.Text(" Macro Duration (s):");
+            ImGui.Text("Macro 1 Duration (s): ");
             ImGui.SameLine();
             ImGui.InputInt("##Macro Duration", ref newMacroDur, 0);
+
+            ImGui.Text("Macro 2 Number: ");
             ImGui.SameLine();
+            ImGui.InputInt("##Macro 2 Number", ref newMacroNum2, 0);
+            ImGui.SameLine();
+
+            ImGui.Text("Macro 2 Duration (s): ");
+            ImGui.SameLine();
+            ImGui.InputInt("##Macro 2 Duration", ref newMacroDur2, 0);
             ImGui.PopItemWidth();
 
             if (ImGui.Button("+", new Vector2(25, 25)) && newMacroName != "" && !macroNames.Contains(newMacroName))
             {
-                configuration.Macros.Add(new CraftingMacro(newMacroName, newMacroNum, newMacroDur));
+                configuration.Macros.Add(new CraftingMacro(newMacroName, newMacroNum, newMacroDur, newMacroNum2, newMacroDur2));
                 macroNames.Add(newMacroName);
                 currMacroName = newMacroName;
                 currMacroNum = newMacroNum;
@@ -409,9 +447,11 @@ namespace CraftingList
             ImGui.Text("Options");
             ImGui.SetWindowFontScale(1f);
             ImGui.Columns(2);
-            float availWidth = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - ImGui.CalcTextSize("Repair  ").X;
+            ImGui.SetColumnWidth(1, 350);
+            ImGui.SetColumnWidth(2, 350);
+            float availWidth = ImGui.GetColumnWidth();
 
-            ImGui.SetNextItemWidth(availWidth * 0.3f);
+            ImGui.SetNextItemWidth(340 - ImGui.CalcTextSize("Repair threshold ").X);
             ImGui.SliderInt("Repair Threshold ", ref configuration.RepairThresholdPercent, 0, 99);
             ImGui.Checkbox("Only repair if durability is below 99?", ref configuration.OnlyRepairIfBelow99);
             ImGui.NewLine();
@@ -422,16 +462,15 @@ namespace CraftingList
             ImGui.Checkbox("Play Sound effect when crafting terminates?", ref configuration.AlertOnTerminate);
             if (configuration.AlertOnTerminate)
             {
-                float width = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - ImGui.CalcTextSize("List Cancelled Sound Effect").X;
-                ImGui.PushItemWidth(width * 0.1f);
-                ImGui.Dummy(new Vector2((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) * 0.05f, 0));
+                ImGui.PushItemWidth(60);
+                ImGui.Dummy(new Vector2(50f, 0));
                 ImGui.SameLine();
                 if (ImGui.InputInt("List Complete Sound Effect", ref completeSoundEffect, 0))
                 {
                     if (completeSoundEffect >= 1 && completeSoundEffect <= 16) configuration.SoundEffectListComplete = completeSoundEffect;
                 }
 
-                ImGui.Dummy(new Vector2((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) * 0.05f, 0));
+                ImGui.Dummy(new Vector2(50f, 0));
                 ImGui.SameLine();
                 if (ImGui.InputInt("List Cancelled Sound Effect", ref cancelSoundEffect, 0))
                 {
@@ -483,6 +522,7 @@ namespace CraftingList
                 return;
             }
 
+            ImGui.SetNextWindowSizeConstraints(new Vector2(725f, 375f), new Vector2(float.PositiveInfinity, float.PositiveInfinity));
             if (ImGui.Begin("Crafting List", ref this.visible,
                  ImGuiWindowFlags.None))
             {

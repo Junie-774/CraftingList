@@ -67,15 +67,19 @@ namespace CraftingList.Crafting
     public unsafe class CraftingMacro
     {
         public string Name { get; set; }
-        public int MacroNum { get; set; }
+        public int Macro1Num { get; set; } = -1;
+        public int Macro1DurationSeconds { get; set; } = 0;
 
-        public int DurationSeconds { get; set; } = 0;
+        public int Macro2Num { get; set; } = -1;
+        public int Macro2DurationSeconds { get; set; } = 0;
 
-        public CraftingMacro(string name, int macroNum, int durationSeconds)
+        public CraftingMacro(string name, int macro1Num, int macro1DurationSeconds, int macro2Num, int macro2DurationSeconds)
         {
             Name = name;
-            DurationSeconds = durationSeconds;
-            MacroNum = macroNum;
+            Macro1DurationSeconds = macro1DurationSeconds;
+            Macro1Num = macro1Num;
+            Macro2Num = macro2Num;
+            Macro2DurationSeconds = macro2DurationSeconds;
         }
 
     }
