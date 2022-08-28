@@ -89,27 +89,7 @@ namespace CraftingList
         public void DrawCraftingList()
         {
             Tabs[0].Draw();
-            ImGui.NewLine();
-            if (crafter.waitingForHQSelection)
-            {
-                ImGui.Text("Waiting for you to select the HQ mats for your craft, please press the button below when finished.");
-                if (ImGui.Button("I've Selected My HQ Mats"))
-                {
-                    crafter.SignalHQMatsSelected();
-                }
-            }
-            else
-            {
-                if (ImGui.Button("Craft!"))
-                {
-                    crafter.CraftAllItems();
-                }
-                ImGui.SameLine();
-            }
-            if (ImGui.Button("Cancel"))
-            {
-                crafter.Cancel("Cancelling craft...", false);
-            }
+
         }
 
         public void DrawMacroTab()
