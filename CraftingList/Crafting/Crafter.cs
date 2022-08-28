@@ -105,10 +105,11 @@ namespace CraftingList.Crafting
                             }
                             if (!m_running) break;
 
-                            if (HQUnselected && entry.HQMats)
+                            if (HQUnselected)
                             {
                                 //await PromptForHqMats((int)entry.ItemId);
                                 FillHQMats(entry.HQSelection);
+                                await Task.Delay(500);
                             }
                             if (!await ClickSynthesize())
                             {
@@ -344,6 +345,7 @@ namespace CraftingList.Crafting
             {
                 for (int j = 0; j < hqSelection[i]; j++)
                 {
+                    PluginLog.Debug("Clicking hq...");
                     //await Task.Delay(500);
                     seInterface.RecipeNote().ClickHQ(i);
                 }
