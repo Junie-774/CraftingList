@@ -7,6 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -25,6 +26,19 @@ namespace CraftingList.SeFunctions
             Alchemist = 6,
             Culinarian = 7
         }
+
+        public static String[] DOHJobAbbreviations =
+        {
+            "CRP",
+            "BSM",
+            "ARM",
+            "GSM",
+            "LTW",
+            "WVR",
+            "ALC",
+            "CUL"
+        };
+
         private readonly IntPtr m_baseUiObject;
         private readonly IntPtr m_uiProperties;
         private readonly bool m_canGetUiObjects;
@@ -41,10 +55,13 @@ namespace CraftingList.SeFunctions
         public Macro AnnounceCompleteMacro;
 
         public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
+        public Hook<AgentRecipeNoteReceiveEventDelegate>? recipeAgentREHook;
         public void Dispose()
         {
             recipeREHook?.Disable();
             recipeREHook?.Dispose();
+            recipeAgentREHook?.Disable();
+            recipeAgentREHook?.Dispose();
             m_waitlist?.Dispose();
         }
 
@@ -72,14 +89,27 @@ namespace CraftingList.SeFunctions
             RemoveFoodMacro = new Macro(0, 0, "Remove Food", "/statusoff \"Well Fed\"");
             CloseNoteMacro = new Macro(0, 0, "Close", "/craftinglist 0");
 
-            //recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
+            recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
             //recipeREHook?.Enable();
+            recipeAgentREHook = Singleton<AgentRecipeNoteReceiveEvent>.Get().CreateHook(AgentReceiveEventDetour);
+            recipeAgentREHook?.Enable();
+
         }
 
         public void ReceiveEventLogDetour(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused)
         {
             PluginLog.Debug($"Receive Event: {atkUnit:X}, eventType: {eventType}, which: {which}, source: {source:X}, unused: {unused:X}");
             recipeREHook?.Original(atkUnit, eventType, which, source, unused);
+        }
+
+        public long AgentReceiveEventDetour(IntPtr agent, long ptr1, long atkvalue, long dum1, long dum2)
+        {
+            PluginLog.Debug($"Atk 1 value: {((AtkValue*)atkvalue)->Int}, Atk 2 value: {((AtkValue*)atkvalue)[1].Int}.");
+            if (recipeAgentREHook != null)
+            {
+                return recipeAgentREHook.Original(agent, ptr1, atkvalue, dum1, dum2);
+            }
+            return 0;
         }
 
         public IntPtr GetUiObject(string name, int index = 1)

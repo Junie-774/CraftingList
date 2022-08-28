@@ -21,6 +21,7 @@ namespace CraftingList.Crafting
 
         private SeInterface seInterface;
         private Configuration configuration;
+        private bool HQUnselected = true;
         public Crafter(SeInterface seInterface, Configuration config)
         {
             this.seInterface = seInterface;
@@ -46,6 +47,7 @@ namespace CraftingList.Crafting
                 foreach (var entry in configuration.EntryList.ToList())
                 {
                     entry.running = true;
+                    HQUnselected = true;
                     await Task.Delay(1000);
                     PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
 
@@ -61,10 +63,6 @@ namespace CraftingList.Crafting
                     await ChangeJobs((DoHJob)job);
 
 
-                    if (entry.HQMats)
-                    {
-                        await PromptForHqMats((int)entry.ItemId);
-                    }
                     if (entry.Macro.Name == "(Quick Synth)")
                     {
                         //await OpenRecipeByItem((int) entry.ItemId);
@@ -89,14 +87,12 @@ namespace CraftingList.Crafting
                                 {
                                     await ChangeFood(entry.FoodId);
                                     lastUsedFood = entry.FoodId;
+                                    HQUnselected = true;
                                 }
                                 if (needToRepair)
                                 {
+                                    HQUnselected = true;
                                     await Repair();
-                                }
-                                if (entry.HQMats)
-                                {
-                                    await PromptForHqMats((int)entry.ItemId);
                                 }
                             }
                             if (!m_running) break;
@@ -109,6 +105,11 @@ namespace CraftingList.Crafting
                             }
                             if (!m_running) break;
 
+                            if (HQUnselected && entry.HQMats)
+                            {
+                                //await PromptForHqMats((int)entry.ItemId);
+                                FillHQMats(entry.HQSelection);
+                            }
                             if (!await ClickSynthesize())
                             {
                                 if (entry.NumCrafts == "max")
@@ -329,6 +330,27 @@ namespace CraftingList.Crafting
             return existsItemBelowThreshold;
         }
 
+        public bool FillHQMats(int[] hqSelection)
+        {
+            
+            if (hqSelection.Length != 6)
+            {
+                PluginLog.Debug("[CraftingList] Internal error selecting HQ mats x.x");
+                return false;
+            }
+            
+            PluginLog.Debug("Selecting HQ Mats...");
+            for (int i = 0; i < 6; i++)
+            {
+                for (int j = 0; j < hqSelection[i]; j++)
+                {
+                    //await Task.Delay(500);
+                    seInterface.RecipeNote().ClickHQ(i);
+                }
+            }
+            HQUnselected = false;
+            return true;
+        }
         public async Task<bool> PromptForHqMats(int itemId)
         {
             PluginLog.Debug("Waiting for HQ Material Selection...");
@@ -359,6 +381,8 @@ namespace CraftingList.Crafting
             }
             return true;
         }
+
+
         public async Task<bool> Repair()
         {
             PluginLog.Debug($"Repairing...");

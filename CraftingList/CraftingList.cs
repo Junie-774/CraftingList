@@ -2,8 +2,11 @@
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+using System;
 
 namespace CraftingList
 {
@@ -13,11 +16,11 @@ namespace CraftingList
     {
         public string Name => "Crafting List";
 
-        private Configuration Configuration { get; init; }
-        private PluginUI PluginUi { get; init; }
+        internal Configuration Configuration { get; init; }
+        internal PluginUI PluginUi { get; init; }
         private SeInterface SeInterface { get; init; }
 
-        private Crafter Crafter { get; init; }
+        internal Crafter Crafter { get; init; }
 
         public static void InitializeSingletons()
         {
@@ -28,6 +31,7 @@ namespace CraftingList
             Singleton<UseAction>.Set(DalamudApi.SigScanner);
             Singleton<OpenContextMenuForAddon>.Set(DalamudApi.SigScanner);
             Singleton<AgentRepairReceiveEvent>.Set(DalamudApi.SigScanner);
+            Singleton<AgentRecipeNoteReceiveEvent>.Set(DalamudApi.SigScanner);
             Singleton<AddonRepairReceiveEvent>.Set(DalamudApi.SigScanner);
             Singleton<AddonRecipeNoteReceiveEvent>.Set(DalamudApi.SigScanner);
             Singleton<AgentRecipeNoteHide>.Set(DalamudApi.SigScanner);
@@ -48,7 +52,7 @@ namespace CraftingList
             Crafter = new Crafter(SeInterface, Configuration);
 
 
-            this.PluginUi = new PluginUI(Configuration, Crafter);
+            this.PluginUi = new PluginUI(this, Configuration, Crafter);
 
 
             DalamudApi.CommandManager.AddHandler("/craftinglist", new CommandInfo(OnCraftingList)

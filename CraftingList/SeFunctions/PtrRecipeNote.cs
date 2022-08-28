@@ -1,6 +1,7 @@
 ﻿using CraftingList.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
 
 namespace CraftingList.SeFunctions
@@ -17,6 +18,7 @@ namespace CraftingList.SeFunctions
 
         public static implicit operator bool(PtrRecipeNote ptr)
             => ptr.Pointer != null;
+
 
         public void Synthesize()
         {
@@ -53,6 +55,19 @@ namespace CraftingList.SeFunctions
         {
             if (Pointer == null) return;
             Module.ClickAddon(Pointer, Pointer->Unk330->AtkComponentBase.OwnerNode, EventType.Change, which);
+        }
+
+        public void ClickHQ(int which)
+        {
+            if (which < 0 || which > 5) return;
+            AtkValue* atkValue = stackalloc AtkValue[2];
+            atkValue[0].ChangeType(FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int);
+            atkValue[1].ChangeType(FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int);
+            atkValue[0].Int = 6;
+            atkValue[1].Int = 65536 + which;
+            byte* numPtr1 = stackalloc byte[16];
+            Singleton<AgentRecipeNoteReceiveEvent>.Get().Invoke((IntPtr) AgentRecipeNote.Instance(),
+                (long)numPtr1, (long)atkValue, 0, 0);
         }
 
         public void Close()
