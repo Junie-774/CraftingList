@@ -169,11 +169,7 @@ namespace CraftingList.UI
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.Combo("##Macro" + i, ref plugin.Configuration.EntryList[i].MacroIndex, macroNames.ToArray(), macroNames.Count))
                 {
-                    macroNames.Clear();
-                    foreach (var mac in plugin.Configuration.Macros)
-                    {
-                        macroNames.Add(mac.Name);
-                    }
+                    updateMacros();
                     var macro = plugin.Configuration.Macros.Where(x => x.Name == macroNames[plugin.Configuration.EntryList[i].MacroIndex]);
                     if (!macro.Any())
                     {
