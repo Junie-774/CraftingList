@@ -179,6 +179,7 @@ namespace CraftingList.UI
                     {
                         plugin.Configuration.EntryList[i].Macro = macro.First();
                     }
+                    //PluginLog.Debug($"Macro {plugin.Configuration.EntryList[i].MacroIndex}: {plugin.Configuration.EntryList[i].Macro.Name}");
                 }
                 ImGui.NextColumn();
                 /*
@@ -208,7 +209,7 @@ namespace CraftingList.UI
                 }
                 ImGui.NextColumn();
 
-                if (ImGui.Button("Select...##" + plugin.Configuration.EntryList.IndexOf(plugin.Configuration.EntryList[i])))
+                if (ImGui.Button("Select...##" + i))
                 {
                     hqMatSelectionCurrEntry = i;
                     ImGui.OpenPopup("HQ Mat Selection");
@@ -254,7 +255,7 @@ namespace CraftingList.UI
             if (ImGui.Combo("##Macro", ref newEntry.MacroIndex, newMacroNames.ToArray(), newMacroNames.Count))
             {
                 updateMacros();
-                var macro = plugin.Configuration.Macros.Where(x => x.Name == macroNames[newEntry.MacroIndex]);
+                var macro = plugin.Configuration.Macros.Where(x => x.Name == newMacroNames[newEntry.MacroIndex]);
                 if (!macro.Any())
                 {
                     PluginLog.Debug("Internal error: Macro name does not match any in macro list. This shouldn't happen.");
@@ -263,6 +264,7 @@ namespace CraftingList.UI
                 {
                     newEntry.Macro = macro.First();
                 }
+                //PluginLog.Debug($"Macro {newEntry.MacroIndex}: {newEntry.Macro.Name}");
             }
             ImGui.NextColumn();
 
