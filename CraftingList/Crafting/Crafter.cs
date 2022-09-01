@@ -52,6 +52,11 @@ namespace CraftingList.Crafting
                     PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
 
                     if (!m_running) break;
+                    if (!CraftingMacro.isValidMacro(entry.Macro))
+                    {
+                        DalamudApi.ChatGui.PrintError("[CraftingList] Entry " + entry.Name + ": Macro is invalid. Try reselecting it. Skipping to next craft.");
+                        continue;
+                    }
                     var job = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
                         .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
                         .First().CraftType.Value!.RowId;
@@ -230,9 +235,10 @@ namespace CraftingList.Crafting
             PluginLog.Debug($"Executing Macro {macro.Macro1Num}");
 
             seInterface.ExecuteMacroByNumber(macro.Macro1Num);
-            await Task.Delay(macro.Macro1DurationSeconds * 1000 + 500);
+            await Task.Delay(macro.Macro1DurationSeconds * 1000 + 1500);
             if (macro.Macro2Num != -1)
             {
+                PluginLog.Debug($"Executing Macro {macro.Macro2Num}");
                 seInterface.ExecuteMacroByNumber(macro.Macro2Num);
             }
 

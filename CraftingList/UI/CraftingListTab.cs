@@ -18,6 +18,8 @@ namespace CraftingList.UI
         readonly private IEnumerable<Recipe?> craftableItems;
         readonly private List<string> craftableNames;
         readonly private IEnumerable<Item?> craftingFoods;
+        private Recipe? hqMatItem;
+        private List<Item> currItemIngredients = new();
         readonly private List<string> foodNames;
         private List<string> newEntryItemNameSearchResults;
 
@@ -127,8 +129,8 @@ namespace CraftingList.UI
             float dynamicAvailWidth = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - (18 + 18 + 12) - (ImGui.CalcTextSize("Amount").X + ImGui.CalcTextSize("HQ Mats?").X + ImGui.CalcTextSize("Remove").X);
             ImGui.SetColumnWidth(0, dynamicAvailWidth * 0.4f);
             ImGui.SetColumnWidth(1, 18 + ImGui.CalcTextSize("Amount").X);
-            ImGui.SetColumnWidth(2, dynamicAvailWidth * 0.25f);
-            ImGui.SetColumnWidth(3, dynamicAvailWidth * 0.35f);
+            ImGui.SetColumnWidth(2, dynamicAvailWidth * 0.3f);
+            ImGui.SetColumnWidth(3, dynamicAvailWidth * 0.3f);
             ImGui.SetColumnWidth(4, 18 + ImGui.CalcTextSize("HQ Mats").X);
 
             ImGui.Separator();
@@ -169,7 +171,7 @@ namespace CraftingList.UI
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.Combo("##Macro" + i, ref plugin.Configuration.EntryList[i].MacroIndex, macroNames.ToArray(), macroNames.Count))
                 {
-                    updateMacros();
+                    OnConfigChange();
                     var macro = plugin.Configuration.Macros.Where(x => x.Name == macroNames[plugin.Configuration.EntryList[i].MacroIndex]);
                     if (!macro.Any())
                     {
@@ -211,6 +213,8 @@ namespace CraftingList.UI
 
                 if (ImGui.Button("Select...##" + i))
                 {
+                    hqMatItem = craftableItems.Where(item => item!.ItemResult.Value!.RowId == plugin.Configuration.EntryList[i].ItemId).First();
+                    setHQItemIngredients(hqMatItem!);
                     hqMatSelectionCurrEntry = i;
                     ImGui.OpenPopup("HQ Mat Selection");
                 }
@@ -254,7 +258,7 @@ namespace CraftingList.UI
             ImGui.SetNextItemWidth(-1);
             if (ImGui.Combo("##Macro", ref newEntry.MacroIndex, newMacroNames.ToArray(), newMacroNames.Count))
             {
-                updateMacros();
+                OnConfigChange();
                 var macro = plugin.Configuration.Macros.Where(x => x.Name == newMacroNames[newEntry.MacroIndex]);
                 if (!macro.Any())
                 {
@@ -264,7 +268,6 @@ namespace CraftingList.UI
                 {
                     newEntry.Macro = macro.First();
                 }
-                //PluginLog.Debug($"Macro {newEntry.MacroIndex}: {newEntry.Macro.Name}");
             }
             ImGui.NextColumn();
 
@@ -289,11 +292,6 @@ namespace CraftingList.UI
             }
             ImGui.NextColumn();
 
-            if (ImGui.Button("Select...##new"))
-            {
-                hqMatSelectionCurrEntry = plugin.Configuration.EntryList.IndexOf(newEntry);
-                ImGui.OpenPopup("HQ Mat Selection");
-            }
             ImGui.NextColumn();
             ImGui.SetNextItemWidth(-1);
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 18);
@@ -310,7 +308,7 @@ namespace CraftingList.UI
 
                     newEntry.ItemId = items.First()!.ItemResult.Value!.RowId;
                     newEntry.NumCrafts = newEntry.NumCrafts.ToLower();
-                    newEntry.MacroIndex -= 1; //Transition from referring to newMacro
+                    newEntry.MacroIndex -= 1; //Transition from referring to newMacroName to macroName
                     var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntry.Macro, newEntry.FoodId, newEntry.HQMats, newEntry.MacroIndex, newEntry.FoodIndex);
                     plugin.Configuration.EntryList.Add(entry);
                     newEntry.Name = "";
@@ -341,17 +339,16 @@ namespace CraftingList.UI
 
         public void DrawHQMatSelection()
         {
-            if (hqMatSelectionCurrEntry < 0) return;
+            if (hqMatSelectionCurrEntry == -1) return;
+            if (hqMatItem == null) return;
+
             CListEntry entry = plugin.Configuration.EntryList[hqMatSelectionCurrEntry];
-            var item = craftableItems.Where(item => item!.ItemResult.Value!.RowId == entry.ItemId).First();
+
 
             bool hasHQIngredients = false;
-            String maxString = "";
-            for (int i = 0; i < item!.UnkData5.Length; i++)
+            string maxString = "";
+            foreach (var ingredient in currItemIngredients)
             {
-                var itemSheet = DalamudApi.DataManager.GetExcelSheet<Item>();
-                int ingredientID = item!.UnkData5[i].ItemIngredient;
-                var ingredient = itemSheet!.Where(it => it.RowId == ingredientID).First();
                 if (ingredient.RowId != 0)
                 {
                     if (ingredient.Name.ToString().Length > maxString.Length)
@@ -364,23 +361,22 @@ namespace CraftingList.UI
             if (ImGui.BeginPopup("HQ Mat Selection"))
             {
 
-                for (int i = 0; i < item!.UnkData5.Length; i++)
+                for (int i = 0; i < hqMatItem!.UnkData5.Length; i++)
                 {
-                    var itemSheet = DalamudApi.DataManager.GetExcelSheet<Item>();
-                    int ingredientID = item!.UnkData5[i].ItemIngredient;
-                    var ingredient = itemSheet!.Where(it => it.RowId == ingredientID).First();
-                    if (ingredient.RowId != 0)
+                    
+                    if (currItemIngredients[i].RowId != 0)
                     {
-                        if (ingredient.CanBeHq)
+                        if (currItemIngredients[i].CanBeHq)
                         {
                             
-                            ImGui.Text(ingredient.Name);
+                            ImGui.Text(currItemIngredients[i].Name + " (" + hqMatItem!.UnkData5[i].AmountIngredient + ")");
                             ImGui.SameLine();
-                            ImGui.SetCursorPosX(ImGui.CalcTextSize(maxString).X);
-                            ImGui.InputInt("##ingredient_" + ingredient.Name, ref entry.HQSelection[i], 1);
-                            if (entry.HQSelection[i] > item!.UnkData5[i].AmountIngredient)
+                            ImGui.SetCursorPosX(ImGui.CalcTextSize(maxString + "(XXX)").X);
+                            ImGui.SetNextItemWidth(100);
+                            ImGui.InputInt("##ingredient_" + currItemIngredients[i].Name, ref entry.HQSelection[i], 1);
+                            if (entry.HQSelection[i] > hqMatItem!.UnkData5[i].AmountIngredient)
                             {
-                                entry.HQSelection[i] = item!.UnkData5[i].AmountIngredient;
+                                entry.HQSelection[i] = hqMatItem!.UnkData5[i].AmountIngredient;
                             }
                             if (entry.HQSelection[i] < 0)
                             {
@@ -404,7 +400,7 @@ namespace CraftingList.UI
             }
         }
 
-        private void updateMacros()
+        public void OnConfigChange()
         {
             macroNames.Clear();
             newMacroNames.Clear();
@@ -413,6 +409,26 @@ namespace CraftingList.UI
             {
                 macroNames.Add(mac.Name);
                 newMacroNames.Add(mac.Name);
+            }
+            foreach (var entry in plugin.Configuration.EntryList)
+            {
+                entry.Macro.Name = "";
+            }
+        }
+        private void setHQItemIngredients(Recipe recipe)
+        {
+            currItemIngredients.Clear();
+            var itemSheet = DalamudApi.DataManager.GetExcelSheet<Item>();
+            for (int i = 0; i < recipe.UnkData5.Length; i++)
+            {
+                
+                int ingredientID = hqMatItem!.UnkData5[i].ItemIngredient;
+                var matches = itemSheet!.Where(it => it.RowId == ingredientID);
+
+                if (matches.Any())
+                {
+                    currItemIngredients.Add(matches.First());
+                }
             }
         }
         public void Dispose()

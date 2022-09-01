@@ -84,7 +84,7 @@ namespace CraftingList.Crafting
 
         public static bool isValidMacro(CraftingMacro macro)
         {
-            if (macro.Name == null) return false;
+            if (macro.Name == null || macro.Name == "") return false;
             if (macro.Macro1Num < 0 || macro.Macro1Num > 99) return false;
             if (macro.Macro1DurationSeconds <= 0) return false;
             if (macro.Macro2Num == -1)

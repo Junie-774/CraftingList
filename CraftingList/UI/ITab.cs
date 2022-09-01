@@ -11,5 +11,6 @@ namespace CraftingList.UI
         public string Name { get; }
 
         void Draw();
+        void OnConfigChange();
     }
 }

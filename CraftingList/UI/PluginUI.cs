@@ -18,8 +18,8 @@ namespace CraftingList
     {
         private List<ITab> Tabs;
         private const string newMacroEntryString = "New Macro...";
+        private readonly CraftingList plugin;
         private readonly Configuration configuration;
-        private Crafter crafter;
 
         private string selectedMacroName = "";
         private string currMacroName = "";
@@ -51,8 +51,8 @@ namespace CraftingList
             {
                 (ITab) new CraftingListTab(plugin),
             };
+            this.plugin = plugin;
             this.configuration = configuration;
-            this.crafter = crafter;
             macroNames = new List<string>
             {
                 ""
@@ -212,6 +212,7 @@ namespace CraftingList
                             currMacro.First().Macro1DurationSeconds = currMacroDur1;
                             currMacro.First().Macro2DurationSeconds = currMacroDur2;
                             selectedMacroName = "";
+                            plugin.PluginUi.OnConfigChange();
                         }
                     }
                     ImGui.SameLine();
@@ -226,6 +227,7 @@ namespace CraftingList
                         configuration.Macros.RemoveAll(m => m.Name == selectedMacroName);
                         macroNames.Remove(selectedMacroName);
                         selectedMacroName = "";
+                        plugin.PluginUi.OnConfigChange();
                     }
                 }
             }
@@ -348,6 +350,14 @@ namespace CraftingList
             }
             configuration.Save();
             ImGui.End();
+        }
+
+        public void OnConfigChange()
+        {
+            foreach (var tab in Tabs)
+            {
+                tab.OnConfigChange();
+            }
         }
 
 
