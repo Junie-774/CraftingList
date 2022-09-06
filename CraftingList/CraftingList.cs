@@ -52,7 +52,7 @@ namespace CraftingList
             Crafter = new Crafter(SeInterface, Configuration);
 
 
-            this.PluginUi = new PluginUI(this, Configuration, Crafter);
+            this.PluginUi = new PluginUI(this, Configuration);
 
 
             DalamudApi.CommandManager.AddHandler("/craftinglist", new CommandInfo(OnCraftingList)

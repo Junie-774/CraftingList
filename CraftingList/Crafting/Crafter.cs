@@ -137,14 +137,14 @@ namespace CraftingList.Crafting
                                 Cancel($"[CraftingList] Macro {{{entry.Macro.Name}, {entry.Macro.Macro1Num}, {entry.Macro.Macro1DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
                                 break;
                             }
-                            if (entry.NumCrafts != "max") entry.NumCrafts = (int.Parse(entry.NumCrafts) - 1).ToString();
+                            entry.Decrement();
                         }
                     }
                     if (!m_running)
                     {
                         break;
                     }
-                    if (entry.NumCrafts == "0") entry.Complete = true;
+                    
                     if (!await ExitCrafting())
                     {
                         PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");

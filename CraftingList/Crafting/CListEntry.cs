@@ -31,6 +31,13 @@
             this.MacroIndex = macroIndex;
             this.FoodIndex = foodIndex;
         }
+
+        public void Decrement()
+        {
+            if (NumCrafts.ToLower() == "max") return;
+            NumCrafts = (int.Parse(NumCrafts) - 1).ToString();
+            if (NumCrafts == "0") Complete = true;
+        }
         /*
         public CListEntry(CListEntry other)
         {

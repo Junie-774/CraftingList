@@ -34,7 +34,7 @@ namespace CraftingList.UI
 
         public string Name => "CraftingList";
 
-        private CraftingList plugin;
+        private readonly CraftingList plugin;
 
         int hqMatSelectionCurrEntry = -1;
 
@@ -171,7 +171,6 @@ namespace CraftingList.UI
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.Combo("##Macro" + i, ref plugin.Configuration.EntryList[i].MacroIndex, macroNames.ToArray(), macroNames.Count))
                 {
-                    OnConfigChange();
                     var macro = plugin.Configuration.Macros.Where(x => x.Name == macroNames[plugin.Configuration.EntryList[i].MacroIndex]);
                     if (!macro.Any())
                     {
@@ -231,7 +230,7 @@ namespace CraftingList.UI
             }
 
 
-            plugin.Configuration.EntryList.RemoveAll(x => x.Complete);
+            plugin.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0");
             plugin.Configuration.Save();
 
         }
@@ -258,7 +257,6 @@ namespace CraftingList.UI
             ImGui.SetNextItemWidth(-1);
             if (ImGui.Combo("##Macro", ref newEntry.MacroIndex, newMacroNames.ToArray(), newMacroNames.Count))
             {
-                OnConfigChange();
                 var macro = plugin.Configuration.Macros.Where(x => x.Name == newMacroNames[newEntry.MacroIndex]);
                 if (!macro.Any())
                 {
@@ -412,8 +410,9 @@ namespace CraftingList.UI
             }
             foreach (var entry in plugin.Configuration.EntryList)
             {
-                entry.Macro.Name = "";
+                entry.MacroIndex = -1;
             }
+            
         }
         private void setHQItemIngredients(Recipe recipe)
         {
