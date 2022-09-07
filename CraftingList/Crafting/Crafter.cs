@@ -44,6 +44,8 @@ namespace CraftingList.Crafting
                 var token = tokenSource.Token;
 
                 uint lastUsedFood = 0;
+
+                PluginLog.Debug($"Last food: {lastUsedFood}");
                 foreach (var entry in configuration.EntryList.ToList())
                 {
                     entry.running = true;

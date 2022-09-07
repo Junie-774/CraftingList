@@ -313,6 +313,7 @@ namespace CraftingList.UI
                     newEntry.NumCrafts = "";
                     newEntry.MacroIndex = 0;
                     newEntry.FoodIndex = 0;
+                    newEntry.FoodId = 0;
                 }
             }
             ImGui.Separator();
