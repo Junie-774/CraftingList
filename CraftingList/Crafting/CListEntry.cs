@@ -9,27 +9,23 @@
         public string NumCrafts;
         
         public CraftingMacro Macro;
-        public uint FoodId = 0;
         public bool running = false;
         public bool HQMats = false;
         public int[] HQSelection = new int[6];
 
         //Dummy variables to store stuff for the UI
-        public int FoodIndex;
         public int MacroIndex;
 
-        public CListEntry(string name, uint itemId, string numCrafts, CraftingMacro macro, uint food, bool hqmats, int macroIndex, int foodIndex)
+        public CListEntry(string name, uint itemId, string numCrafts, CraftingMacro macro, bool hqmats, int macroIndex)
         {
             this.Name = name;
             this.ItemId = itemId;
             this.NumCrafts = numCrafts == "max" || int.TryParse(numCrafts, out _) ? numCrafts : "0";
             
             this.Macro = macro;
-            this.FoodId = food;
             this.HQMats = hqmats;
 
             this.MacroIndex = macroIndex;
-            this.FoodIndex = foodIndex;
         }
 
         public void Decrement()
@@ -37,6 +33,11 @@
             if (NumCrafts.ToLower() == "max") return;
             NumCrafts = (int.Parse(NumCrafts) - 1).ToString();
             if (NumCrafts == "0") Complete = true;
+        }
+
+        public static CListEntry Clone(CListEntry other)
+        {
+            return new CListEntry(other.Name, other.ItemId, other.NumCrafts, other.Macro, other.HQMats, other.MacroIndex);
         }
         /*
         public CListEntry(CListEntry other)

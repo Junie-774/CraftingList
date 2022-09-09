@@ -39,11 +39,13 @@ namespace CraftingList.Crafting
             m_running = true;
             return Task.Run(async () =>
             {
-
+                await ExitCrafting();
+                await seInterface.WaitForCloseAddon("RecipeNote", true, configuration.AddonTimeout);
                 var tokenSource = new CancellationTokenSource();
                 var token = tokenSource.Token;
 
                 uint lastUsedFood = 0;
+                uint lastUsedMedicine = 0;
 
                 PluginLog.Debug($"Last food: {lastUsedFood}");
                 foreach (var entry in configuration.EntryList.ToList())
@@ -51,7 +53,7 @@ namespace CraftingList.Crafting
                     entry.running = true;
                     HQUnselected = true;
                     await Task.Delay(1000);
-                    PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.FoodId}");
+                    PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.Macro.FoodID}");
 
                     if (!m_running) break;
                     if (!CraftingMacro.isValidMacro(entry.Macro))
@@ -80,41 +82,60 @@ namespace CraftingList.Crafting
                         {
                             if (!m_running || !entry.running) break;
 
-                            bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.FoodId).Result;
+                            bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.Macro.FoodID, false).Result;
+                            bool needToChangeMedicine = NeedToChangeFood(lastUsedMedicine, entry.Macro.MedicineID, true).Result;
                             bool needToRepair = NeedsRepair();
 
-                            PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {entry.FoodId}");
+                            PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {entry.Macro.FoodID}");
                             PluginLog.Debug($"Need change food: {needToChangeFood}");
+                            PluginLog.Debug($"Last medicine: {lastUsedMedicine}, Curr medicine: {entry.Macro.MedicineID}");
+                            PluginLog.Debug($"Need change medicine: {needToChangeMedicine}");
                             PluginLog.Debug($"Need repair: {needToRepair}");
 
-                            if (needToChangeFood || needToRepair)
+                            if (needToChangeFood || needToChangeMedicine || needToRepair)
                             {
                                 await ExitCrafting();
                                 if (needToChangeFood)
                                 {
-                                    await ChangeFood(entry.FoodId);
-                                    lastUsedFood = entry.FoodId;
-                                    HQUnselected = true;
+                                    if (!await ChangeFood(entry.Macro.FoodID, false))
+                                    {
+                                        PluginLog.Debug($"Consuming food failed, stopping craft...");
+                                        Cancel("[CraftingList] A problem occurred while trying to consume food, cancelling craft...", true);
+                                        break;
+                                    }
+                                    lastUsedFood = entry.Macro.FoodID;
                                 }
+                                if (needToChangeMedicine)
+                                {
+                                    
+                                    if (!await ChangeFood(entry.Macro.MedicineID, true))
+                                    {
+                                        PluginLog.Debug($"Consuming medication failed, stopping craft...");
+                                        Cancel("[CraftingList] A problem occurred while trying to consume medication, cancelling craft...", true);
+                                        break;
+                                    }
+                                    lastUsedMedicine = entry.Macro.MedicineID;
+                                }
+
                                 if (needToRepair)
                                 {
-                                    HQUnselected = true;
                                     await Repair();
                                 }
+                                HQUnselected = true;
+
                             }
                             if (!m_running) break;
 
                             if (!await OpenRecipeByItem((int)entry.ItemId))
                             {
                                 PluginLog.Debug($"Open Recipe Note failed, stopping craft...");
-                                Cancel("[CraftingList] A problem occurred while trying to open crafting log, cancelling...", true);
+                                Cancel("[CraftingList] A problem occurred while trying to open crafting log, cancelling craft...", true);
                                 break;
                             }
                             if (!m_running) break;
 
                             if (HQUnselected)
                             {
-                                //await PromptForHqMats((int)entry.ItemId);
                                 FillHQMats(entry.HQSelection);
                                 await Task.Delay(500);
                             }
@@ -127,7 +148,7 @@ namespace CraftingList.Crafting
                                 else
                                 {
                                     PluginLog.Debug($"Click Synthesize failed, stopping current entry...");
-                                    DalamudApi.ChatGui.PrintError("[CraftingList] A problem occured starting craft, moving on to next item in the list...");
+                                    Cancel("[CraftingList] A problem occured starting craft, cancelling...", true);
                                 }
 
                                 break;
@@ -200,25 +221,38 @@ namespace CraftingList.Crafting
             return true;
         }
 
-        public async Task<int> ChangeFood(uint newFoodId)
+        public async Task<bool> ChangeFood(uint newFoodId, bool medication)
         {
-            PluginLog.Debug($"Changing food to {newFoodId}");
+            PluginLog.Debug($"Changing food/medication to {newFoodId}");
             if (newFoodId != 0)
             {
-                PluginLog.Debug($"Eating food {newFoodId}...");
+
+                if (medication) seInterface.RemoveMedicated();
+                else seInterface.RemoveFood();
+
+                PluginLog.Debug($"Consuming food/medication {newFoodId}...");
+
                 seInterface.UseItem(newFoodId);
-                PluginLog.Debug($"Ate Food.");
+
                 await Task.Delay(configuration.WaitDurations.AfterEatFood);
 
+                if (!medication) return await HasMedication();
+                else return await HasFood();
             }
             else
             {
-                PluginLog.Debug($"Removing food...");
-                seInterface.RemoveFood();
-                PluginLog.Debug($"Removed food.");
+                PluginLog.Debug($"Removing food/medication...");
+
+                if (medication) seInterface.RemoveMedicated();
+                else seInterface.RemoveFood();
+
+                PluginLog.Debug($"Removed food/medication.");
+
                 await Task.Delay(configuration.WaitDurations.AfterClickOffFood);
+
+                if (!medication) return !await HasMedication();
+                else return !await HasFood();
             }
-            return 0;
         }
 
         public async Task<bool> ClickSynthesize()
@@ -273,22 +307,9 @@ namespace CraftingList.Crafting
             seInterface.ExecuteMacro(mac);
         }
 
-        public static async Task<bool> NeedToChangeFood(uint lastFood, uint currEntryFoodId)
+        public static async Task<bool> NeedToChangeFood(uint lastFood, uint currEntryFoodId, bool medicine)
         {
-            bool hasFood = false;
-            while (DalamudApi.ClientState.LocalPlayer == null)
-            {
-                await Task.Delay(20);
-            }
-            foreach (var status in DalamudApi.ClientState.LocalPlayer.StatusList)
-            {
-                if (status == null) continue;
-
-                if (status.StatusId == 48)
-                {
-                    hasFood = true;
-                }
-            }
+            bool hasFood = medicine ? await HasMedication() : await HasFood();
             // If we need to refresh
             if (lastFood == currEntryFoodId && currEntryFoodId != 0)
             {
@@ -392,7 +413,45 @@ namespace CraftingList.Crafting
             return true;
         }
 
+        public static async Task<bool> HasFood()
+        {
+            bool hasFood = false;
+            while (DalamudApi.ClientState.LocalPlayer == null)
+            {
+                await Task.Delay(20);
+            }
+            foreach (var status in DalamudApi.ClientState.LocalPlayer.StatusList)
+            {
+                if (status == null) continue;
 
+                if (status.StatusId == 48)
+                {
+                    hasFood = true;
+                }
+     
+            }
+            return hasFood;
+        }
+
+        public static async Task<bool> HasMedication()
+        {
+            bool hasMeds = false;
+            while (DalamudApi.ClientState.LocalPlayer == null)
+            {
+                await Task.Delay(20);
+            }
+            foreach (var status in DalamudApi.ClientState.LocalPlayer.StatusList)
+            {
+                if (status == null) continue;
+
+                if (status.StatusId == 48)
+                {
+                    hasMeds = true;
+                }
+     
+            }
+            return hasMeds;
+        }
         public async Task<bool> Repair()
         {
             PluginLog.Debug($"Repairing...");

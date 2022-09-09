@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -51,8 +52,10 @@ namespace CraftingList.SeFunctions
         private Macro[] ChangeJobMacros;
         private Macro OpenRepairMacro;
         private Macro RemoveFoodMacro;
+        private Macro RemoveMedicatedMacro;
         public Macro CloseNoteMacro;
         public Macro AnnounceCompleteMacro;
+        
 
         public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
         public Hook<AgentRecipeNoteReceiveEventDelegate>? recipeAgentREHook;
@@ -64,7 +67,6 @@ namespace CraftingList.SeFunctions
             recipeAgentREHook?.Dispose();
             m_waitlist?.Dispose();
         }
-
         public SeInterface()
         {
             m_baseUiObject = Singleton<GetBaseUiObject>.Get().Invoke() ?? IntPtr.Zero;
@@ -87,6 +89,7 @@ namespace CraftingList.SeFunctions
 
             OpenRepairMacro = new Macro(0, 0, "Open Repair", "/gaction \"Repair\"");
             RemoveFoodMacro = new Macro(0, 0, "Remove Food", "/statusoff \"Well Fed\"");
+            RemoveMedicatedMacro = new Macro(0, 0, "Remove Medicated", "/statusoff \"Medicated\"");
             CloseNoteMacro = new Macro(0, 0, "Close", "/craftinglist 0");
 
             recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
@@ -177,6 +180,8 @@ namespace CraftingList.SeFunctions
         }
 
         public void RemoveFood() => ExecuteMacro(RemoveFoodMacro);
+
+        public void RemoveMedicated() => ExecuteMacro(RemoveMedicatedMacro);
 
     }
 }

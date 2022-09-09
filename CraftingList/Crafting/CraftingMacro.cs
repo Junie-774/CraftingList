@@ -66,12 +66,15 @@ namespace CraftingList.Crafting
     }
     public unsafe class CraftingMacro
     {
-        public string Name { get; set; }
-        public int Macro1Num { get; set; } = -1;
-        public int Macro1DurationSeconds { get; set; } = 0;
+        public string Name = "";
+        public int Macro1Num = -1;
+        public int Macro1DurationSeconds = 0;
 
-        public int Macro2Num { get; set; } = -1;
-        public int Macro2DurationSeconds { get; set; } = 0;
+        public int Macro2Num = -1;
+        public int Macro2DurationSeconds  = 0;
+
+        public uint FoodID = 0;
+        public uint MedicineID = 0;
 
         public CraftingMacro(string name, int macro1Num, int macro1DurationSeconds, int macro2Num, int macro2DurationSeconds)
         {

@@ -93,7 +93,7 @@ namespace CraftingList
                 return;
             }
 
-            ImGui.SetNextWindowSizeConstraints(new Vector2(725f, 375f), new Vector2(float.PositiveInfinity, float.PositiveInfinity));
+            ImGui.SetNextWindowSizeConstraints(new Vector2(500f, 375f), new Vector2(float.PositiveInfinity, float.PositiveInfinity));
             if (ImGui.Begin("Crafting List", ref this.visible,
                  ImGuiWindowFlags.None))
             {
