@@ -8,7 +8,6 @@
         public uint ItemId;
         public string NumCrafts;
         
-        public CraftingMacro Macro;
         public bool running = false;
         public bool HQMats = false;
         public int[] HQSelection = new int[6];
@@ -16,13 +15,12 @@
         //Dummy variables to store stuff for the UI
         public int MacroIndex;
 
-        public CListEntry(string name, uint itemId, string numCrafts, CraftingMacro macro, bool hqmats, int macroIndex)
+        public CListEntry(string name, uint itemId, string numCrafts, bool hqmats, int macroIndex)
         {
             this.Name = name;
             this.ItemId = itemId;
             this.NumCrafts = numCrafts == "max" || int.TryParse(numCrafts, out _) ? numCrafts : "0";
             
-            this.Macro = macro;
             this.HQMats = hqmats;
 
             this.MacroIndex = macroIndex;
@@ -37,7 +35,7 @@
 
         public static CListEntry Clone(CListEntry other)
         {
-            return new CListEntry(other.Name, other.ItemId, other.NumCrafts, other.Macro, other.HQMats, other.MacroIndex);
+            return new CListEntry(other.Name, other.ItemId, other.NumCrafts, other.HQMats, other.MacroIndex);
         }
         /*
         public CListEntry(CListEntry other)

@@ -35,6 +35,11 @@ namespace CraftingList.Crafting
                 DalamudApi.ChatGui.PrintError("[CraftingList] A craft is already running!");
                 return Task.FromResult(false);
             }
+            if (!IsListValid())
+            {
+                DalamudApi.ChatGui.PrintError("[CraftingList] An error occured validating the list. Please make sure all of your amounts are correct, and that all of your macros are selected.");
+                return Task.FromResult(false);
+            }
 
             m_running = true;
             return Task.Run(async () =>
@@ -50,17 +55,18 @@ namespace CraftingList.Crafting
                 PluginLog.Debug($"Last food: {lastUsedFood}");
                 foreach (var entry in configuration.EntryList.ToList())
                 {
+                    if (!m_running) break;
                     entry.running = true;
                     HQUnselected = true;
-                    await Task.Delay(1000);
-                    PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {entry.Macro.Name}. FoodId: {entry.Macro.FoodID}");
-
-                    if (!m_running) break;
-                    if (!CraftingMacro.isValidMacro(entry.Macro))
+                    var macro = configuration.Macros[entry.MacroIndex];
+                    if (!CraftingMacro.isValidMacro(macro))
                     {
-                        DalamudApi.ChatGui.PrintError("[CraftingList] Entry " + entry.Name + ": Macro is invalid. Try reselecting it. Skipping to next craft.");
-                        continue;
+                        Cancel($"Error: Macro \"{macro.Name}\" was invalid. This is likely an internal error x.x", true);
                     }
+                    await Task.Delay(1000);                 
+                                        
+                    PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {macro.Name}. FoodId: {macro.FoodID}");
+
                     var job = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
                         .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
                         .First().CraftType.Value!.RowId;
@@ -71,8 +77,7 @@ namespace CraftingList.Crafting
 
                     await ChangeJobs((DoHJob)job);
 
-
-                    if (entry.Macro.Name == "(Quick Synth)")
+                    if (macro.Name == "(Quick Synth)")
                     {
                         //await OpenRecipeByItem((int) entry.ItemId);
                     }
@@ -82,13 +87,13 @@ namespace CraftingList.Crafting
                         {
                             if (!m_running || !entry.running) break;
 
-                            bool needToChangeFood = NeedToChangeFood(lastUsedFood, entry.Macro.FoodID, false).Result;
-                            bool needToChangeMedicine = NeedToChangeFood(lastUsedMedicine, entry.Macro.MedicineID, true).Result;
+                            bool needToChangeFood = NeedToChangeFood(lastUsedFood, macro.FoodID, false).Result;
+                            bool needToChangeMedicine = NeedToChangeFood(lastUsedMedicine, macro.MedicineID, true).Result;
                             bool needToRepair = NeedsRepair();
 
-                            PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {entry.Macro.FoodID}");
+                            PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {macro.FoodID}");
                             PluginLog.Debug($"Need change food: {needToChangeFood}");
-                            PluginLog.Debug($"Last medicine: {lastUsedMedicine}, Curr medicine: {entry.Macro.MedicineID}");
+                            PluginLog.Debug($"Last medicine: {lastUsedMedicine}, Curr medicine: {macro.MedicineID}");
                             PluginLog.Debug($"Need change medicine: {needToChangeMedicine}");
                             PluginLog.Debug($"Need repair: {needToRepair}");
 
@@ -97,24 +102,24 @@ namespace CraftingList.Crafting
                                 await ExitCrafting();
                                 if (needToChangeFood)
                                 {
-                                    if (!await ChangeFood(entry.Macro.FoodID, false))
+                                    if (!await ChangeFood(macro.FoodID, false))
                                     {
                                         PluginLog.Debug($"Consuming food failed, stopping craft...");
                                         Cancel("[CraftingList] A problem occurred while trying to consume food, cancelling craft...", true);
                                         break;
                                     }
-                                    lastUsedFood = entry.Macro.FoodID;
+                                    lastUsedFood = macro.FoodID;
                                 }
                                 if (needToChangeMedicine)
                                 {
                                     
-                                    if (!await ChangeFood(entry.Macro.MedicineID, true))
+                                    if (!await ChangeFood(macro.MedicineID, true))
                                     {
                                         PluginLog.Debug($"Consuming medication failed, stopping craft...");
                                         Cancel("[CraftingList] A problem occurred while trying to consume medication, cancelling craft...", true);
                                         break;
                                     }
-                                    lastUsedMedicine = entry.Macro.MedicineID;
+                                    lastUsedMedicine = macro.MedicineID;
                                 }
 
                                 if (needToRepair)
@@ -154,10 +159,10 @@ namespace CraftingList.Crafting
                                 break;
                             }
 
-                            if (!await ExecuteMacro(entry.Macro, isCollectible))
+                            if (!await ExecuteMacro(macro, isCollectible))
                             {
                                 PluginLog.Debug($"Executing macro timed out, stopping craft...");
-                                Cancel($"[CraftingList] Macro {{{entry.Macro.Name}, {entry.Macro.Macro1Num}, {entry.Macro.Macro1DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
+                                Cancel($"[CraftingList] Macro {{{macro.Name}, {macro.Macro1Num}, {macro.Macro1DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
                                 break;
                             }
                             entry.Decrement();
@@ -511,5 +516,23 @@ namespace CraftingList.Crafting
             waitingForHQSelection = false;
         }
 
+        public bool IsEntryValid(CListEntry entry)
+        {
+            if (entry.NumCrafts.ToLower() != "max" || (!int.TryParse(entry.NumCrafts, out _) || int.Parse(entry.NumCrafts) <= 0))
+                return false;
+
+            if (entry.MacroIndex < 0 || entry.MacroIndex > configuration.Macros.Count) return false;
+
+            return true;
+        }
+
+        public bool IsListValid()
+        {
+            foreach (var entry in configuration.EntryList)
+            {
+                if (!IsEntryValid(entry)) return false;
+            }
+            return true;
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace CraftingList.UI
         readonly List<string> macroNames;
         readonly List<string> newMacroNames;
 
-        readonly private CListEntry newEntry = new("", 0, "", new CraftingMacro("", 0, 0, 0, 0), false, 0);
+        readonly private CListEntry newEntry = new("", 0, "", false, 0);
 
         int newEntryItemNameSelection = 0;
         bool newEntryShowItemNameList = false;
@@ -98,22 +98,13 @@ namespace CraftingList.UI
             DrawNewListEntry();
             DrawHQMatSelection();
             ImGui.NewLine();
-            if (plugin.Crafter.waitingForHQSelection)
+
+            if (ImGui.Button("Craft!"))
             {
-                ImGui.Text("Waiting for you to select the HQ mats for your craft, please press the button below when finished.");
-                if (ImGui.Button("I've Selected My HQ Mats"))
-                {
-                    plugin.Crafter.SignalHQMatsSelected();
-                }
+                plugin.Crafter.CraftAllItems();
             }
-            else
-            {
-                if (ImGui.Button("Craft!"))
-                {
-                    plugin.Crafter.CraftAllItems();
-                }
-                ImGui.SameLine();
-            }
+            ImGui.SameLine();
+            
             if (ImGui.Button("Cancel"))
             {
                 plugin.Crafter.Cancel("Cancelling craft...", false);
@@ -172,19 +163,8 @@ namespace CraftingList.UI
                     {
                         PluginLog.Debug("Internal error: Macro name does not match any in macro list. This shouldn't happen.");
                     }
-                    else
-                    {
-                        plugin.Configuration.EntryList[i].Macro = macro.First();
-                    }
-                    //PluginLog.Debug($"Macro {plugin.Configuration.EntryList[i].MacroIndex}: {plugin.Configuration.EntryList[i].Macro.Name}");
                 }
                 ImGui.NextColumn();
-                /*
-                bool HQ = plugin.Configuration.EntryList[i].FoodId > 1000000;
-                ImGui.Text((HQ ? "(HQ) " : "")
-                    + DalamudApi.DataManager.GetExcelSheet<Item>()!
-                        .Where(x => x.RowId == (HQ ? plugin.Configuration.EntryList[i].FoodId - 1000000 : plugin.Configuration.EntryList[i].FoodId)).First().Name
-                );*/
 
                 if (ImGui.Button("Select...##" + i))
                 {
@@ -238,10 +218,6 @@ namespace CraftingList.UI
                 {
                     PluginLog.Debug("Internal error: Macro name does not match any in macro list. This shouldn't happen.");
                 }
-                else
-                {
-                    newEntry.Macro = macro.First();
-                }
             }
             ImGui.NextColumn();
 
@@ -256,13 +232,13 @@ namespace CraftingList.UI
 
                 if (items.Any() &&
                     (newEntry.NumCrafts.ToLower() == "max" || (int.TryParse(newEntry.NumCrafts, out _) && int.Parse(newEntry.NumCrafts) > 0))
-                    && newEntry.MacroIndex != 0)
+                    && newEntry.MacroIndex > 0)
                 {
 
                     newEntry.ItemId = items.First()!.ItemResult.Value!.RowId;
                     newEntry.NumCrafts = newEntry.NumCrafts.ToLower();
                     newEntry.MacroIndex -= 1; //Transition from referring to newMacroName to macroName
-                    var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntry.Macro, newEntry.HQMats, newEntry.MacroIndex);
+                    var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntry.HQMats, newEntry.MacroIndex);
                     plugin.Configuration.EntryList.Add(entry);
                     newEntry.Name = "";
                     newEntry.NumCrafts = "";

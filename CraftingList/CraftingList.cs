@@ -104,7 +104,9 @@ namespace CraftingList
 
         private void OnCommand(string command, string args)
         {
-            SeInterface.UseItem(19884);
+            foreach(var entry in Configuration.EntryList)
+            {                
+            }
         }
 
         private void OnCraftingList(string command, string args)
