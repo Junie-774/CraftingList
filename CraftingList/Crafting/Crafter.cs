@@ -518,10 +518,12 @@ namespace CraftingList.Crafting
 
         public bool IsEntryValid(CListEntry entry)
         {
-            if (entry.NumCrafts.ToLower() != "max" || (!int.TryParse(entry.NumCrafts, out _) || int.Parse(entry.NumCrafts) <= 0))
+            if (entry.NumCrafts.ToLower() != "max" && (!int.TryParse(entry.NumCrafts, out _) || int.Parse(entry.NumCrafts) <= 0)) {
+                PluginLog.Debug("bad amount");
                 return false;
+            }
 
-            if (entry.MacroIndex < 0 || entry.MacroIndex > configuration.Macros.Count) return false;
+            if (entry.MacroIndex < 0 || entry.MacroIndex > configuration.Macros.Count) { PluginLog.Debug("Bad macro"); return false; }
 
             return true;
         }
