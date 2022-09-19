@@ -18,7 +18,7 @@ namespace CraftingList
 
         internal Configuration Configuration { get; init; }
         internal PluginUI PluginUi { get; init; }
-        private SeInterface SeInterface { get; init; }
+        internal SeInterface SeInterface { get; init; }
 
         internal Crafter Crafter { get; init; }
 
@@ -104,9 +104,7 @@ namespace CraftingList
 
         private void OnCommand(string command, string args)
         {
-            foreach(var entry in Configuration.EntryList)
-            {                
-            }
+            PluginLog.Debug($"Medication: {Crafter.HasMedication().Result}");
         }
 
         private void OnCraftingList(string command, string args)

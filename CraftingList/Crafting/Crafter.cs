@@ -449,7 +449,7 @@ namespace CraftingList.Crafting
             {
                 if (status == null) continue;
 
-                if (status.StatusId == 48)
+                if (status.StatusId == 49)
                 {
                     hasMeds = true;
                 }

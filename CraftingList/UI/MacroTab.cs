@@ -95,7 +95,7 @@ namespace CraftingList.UI
 
         }
 
-        public void Draw()
+        public async void Draw()
         {
             ImGui.SetWindowFontScale(1.1f);
             ImGui.Text("Select Macro");
@@ -288,6 +288,7 @@ namespace CraftingList.UI
                         selectedMacroName = "";
                         plugin.PluginUi.OnConfigChange();
                     }
+                    ImGui.SameLine();
                 }
             }
         }
