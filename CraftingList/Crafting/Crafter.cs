@@ -241,7 +241,7 @@ namespace CraftingList.Crafting
 
                 await Task.Delay(configuration.WaitDurations.AfterEatFood);
 
-                if (!medication) return await HasMedication();
+                if (medication) return await HasMedication();
                 else return await HasFood();
             }
             else
@@ -255,8 +255,8 @@ namespace CraftingList.Crafting
 
                 await Task.Delay(configuration.WaitDurations.AfterClickOffFood);
 
-                if (!medication) return !await HasMedication();
-                else return !await HasFood();
+                if (medication) return await HasMedication();
+                else return await HasFood();
             }
         }
 
