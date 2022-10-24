@@ -73,15 +73,11 @@ namespace CraftingList
             {
                 HelpMessage = "Cancel current craft."
             });
-            DalamudApi.CommandManager.AddHandler("/command", new CommandInfo(OnCommand)
+            DalamudApi.CommandManager.AddHandler("/addentry", new CommandInfo(OnCommand)
             {
                 ShowInHelp = false
             });
-            /*
-            DalamudApi.CommandManager.AddHandler("/clconfig", new CommandInfo(OnOpenConfig)
-            {
-                HelpMessage = "Open CraftingList Config"
-            });*/
+            
 
 
 
@@ -98,13 +94,44 @@ namespace CraftingList
             DalamudApi.CommandManager.RemoveHandler("/craftallitems");
             DalamudApi.CommandManager.RemoveHandler("/clist");
             DalamudApi.CommandManager.RemoveHandler("/clcancel");
-            DalamudApi.CommandManager.RemoveHandler("/command");
+            DalamudApi.CommandManager.RemoveHandler("/addentry");
             //DalamudApi.CommandManager.RemoveHandler("/clconfig");
         }
 
         private void OnCommand(string command, string args)
         {
-            PluginLog.Debug($"Medication: {Crafter.HasMedication().Result}");
+            var argsArray = args.Split(' ');
+            uint itemId = 0;
+            if (!uint.TryParse(argsArray[0]!, out itemId)) {
+                DalamudApi.ChatGui.PrintError("[CraftingList] Invalid arg.");
+            }
+            string numCrafts = argsArray[1]!;
+            int macroIdx = 0;
+            if (!int.TryParse(argsArray[2]!, out macroIdx))
+            {
+                DalamudApi.ChatGui.PrintError("[CraftingList] Invalid arg.");
+            }
+            CListEntry newEntry = new CListEntry("Added Entry", itemId, numCrafts, macroIdx);
+            for (int i = 0; i < 6 && i + 3 < argsArray.Length; i++)
+            {
+                int nHQ;
+                if (!int.TryParse(argsArray[i + 3]!, out nHQ))
+                {
+                    DalamudApi.ChatGui.PrintError("[CraftingList] Invalid arg.");
+                }
+                newEntry.HQSelection[i] = nHQ;
+                PluginLog.Debug(nHQ.ToString());
+                foreach (var hq in newEntry.HQSelection)
+                {
+                    PluginLog.Debug($"- {hq}");
+                }
+
+            }
+            Configuration.EntryList.Add(newEntry);
+            foreach (var hq in Configuration.EntryList[0].HQSelection)
+            {
+                PluginLog.Debug($"- {hq}");
+            }
         }
 
         private void OnCraftingList(string command, string args)

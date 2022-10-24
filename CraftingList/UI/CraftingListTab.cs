@@ -27,7 +27,7 @@ namespace CraftingList.UI
         readonly List<string> macroNames;
         readonly List<string> newMacroNames;
 
-        readonly private CListEntry newEntry = new("", 0, "", false, 0);
+        readonly private CListEntry newEntry = new("", 0, "", 0);
 
         int newEntryItemNameSelection = 0;
         bool newEntryShowItemNameList = false;
@@ -238,7 +238,7 @@ namespace CraftingList.UI
                     newEntry.ItemId = items.First()!.ItemResult.Value!.RowId;
                     newEntry.NumCrafts = newEntry.NumCrafts.ToLower();
                     newEntry.MacroIndex -= 1; //Transition from referring to newMacroName to macroName
-                    var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntry.HQMats, newEntry.MacroIndex);
+                    var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntry.MacroIndex);
                     plugin.Configuration.EntryList.Add(entry);
                     newEntry.Name = "";
                     newEntry.NumCrafts = "";
