@@ -5,13 +5,13 @@
     "Punchline": "Craft stuffs",
     "Description": "Craft your things",
     "InternalName": "CraftingList",
-    "AssemblyVersion": "1.7.5",
+    "AssemblyVersion": "1.7.6",
     "ApplicableVersion": "any",
     "Tags": [
       "craft"
     ],
     "RepoUrl": "https://github.com/Junie-774/CraftingList",
-    "DalamudApiLevel": 7,
+    "DalamudApiLevel": 8,
     "LoadPriority": 69,
     "IsHide": false,
     "DownloadLinkInstall": "https://raw.githubusercontent.com/Junie-774/CraftingList/main/CraftingList/latest.zip",
