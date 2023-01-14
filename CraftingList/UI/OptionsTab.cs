@@ -33,7 +33,7 @@ namespace CraftingList.UI
             ImGui.SetNextItemWidth(300 - 0 - ImGui.CalcTextSize("Repair threshold: ").X);
             ImGui.SliderInt("##RepairThreshold", ref plugin.Configuration.RepairThresholdPercent, 0, 99);
 
-            ImGui.Checkbox("Only repair if durability is below 99?", ref plugin.Configuration.OnlyRepairIfBelow99);
+            ImGui.Checkbox("Only repair if durability for all items is below 99?", ref plugin.Configuration.OnlyRepairIfBelow99);
             ImGui.NewLine();
 
             // auxillary variables to allow for error checking
@@ -122,7 +122,7 @@ namespace CraftingList.UI
             if (ImGui.InputInt("##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0))
             {
                 if (clickSynthesizeDelayMax > 0 && clickSynthesizeDelayMin < clickSynthesizeDelayMax)
-                    plugin.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMax;
+                    plugin.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
             }
 
             ImGui.Columns(1); 
