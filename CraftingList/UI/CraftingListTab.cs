@@ -109,6 +109,15 @@ namespace CraftingList.UI
             {
                 plugin.Crafter.Cancel("Cancelling craft...", false);
             }
+            ImGui.NewLine();
+            ImGui.Checkbox("##HasCraftTimeout", ref plugin.Configuration.HasCraftTimeout);
+            ImGui.SameLine();
+            ImGui.Text(" Stop after ");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(25);
+            ImGui.InputInt("##CraftTimeout", ref plugin.Configuration.CraftTimeoutMinutes, 0, 0);
+            ImGui.SameLine();
+            ImGui.Text(" Minutes");
         }
 
         private void DrawEntryTable()

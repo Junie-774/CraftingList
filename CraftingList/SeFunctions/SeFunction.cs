@@ -36,7 +36,15 @@ namespace CraftingList.SeFunctions
                 PluginLog.Error($"Trying to generate delegate for {GetType().Name} failed.");
                 return null;
             }
-            return FunctionDelegate.DynamicInvoke(parameters);
+            try
+            {
+                return FunctionDelegate.DynamicInvoke(parameters);
+            }
+            catch(Exception e)
+            {
+                PluginLog.Error(e.ToString());
+                return null;
+            }
         }
 
         public Hook<T>? CreateHook(T detour)

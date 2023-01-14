@@ -33,6 +33,10 @@ namespace CraftingList
         public bool FlashWindowOnHQPrompt = true;
 
         public int RepairThresholdPercent = 99;
+
+        public bool HasCraftTimeout = false;
+        public int CraftTimeoutMinutes = 0;
+
         public bool OnlyRepairIfBelow99 = true;
 
         public WaitDurationHelper WaitDurations = new();

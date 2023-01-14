@@ -95,9 +95,16 @@ namespace CraftingList.UI
 
         }
 
-        public async void Draw()
+        public void Draw()
         {
             ImGui.SetWindowFontScale(1.1f);
+            if (plugin.Crafter.IsRunning())
+            {
+                ImGui.Text("Cannot edit macros while a crafting job is running.");
+                ImGui.SetWindowFontScale(1f);
+                return;
+            }
+            
             ImGui.Text("Select Macro");
             ImGui.SetWindowFontScale(1f);
 
