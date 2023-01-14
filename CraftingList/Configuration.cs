@@ -12,8 +12,8 @@ namespace CraftingList
         public int AfterChangeJobs = 1500;
         public int AfterEatFood = 3000;
         public int AfterCompleteMacroHQ = 3500;
-        public int AfterCompleteMacroCollectible = 2500;
-        public int AfterExitCrafting = 3000;
+        public int AfterCompleteMacroCollectible = 1800;
+        public int AfterExitCrafting = 2000;
         public int AfterOpenCloseMenu = 500;
         public int AfterRepairConfirm = 3250;
         public int AfterClickOffFood = 1000;
@@ -37,6 +37,12 @@ namespace CraftingList
         public bool HasCraftTimeout = false;
         public int CraftTimeoutMinutes = 0;
 
+        public int ExecuteMacroDelayMinSeconds = 1;
+        public int ExecuteMacroDelayMaxSeconds = 5; 
+
+        public int ClickSynthesizeDelayMinSeconds = 1;
+        public int ClickSynthesizeDelayMaxSeconds = 5;
+        
         public bool OnlyRepairIfBelow99 = true;
 
         public WaitDurationHelper WaitDurations = new();

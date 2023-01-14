@@ -4,18 +4,15 @@ using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.GeneratedSheets;
 using System;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using static CraftingList.SeFunctions.SeInterface;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureMacroModule;
 
 namespace CraftingList.Crafting
 {
     public class Crafter
     {
+        private Random randomDelay = new Random(DateTime.Now.Millisecond);
 
         private bool m_running = false;
 
@@ -301,10 +298,16 @@ namespace CraftingList.Crafting
         public async Task<bool> ClickSynthesize()
         {
             PluginLog.Debug($"Clicking Synthesize...");
+
+            await Task.Delay(randomDelay.Next(configuration.ClickSynthesizeDelayMinSeconds * 1000,
+                                              configuration.ClickSynthesizeDelayMaxSeconds * 1000)
+             );
+
             seInterface.RecipeNote().Synthesize();
-            var res = seInterface.WaitForAddon("Synthesis", true, configuration.AddonTimeout);
-            try { res.Wait(); }
+            var waitForSynthWindoResult = seInterface.WaitForAddon("Synthesis", true, configuration.AddonTimeout);
+            try { waitForSynthWindoResult.Wait(); }
             catch { return false; }
+
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
         }
@@ -313,8 +316,17 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Executing Macro {macro.Macro1Num}");
 
+            // No particular reason for a random delay here, why do you ask?
+            await Task.Delay(randomDelay.Next(configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              configuration.ExecuteMacroDelayMaxSeconds * 1000)
+             );
+
             seInterface.ExecuteMacroByNumber(macro.Macro1Num);
+
             await Task.Delay(macro.Macro1DurationSeconds * 1000 + 1500);
+            await Task.Delay(randomDelay.Next(configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            );
             if (macro.Macro2Num != -1)
             {
                 PluginLog.Debug($"Executing Macro {macro.Macro2Num}");
@@ -417,7 +429,6 @@ namespace CraftingList.Crafting
             {
                 for (int j = 0; j < hqSelection[i]; j++)
                 {
-                    PluginLog.Debug("Clicking hq...");
                     //await Task.Delay(500);
                     seInterface.RecipeNote().ClickHQ(i);
                 }
