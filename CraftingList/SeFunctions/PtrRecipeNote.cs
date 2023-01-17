@@ -1,4 +1,5 @@
 ﻿using CraftingList.Utility;
+using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -25,6 +26,8 @@ namespace CraftingList.SeFunctions
             if (Pointer == null) return;
             Module.ClickAddon(Pointer, null/*Pointer->SynthesizeButton->AtkComponentBase.OwnerNode*/, EventType.Change, SynthesizeButtonId);
         }
+
+
 
         public void QuickSynthesize()
         {

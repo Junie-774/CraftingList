@@ -2,6 +2,7 @@
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
@@ -18,7 +19,6 @@ namespace CraftingList
 
         internal Configuration Configuration { get; init; }
         internal PluginUI PluginUi { get; init; }
-        internal SeInterface SeInterface { get; init; }
 
         internal Crafter Crafter { get; init; }
 
@@ -35,21 +35,22 @@ namespace CraftingList
             Singleton<AddonRepairReceiveEvent>.Set(DalamudApi.SigScanner);
             Singleton<AddonRecipeNoteReceiveEvent>.Set(DalamudApi.SigScanner);
             Singleton<AgentRecipeNoteHide>.Set(DalamudApi.SigScanner);
+            Singleton<AgentRecipeMaterialListReceiveEvent>.Set(DalamudApi.SigScanner);
         }
 
         public CraftingList(DalamudPluginInterface pluginInterface)
         {
-            DalamudApi.Initialize(pluginInterface);
+            Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Configuration.Initialize(pluginInterface);
+
+            DalamudApi.Initialize(pluginInterface, Configuration);
             Module.Initialize();
             SignatureHelper.Initialise(this);
+
             InitializeSingletons();
 
-            SeInterface = new SeInterface();
-
-
-            Configuration = DalamudApi.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            Configuration.Initialize(DalamudApi.PluginInterface);
-            Crafter = new Crafter(SeInterface, Configuration);
+                        
+            Crafter = new Crafter(SeInterface.Instance, Configuration);
 
 
             this.PluginUi = new PluginUI(this, Configuration);
@@ -73,15 +74,15 @@ namespace CraftingList
             {
                 HelpMessage = "Cancel current craft."
             });
-            DalamudApi.CommandManager.AddHandler("/addentry", new CommandInfo(OnCommand)
+            DalamudApi.CommandManager.AddHandler("/testcommand", new CommandInfo(OnCommand)
             {
                 ShowInHelp = false
             });
-            
-
-
-
-
+            DalamudApi.CommandManager.AddHandler("/closerecipenote", new CommandInfo(OnCloseRecipeNote)
+            {
+                ShowInHelp = false
+            });
+        
             DalamudApi.PluginInterface.UiBuilder.Draw += DrawUI;
             //DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
         }
@@ -94,56 +95,23 @@ namespace CraftingList
             DalamudApi.CommandManager.RemoveHandler("/craftallitems");
             DalamudApi.CommandManager.RemoveHandler("/clist");
             DalamudApi.CommandManager.RemoveHandler("/clcancel");
-            DalamudApi.CommandManager.RemoveHandler("/addentry");
+            DalamudApi.CommandManager.RemoveHandler("/testcommand");
+            DalamudApi.CommandManager.RemoveHandler("/closerecipenote");
+
             //DalamudApi.CommandManager.RemoveHandler("/clconfig");
         }
 
         private void OnCommand(string command, string args)
         {
-            var argsArray = args.Split(' ');
-            uint itemId = 0;
-            if (!uint.TryParse(argsArray[0]!, out itemId)) {
-                DalamudApi.ChatGui.PrintError("[CraftingList] Invalid arg.");
-            }
-            string numCrafts = argsArray[1]!;
-            int macroIdx = 0;
-            if (!int.TryParse(argsArray[2]!, out macroIdx))
-            {
-                DalamudApi.ChatGui.PrintError("[CraftingList] Invalid arg.");
-            }
-            CListEntry newEntry = new CListEntry("Added Entry", itemId, numCrafts, macroIdx);
-            for (int i = 0; i < 6 && i + 3 < argsArray.Length; i++)
-            {
-                int nHQ;
-                if (!int.TryParse(argsArray[i + 3]!, out nHQ))
-                {
-                    DalamudApi.ChatGui.PrintError("[CraftingList] Invalid arg.");
-                }
-                newEntry.HQSelection[i] = nHQ;
-                PluginLog.Debug(nHQ.ToString());
-                foreach (var hq in newEntry.HQSelection)
-                {
-                    PluginLog.Debug($"- {hq}");
-                }
-
-            }
-            Configuration.EntryList.Add(newEntry);
-            foreach (var hq in Configuration.EntryList[0].HQSelection)
-            {
-                PluginLog.Debug($"- {hq}");
-            }
+            DalamudApi.ChatGui.Print(args);
+            int button = int.Parse(args);
+            ((PtrSynthesisSimpleDialog)SeInterface.GetUiObject("SynthesisSimpleDialog")).ClickButton(button);
         }
 
         private void OnCraftingList(string command, string args)
         {
-            if (args != "" && int.Parse(args) == 0)
-            {
-                SeInterface.RecipeNote().Close();
-            }
-            else
-            {
-                this.PluginUi.Visible = true;
-            }
+
+            this.PluginUi.Visible = true;
         }
 
         private void OnCraftAllItems(string command, string args)
@@ -159,6 +127,15 @@ namespace CraftingList
         private void OnOpenConfig(string command, string args)
         {
             DrawConfigUI();
+        }
+
+        //I could not ever explain why, but closing the recipe note directly
+        //crashes the game in some circumstances, but directing a call through 
+        //the macro system doesn't.
+        //I dunno.
+        private void OnCloseRecipeNote(string command, string args)
+        {
+            SeInterface.RecipeNote().Close();
         }
         private void DrawUI()
         {

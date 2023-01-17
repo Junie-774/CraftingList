@@ -2,17 +2,20 @@
 using CraftingList.Utility;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.GeneratedSheets;
 using System;
+using System.Collections;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using static CraftingList.SeFunctions.SeInterface;
+
 
 namespace CraftingList.Crafting
 {
     public class Crafter
     {
-        private Random randomDelay = new Random(DateTime.Now.Millisecond);
+        private readonly Random randomDelay = new(DateTime.Now.Millisecond);
 
         private bool m_running = false;
 
@@ -41,12 +44,18 @@ namespace CraftingList.Crafting
             m_running = true;
             return Task.Run(async () =>
             {
+
                 DalamudApi.ChatGui.Print("[CraftingList] Starting crafting!");
 
                 var craftStart = DateTime.Now;
 
-                await ExitCrafting();
-                await seInterface.WaitForCloseAddon("RecipeNote", true, configuration.AddonTimeout);
+                if (!await ExitCrafting())
+                {
+                    PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
+                    Cancel("[CraftingList] A problem occurred trying to close the crafting log, cancelling...", true);
+                    
+                }
+                await SeInterface.WaitForCloseAddon("RecipeNote", true, configuration.AddonTimeout);
 
                 uint lastUsedFood = 0;
                 uint lastUsedMedicine = 0;
@@ -58,11 +67,13 @@ namespace CraftingList.Crafting
                     if (configuration.HasCraftTimeout && configuration.CraftTimeoutMinutes > 0 && (DateTime.Now - craftStart).TotalMinutes >= configuration.CraftTimeoutMinutes) break;
                     entry.running = true;
 
-                    var macro = configuration.Macros[entry.MacroIndex];
-                    if (!TimedIngameMacro.isValidMacro(macro))
+                    CraftingMacro macro = DalamudApi.Configuration.UsePluginMacros ? DalamudApi.Configuration.PluginMacros[entry.MacroIndex] :
+                                                                            DalamudApi.Configuration.Macros[entry.MacroIndex];
+                    if (macro is TimedIngameMacro && !TimedIngameMacro.isValidMacro((TimedIngameMacro) macro))
                     {
                         Cancel($"Error: Macro \"{macro.Name}\" was invalid. This is likely an internal error x.x", true);
                     }
+
                     await Task.Delay(1000);                 
                                         
                     PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {macro.Name}. FoodId: {macro.FoodID}");
@@ -71,7 +82,7 @@ namespace CraftingList.Crafting
                         .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
                         .First().CraftType.Value!.RowId;             
 
-                    await ChangeJobs((DoHJob)job);
+                    await ChangeJobs((int) job);
 
                     if (macro.Name == "(Quick Synth)")
                     {
@@ -91,7 +102,7 @@ namespace CraftingList.Crafting
                             lastUsedFood = repairAndConsumablesResult.Item2;
                             lastUsedMedicine = repairAndConsumablesResult.Item3;
 
-                            if (!await CraftOneItem(entry))
+                            if (!await CraftOneItem(entry, macro))
                             {
                                 break;
                             }
@@ -104,7 +115,7 @@ namespace CraftingList.Crafting
                     }
 
                     // Leave crafting stance after each entry in case we need to switch jobs. Could hypothetically stay in crafting stance if next entry uses the same job,
-                    // but that's a pretty minor gain and this simplifies code flow.yea
+                    // but that's a pretty minor gain and this simplifies code flow.
                     if (!await ExitCrafting())
                     {
                         PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
@@ -120,21 +131,21 @@ namespace CraftingList.Crafting
             });
         }
 
-        public async Task<int> ChangeJobs(DoHJob job)
+        public async Task<int> ChangeJobs(int job)
         {
-            PluginLog.Debug($"Changing jobs to {job}");
-            seInterface.SwapToDOHJob(job);
+            PluginLog.Debug($"Changing jobs to {SeInterface.DoHJobs[job]}");
+            SeInterface.SwapToDOHJob(job);
             await Task.Delay(configuration.WaitDurations.AfterChangeJobs);
             return 0;
         }
 
         // Takes lastUsedFood and lastUsedMedicine as input/output parameters,
         // because the function needs to return a bool to check for success and trying to mimic union types in C# seems stinky
-        public async Task<(bool, uint, uint)> RepairAndApplyConsumables(TimedIngameMacro macro, uint lastUsedFood, uint lastUsedMedicine)
+        public async Task<(bool, uint, uint)> RepairAndApplyConsumables(CraftingMacro macro, uint lastUsedFood, uint lastUsedMedicine)
         {
-            bool needToChangeFood = NeedToChangeConsumable(lastUsedFood, macro.FoodID, false).Result;
-            bool needToChangeMedicine = NeedToChangeConsumable(lastUsedMedicine, macro.MedicineID, true).Result;
-            bool needToRepair = NeedsRepair();
+            bool needToChangeFood = NeedToChangeConsumable(lastUsedFood, macro.FoodID, false);
+            bool needToChangeMedicine = NeedToChangeConsumable(lastUsedMedicine, macro.MedicineID, true);
+            bool needToRepair = SeInterface.NeedsRepair();
 
             PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {macro.FoodID}");
             PluginLog.Debug($"Need change food: {needToChangeFood}");
@@ -180,9 +191,9 @@ namespace CraftingList.Crafting
             }
             return (true, lastUsedFood, lastUsedMedicine);
         }
-        public async Task<bool> CraftOneItem(CListEntry entry)
+
+        public async Task<bool> CraftOneItem(CListEntry entry, CraftingMacro macro)
         {
-            var macro = configuration.Macros[entry.MacroIndex];
             bool isCollectible = DalamudApi.DataManager.GetExcelSheet<Item>()!
                         .Where(item => item.RowId == entry.ItemId)
                         .First().IsCollectable;
@@ -194,8 +205,7 @@ namespace CraftingList.Crafting
                 return false;
             }
 
-
-            if (!FillHQMats(entry.HQSelection))
+            if (!await FillHQMats(entry.HQSelection))
             {
                 PluginLog.Debug($"Filling HQ Mats failed, stopping craft...");
                 Cancel("[CraftingList] A problem occured while trying to fill HQ mats, cancelling craft...", true);
@@ -219,10 +229,10 @@ namespace CraftingList.Crafting
                 return false;
             }
 
-            if (!await ExecuteMacro(macro, isCollectible))
+            if (!await macro.Execute(isCollectible))
             {
                 PluginLog.Debug($"Executing macro timed out, stopping craft...");
-                Cancel($"[CraftingList] Macro {{{macro.Name}, {macro.Macro1Num}, {macro.Macro1DurationSeconds}s}} timed out before completing the craft, cancelling...", true);
+                Cancel($"[CraftingList] Macro '{macro.Name}' timed out before completing the craft, cancelling...", true);
                 return false;
             }
             entry.Decrement();
@@ -231,16 +241,20 @@ namespace CraftingList.Crafting
 
         public async Task<bool> OpenRecipeByItem(int itemId)
         {
-            if (seInterface.RecipeNote().IsVisible())
+            //We close the recipe note when the job starts, so if it's open, it's open because
+            // we opened it to the right item.
+            if (SeInterface.RecipeNote().IsVisible())
             {
-                await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu); return true;
+                await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
+                return true;
             }
-            PluginLog.Debug($"Opening crafting log to item {itemId}");
-            seInterface.RecipeNote().OpenRecipeByItemId(itemId);
 
-            var task = seInterface.WaitForAddon("RecipeNote", true, configuration.AddonTimeout);
+            PluginLog.Debug($"Opening crafting log to item {itemId}");
+            SeInterface.RecipeNote().OpenRecipeByItemId(itemId);
+            var task = SeInterface.WaitForAddon("RecipeNote", true, configuration.AddonTimeout);
             try { task.Wait(); }
             catch { return false; }
+
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
         }
@@ -248,8 +262,8 @@ namespace CraftingList.Crafting
         public async Task<bool> ExitCrafting()
         {
             PluginLog.Debug($"Closing Recipe Note...");
-            seInterface.ExecuteMacro(seInterface.CloseNoteMacro);
-            var recipeNoteClosed = seInterface.WaitForCloseAddon("RecipeNote", true, configuration.AddonTimeout);
+            SeInterface.ExecuteMacro(seInterface.CloseNoteMacro);
+            var recipeNoteClosed = SeInterface.WaitForCloseAddon("RecipeNote", true, configuration.AddonTimeout);
             try { recipeNoteClosed.Wait(); }
             catch { return false; }
 
@@ -262,36 +276,27 @@ namespace CraftingList.Crafting
         public async Task<bool> ChangeFood(uint newFoodId, bool medication)
         {
             PluginLog.Debug($"Changing food/medication to {newFoodId}");
+            string relevantStatus = medication ? "Well Fed" : "Medicated";
+
+            SeInterface.Statusoff(relevantStatus);
+
+            await Task.Delay(configuration.WaitDurations.AfterClickOffFood);
             if (newFoodId != 0)
             {
-
-                if (medication) seInterface.RemoveMedicated();
-                else seInterface.RemoveFood();
-
-                await Task.Delay(configuration.WaitDurations.AfterClickOffFood);
-
                 PluginLog.Debug($"Consuming food/medication {newFoodId}...");
 
-                seInterface.UseItem(newFoodId);
+                SeInterface.UseItem(newFoodId);
 
                 await Task.Delay(configuration.WaitDurations.AfterEatFood);
 
-                if (medication) return await HasMedication();
-                else return await HasFood();
+                if (medication) return SeInterface.HasStatusID(49);
+                else return SeInterface.HasStatusID(48);
             }
             else
-            {
-                PluginLog.Debug($"Removing food/medication...");
+            {            
 
-                if (medication) seInterface.RemoveMedicated();
-                else seInterface.RemoveFood();
-
-                PluginLog.Debug($"Removed food/medication.");
-
-                await Task.Delay(configuration.WaitDurations.AfterClickOffFood);
-
-                if (medication) return await HasMedication();
-                else return await HasFood();
+                if (medication) return !SeInterface.HasStatusID(49);
+                else return !SeInterface.HasStatusID(48);
             }
         }
 
@@ -299,10 +304,8 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Clicking Synthesize...");
 
-            
-
-            seInterface.RecipeNote().Synthesize();
-            var waitForSynthWindoResult = seInterface.WaitForAddon("Synthesis", true, configuration.AddonTimeout);
+            SeInterface.RecipeNote().Synthesize();
+            var waitForSynthWindoResult = SeInterface.WaitForAddon("Synthesis", true, configuration.AddonTimeout);
             try { waitForSynthWindoResult.Wait(); }
             catch { return false; }
 
@@ -312,38 +315,6 @@ namespace CraftingList.Crafting
                                               configuration.ClickSynthesizeDelayMaxSeconds * 1000)
              );
             return true;
-        }
-
-        public async Task<bool> ExecuteMacro(TimedIngameMacro macro, bool collectible)
-        {
-            PluginLog.Debug($"Executing Macro {macro.Macro1Num}");
-
-            seInterface.ExecuteMacroByNumber(macro.Macro1Num);
-
-            await Task.Delay(macro.Macro1DurationSeconds * 1000 + 1500);
-
-            // No particular reason for a random delay here, why do you ask?
-            await Task.Delay(randomDelay.Next(configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              configuration.ExecuteMacroDelayMaxSeconds * 1000)
-            );
-            if (macro.Macro2Num != -1)
-            {
-                PluginLog.Debug($"Executing Macro {macro.Macro2Num}");
-                seInterface.ExecuteMacroByNumber(macro.Macro2Num);
-            }
-
-            int completionAnimationTime = collectible ? configuration.WaitDurations.AfterCompleteMacroCollectible : configuration.WaitDurations.AfterCompleteMacroHQ;
-            var recipeNote = seInterface.WaitForAddon("RecipeNote", true, macro.Macro2DurationSeconds * 1000 + completionAnimationTime + configuration.MacroExtraTimeoutMs);
-
-            try { recipeNote.Wait(); }
-            catch { return false; }
-
-            await Task.Delay(randomDelay.Next(configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              configuration.ExecuteMacroDelayMaxSeconds * 1000)
-            );
-            await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
-            return true;
-
         }
 
         public void TerminationAlert()
@@ -361,12 +332,12 @@ namespace CraftingList.Crafting
         private void SendAlert(string message, int soundEffect)
         {
             var mac = new Macro(0, 0, "Alert", new string[] { "/echo [CraftingList] " + message + " <se." + soundEffect + ">" });
-            seInterface.ExecuteMacro(mac);
+            SeInterface.ExecuteMacro(mac);
         }
 
-        public static async Task<bool> NeedToChangeConsumable(uint lastFood, uint currEntryFoodId, bool medicine)
+        public static bool NeedToChangeConsumable(uint lastFood, uint currEntryFoodId, bool medicine)
         {
-            bool hasFood = medicine ? await HasMedication() : await HasFood();
+            bool hasFood = medicine ? SeInterface.HasStatusID(49) : SeInterface.HasStatusID(48);
             // If we need to refresh
             if (lastFood == currEntryFoodId && currEntryFoodId != 0)
             {
@@ -388,101 +359,32 @@ namespace CraftingList.Crafting
             return stat1 == 70 || stat2 == 70;
         }
 
-
-
-        public unsafe bool NeedsRepair()
+        public async Task<bool> FillHQMats(int[] hqSelection)
         {
-            bool existsItemBelowThreshold = false;
-            bool existsItemAbove100 = false;
-            bool existsBrokenItem = false;
-            for (int i = 0; i < 13; i++)
-            {
-                var condition = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition;
-                if (condition <= (ushort)30000 * configuration.RepairThresholdPercent / 100 || condition == 0)
-                {
-                    existsItemBelowThreshold = true;
-                }
-                if (condition > 30000)
-                {
-                    existsItemAbove100 = true;
-                }
-                if (condition == 0)
-                {
-                    existsBrokenItem = true;
-                }
-            }
+            PluginLog.Debug("Selecting HQ Mats...");
 
-            if (existsBrokenItem) return true;
-            if (existsItemAbove100 && configuration.OnlyRepairIfBelow99) return false;
-            return existsItemBelowThreshold;
-        }
-
-        public bool FillHQMats(int[] hqSelection)
-        {
-            
             if (hqSelection.Length != 6)
             {
                 PluginLog.Debug("[CraftingList] Internal error selecting HQ mats x.x");
                 return false;
             }
             
-            PluginLog.Debug("Selecting HQ Mats...");
             for (int i = 0; i < 6; i++)
             {
                 for (int j = 0; j < hqSelection[i]; j++)
                 {
-                    //await Task.Delay(500);
-                    seInterface.RecipeNote().ClickHQ(i);
+                    await Task.Delay(250);
+                    SeInterface.RecipeNote().ClickHQ(i);
                 }
             }
             return true;
         }
 
-        public static async Task<bool> HasFood()
-        {
-            bool hasFood = false;
-            while (DalamudApi.ClientState.LocalPlayer == null)
-            {
-                await Task.Delay(20);
-            }
-            foreach (var status in DalamudApi.ClientState.LocalPlayer.StatusList)
-            {
-                if (status == null) continue;
-
-                if (status.StatusId == 48)
-                {
-                    hasFood = true;
-                }
-     
-            }
-            return hasFood;
-        }
-
-        public static async Task<bool> HasMedication()
-        {
-            bool hasMeds = false;
-            while (DalamudApi.ClientState.LocalPlayer == null)
-            {
-                await Task.Delay(20);
-            }
-            foreach (var status in DalamudApi.ClientState.LocalPlayer.StatusList)
-            {
-                if (status == null) continue;
-
-                if (status.StatusId == 49)
-                {
-                    hasMeds = true;
-                }
-     
-            }
-            return hasMeds;
-        }
         public async Task<bool> Repair()
         {
             PluginLog.Debug($"Repairing...");
-            PluginLog.Debug("Opening repair...");
-            seInterface.ToggleRepairWindow();
-            var repair = seInterface.WaitForAddon("Repair", true, 5000);
+            SeInterface.ToggleRepairWindow();
+            var repair = SeInterface.WaitForAddon("Repair", true, 5000);
             try { repair.Wait(); }
             catch
             {
@@ -492,8 +394,8 @@ namespace CraftingList.Crafting
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
             PluginLog.Debug("Clicking repair all...");
-            seInterface.Repair().ClickRepairAll();
-            var selectYesno = seInterface.WaitForAddon("SelectYesno", true, configuration.AddonTimeout);
+            SeInterface.Repair().ClickRepairAll();
+            var selectYesno = SeInterface.WaitForAddon("SelectYesno", true, configuration.AddonTimeout);
             try { selectYesno.Wait(); }
             catch
             {
@@ -503,13 +405,14 @@ namespace CraftingList.Crafting
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
             //Can't wait for any addons here because the yesno dialog closes immediately on animation start and the repair window doesn't close
+            // We wait for a static time instead.
             PluginLog.Debug("Clicking confirm...");
-            seInterface.SelectYesNo().ClickYes();
+            SeInterface.SelectYesNo().ClickYes();
             var waitForRepairAnim = Task.Delay(configuration.WaitDurations.AfterRepairConfirm);
 
             PluginLog.Debug("Closing repair window...");
-            seInterface.ToggleRepairWindow();
-            var closeRepairtask = seInterface.WaitForCloseAddon("Repair", true, configuration.AddonTimeout);
+            SeInterface.ToggleRepairWindow();
+            var closeRepairtask = SeInterface.WaitForCloseAddon("Repair", true, configuration.AddonTimeout);
             try { closeRepairtask.Wait(); }
             catch
             {

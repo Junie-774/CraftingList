@@ -29,7 +29,7 @@ namespace CraftingList.SeFunctions
             return FunctionDelegate;
         }
 
-        public dynamic? Invoke(params dynamic[] parameters)
+        public unsafe dynamic? Invoke(params dynamic[] parameters)
         {
             if (FunctionDelegate == null)
             {

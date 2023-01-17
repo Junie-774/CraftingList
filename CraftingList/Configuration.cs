@@ -28,6 +28,10 @@ namespace CraftingList
         public int Version { get; set; } = 1;
 
         public List<TimedIngameMacro> Macros { get; set; } = new();
+        public List<PluginMacro> PluginMacros { get; set; } = new();
+
+        public bool UsePluginMacros = false;
+
         public List<CListEntry> EntryList { get; set; } = new();
 
         public bool FlashWindowOnHQPrompt = true;
@@ -36,12 +40,6 @@ namespace CraftingList
 
         public bool HasCraftTimeout = false;
         public int CraftTimeoutMinutes = 0;
-
-        public int ExecuteMacroDelayMinSeconds = 1;
-        public int ExecuteMacroDelayMaxSeconds = 5; 
-
-        public int ClickSynthesizeDelayMinSeconds = 1;
-        public int ClickSynthesizeDelayMaxSeconds = 5;
         
         public bool OnlyRepairIfBelow99 = true;
 
@@ -52,6 +50,14 @@ namespace CraftingList
         public int SoundEffectListComplete = 6;
         public int SoundEffectListCancel = 4;
         public bool AlertOnTerminate = true;
+
+        public int ExecuteMacroDelayMinSeconds = 1;
+        public int ExecuteMacroDelayMaxSeconds = 5;
+
+        public int ClickSynthesizeDelayMinSeconds = 1;
+        public int ClickSynthesizeDelayMaxSeconds = 5;
+
+        public bool SmartWait = false;
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

@@ -17,10 +17,8 @@ namespace CraftingList.UI
     {
         readonly private IEnumerable<Recipe?> craftableItems;
         readonly private List<string> craftableNames;
-        readonly private IEnumerable<Item?> craftingFoods;
         private Recipe? hqMatItem;
         private List<Item> currItemIngredients = new();
-        readonly private List<string> foodNames;
         private List<string> newEntryItemNameSearchResults;
 
         // Two separate lists because we want to present an empty option for a new list entry, but not present an empty option for an existing entry.
@@ -50,20 +48,6 @@ namespace CraftingList.UI
                 ""
             };
             macroNames = new List<string>();
-            foodNames = new List<string>();
-
-            var MealIndexes = DalamudApi.DataManager.GetExcelSheet<ItemFood>()!
-                .Select(m => m.RowId);
-
-            craftingFoods = DalamudApi.DataManager.GetExcelSheet<Item>()!
-                .Where(item => item.ItemAction.Value!.DataHQ[1] != 0 && MealIndexes.Contains(item.ItemAction.Value.DataHQ[1]))
-                .Where(meal => meal.ItemAction.Value!.Type == 844 || meal.ItemAction.Value!.Type == 845)
-                .Where(meal =>
-                {
-                    int param = DalamudApi.DataManager.GetExcelSheet<ItemFood>()!
-                        .GetRow(meal.ItemAction.Value!.DataHQ[1])!.UnkData1[0].BaseParam;
-                    return param == 11 || param == 70 || param == 71;
-                });
 
             craftableItems = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
                 .Select(r => r).Where(r => r != null && r.ItemResult.Value != null && r.ItemResult.Value.Name != "");
@@ -72,23 +56,8 @@ namespace CraftingList.UI
             {
                 craftableNames.Add(item!.ItemResult.Value!.Name);
             }
-            foreach (var macro in plugin.Configuration.Macros)
-            {
-                macroNames.Add(macro.Name);
-                newMacroNames.Add(macro.Name);
-            }
-            foreach (var item in craftingFoods)
-            {
-                foodNames.Add(item!.Name);
-            }
-            foodNames.Add("None");
-            foodNames.Reverse();
-            for (int i = 1; i < foodNames.Count; i++)
-            {
-                string hqFood = "(HQ) " + foodNames[i];
-                foodNames.Insert(i, hqFood);
-                i++;
-            }
+            PopulateMacroNames();
+
             newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntry.Name)).ToList();
 
         }
@@ -342,16 +311,34 @@ namespace CraftingList.UI
             macroNames.Clear();
             newMacroNames.Clear();
             newMacroNames.Add("");
-            foreach (var mac in plugin.Configuration.Macros)
-            {
-                macroNames.Add(mac.Name);
-                newMacroNames.Add(mac.Name);
-            }
+
+            PopulateMacroNames();
+            
             foreach (var entry in plugin.Configuration.EntryList)
             {
                 entry.MacroIndex = -1;
             }
             
+        }
+
+        void PopulateMacroNames()
+        {
+            if (DalamudApi.Configuration.UsePluginMacros)
+            {
+                foreach (var mac in DalamudApi.Configuration.PluginMacros)
+                {
+                    macroNames.Add(mac.Name);
+                    newMacroNames.Add(mac.Name);
+                }
+            }
+            else
+            {
+                foreach (var mac in DalamudApi.Configuration.Macros)
+                {
+                    macroNames.Add(mac.Name);
+                    newMacroNames.Add(mac.Name);
+                }
+            }
         }
         private void setHQItemIngredients(Recipe recipe)
         {

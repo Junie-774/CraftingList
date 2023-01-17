@@ -1,6 +1,11 @@
-﻿using FFXIVClientStructs.FFXIV.Client.System.String;
+﻿using CraftingList.SeFunctions;
+using CraftingList.Utility;
+using Dalamud.Logging;
+using FFXIVClientStructs.FFXIV.Client.System.String;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureMacroModule;
 
 
 namespace CraftingList.Crafting
@@ -64,25 +69,59 @@ namespace CraftingList.Crafting
             }
         }
     }
-    public unsafe class TimedIngameMacro
+    public class TimedIngameMacro : CraftingMacro
     {
-        public string Name = "";
         public int Macro1Num = -1;
         public int Macro1DurationSeconds = 0;
 
         public int Macro2Num = -1;
         public int Macro2DurationSeconds  = 0;
 
-        public uint FoodID = 0;
-        public uint MedicineID = 0;
 
         public TimedIngameMacro(string name, int macro1Num, int macro1DurationSeconds, int macro2Num, int macro2DurationSeconds)
+            :base(name, 0, 0)
         {
-            Name = name;
             Macro1DurationSeconds = macro1DurationSeconds;
             Macro1Num = macro1Num;
             Macro2Num = macro2Num;
             Macro2DurationSeconds = macro2DurationSeconds;
+        }
+
+        public override async Task<bool> Execute(bool collectible)
+        {
+            PluginLog.Debug($"Executing Macro {Macro1Num}");
+            int completionAnimationTime = collectible ? DalamudApi.Configuration.WaitDurations.AfterCompleteMacroCollectible :
+                                                        DalamudApi.Configuration.WaitDurations.AfterCompleteMacroHQ;
+
+            SeInterface.ExecuteMacroByNumber(Macro1Num);
+
+            await Task.Delay(Macro1DurationSeconds * 1000 + 1500);
+
+            // No particular reason for a random delay here, why do you ask?
+            await Task.Delay(randomDelay.Next(DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            );
+
+            if (Macro2Num != -1)
+            {
+                PluginLog.Debug($"Executing Macro {Macro2Num}");
+                SeInterface.ExecuteMacroByNumber(Macro2Num);
+                await Task.Delay(Macro2DurationSeconds + completionAnimationTime);
+            }
+
+            
+            var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,
+                DalamudApi.Configuration.MacroExtraTimeoutMs);
+
+            try { recipeNote.Wait(); }
+            catch { return false; }
+
+            await Task.Delay(randomDelay.Next(DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            );
+            await Task.Delay(DalamudApi.Configuration.WaitDurations.AfterOpenCloseMenu);
+
+            return true;
         }
 
         public static bool isValidMacro(TimedIngameMacro macro)
