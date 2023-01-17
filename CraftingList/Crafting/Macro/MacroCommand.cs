@@ -1,5 +1,4 @@
-﻿using CraftingList.SeFunctions;
-using CraftingList.Utility;
+﻿using CraftingList.Utility;
 using Dalamud.Game.Text;
 using System;
 using System.Collections.Generic;

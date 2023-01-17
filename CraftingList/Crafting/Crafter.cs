@@ -331,8 +331,7 @@ namespace CraftingList.Crafting
 
         private void SendAlert(string message, int soundEffect)
         {
-            var mac = new Macro(0, 0, "Alert", new string[] { "/echo [CraftingList] " + message + " <se." + soundEffect + ">" });
-            SeInterface.ExecuteMacro(mac);
+            SeInterface.SendChatMessage("/echo [CraftingList] " + message + " <se." + soundEffect + ">");
         }
 
         public static bool NeedToChangeConsumable(uint lastFood, uint currEntryFoodId, bool medicine)

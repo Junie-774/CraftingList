@@ -1,5 +1,4 @@
-﻿using CraftingList.SeFunctions;
-using CraftingList.Utility;
+﻿using CraftingList.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;

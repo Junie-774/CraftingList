@@ -88,6 +88,40 @@ namespace CraftingList
         }
         public void DrawSettingsWindow()
         {
+            if (!DalamudApi.Configuration.AcknowledgedMacroChange)
+            {
+                ImGui.SetNextWindowSizeConstraints(new Vector2(550f, 500f), new Vector2(550f, 500f));
+                if (ImGui.Begin("Crafting List Update!!!", ref this.visible, ImGuiWindowFlags.NoResize))
+                {
+                    ImGui.SetWindowFontScale(1.5f);
+                    ImGui.Text("[CraftingList] New Macro system!");
+                    ImGui.SetWindowFontScale(1f);
+
+                    ImGui.Text("CraftingList has a new Macro system! This plugin now features in-house macros, with");
+                    ImGui.Text("the text saved in the plugin config, freeing up sapce on your macro page.");
+                    ImGui.NewLine();
+                    ImGui.Text("These new macros are unlimited in length. You can copy+paste them from teamcraft, but");
+                    ImGui.Text("You don't have to worry about their durations anymore. They also support ignoring");
+                    ImGui.Text("the <wait.X> modifiers, and moving on to the next step as soon as it's ready.");
+                    ImGui.NewLine();
+                    ImGui.Text("You won't be able to use the old macros, sorry. I know it's a breaking change, but");
+                    ImGui.Text("it's a better macro system, and I'd rather get the migration over with quickly.");
+                    ImGui.Text("I've tried to make it as painless as possible by adding an import button that will");
+                    ImGui.Text("automatically re-create your old macros in the new format. Hopefully you should be");
+                    ImGui.Text("able to just press the button and be done with the transition. It can be found under");
+                    ImGui.Text("the Options tab.");
+                    ImGui.Text("I'll leave the old macro data there to import for about a month, so import before then.");
+
+                    ImGui.NewLine();
+                    ImGui.Text("Press the button below to make this message go away. There's a button in the options tab");
+                    ImGui.Text("to make this message re-appear.");
+
+                    if (ImGui.Button("ACKNOWLEDGE"))
+                    {
+                        DalamudApi.Configuration.AcknowledgedMacroChange = true;
+                    }
+                }
+            }
             if (!Visible)
             {
                 return;
@@ -116,6 +150,8 @@ namespace CraftingList
             }
             plugin.Configuration.Save();
             ImGui.End();
+
+            
         }
 
         public void OnConfigChange()

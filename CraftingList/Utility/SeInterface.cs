@@ -1,4 +1,5 @@
 ﻿using CraftingList.Crafting;
+using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using Dalamud.Hooking;
 using Dalamud.Logging;
@@ -56,7 +57,7 @@ namespace CraftingList.Utility
         //crashes the game in some circumstances, but directing a call through 
         //the macro system doesn't.
         //I dunno.
-        public Macro CloseNoteMacro;
+        public InternalMacro CloseNoteMacro;
 
         public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
         public Hook<AgentRecipeNoteReceiveEventDelegate>? recipeAgentREHook;
@@ -80,7 +81,7 @@ namespace CraftingList.Utility
             m_openRecipeDelegate = Singleton<OpenRecipebyRecipeId>.Get().Delegate();
             m_useActionDelegate = Singleton<UseAction>.Get().Delegate();
 
-            CloseNoteMacro = new Macro(0, 0, "Close", "/closerecipenote");
+            CloseNoteMacro = new InternalMacro(0, 0, "Close", "/closerecipenote");
 
             recipeREHook = Singleton<AddonRecipeNoteReceiveEvent>.Get().CreateHook(ReceiveEventLogDetour);
             //recipeREHook?.Enable();
@@ -133,8 +134,8 @@ namespace CraftingList.Utility
         public static IntPtr GetUiObjectSolo(string name) => GetUiObject(name);
 
         public static void ExecuteMacroByNumber(int macroNum) => RaptureShellModule.Instance->ExecuteMacro(RaptureMacroModule.Instance->Individual[macroNum]);
-        public static void ExecuteMacro(Macro* m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)m);
-        public static void ExecuteMacro(Macro m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)&m);
+        public static void ExecuteMacro(InternalMacro* m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)m);
+        public static void ExecuteMacro(InternalMacro m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)&m);
 
         public static unsafe void SendChatMessage(string message)
         {

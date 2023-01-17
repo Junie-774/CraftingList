@@ -31,7 +31,7 @@ namespace CraftingList
         public List<TimedIngameMacro> Macros { get; set; } = new();
         public List<PluginMacro> PluginMacros { get; set; } = new();
 
-        public bool UsePluginMacros = false;
+        public bool UsePluginMacros = true;
 
         public List<CListEntry> EntryList { get; set; } = new();
 
@@ -59,6 +59,8 @@ namespace CraftingList
         public int ClickSynthesizeDelayMaxSeconds = 5;
 
         public bool SmartWait = false;
+
+        public bool AcknowledgedMacroChange = false;
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

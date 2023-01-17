@@ -1,5 +1,4 @@
-﻿using CraftingList.SeFunctions;
-using CraftingList.Utility;
+﻿using CraftingList.Utility;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using System;
@@ -11,20 +10,20 @@ using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureMacroModule;
 namespace CraftingList.Crafting.Macro
 {
     [StructLayout(LayoutKind.Sequential, Size = 0x688)]
-    public unsafe struct Macro
+    public unsafe struct InternalMacro
     {
         public uint IconId;
         public uint Unk;
         public Utf8String Name;
         public Lines Line;
 
-        public Macro(uint iconId, uint unk, string name, string line)
+        public InternalMacro(uint iconId, uint unk, string name, string line)
             : this(iconId, unk, name, new string[] { line })
         {
 
         }
 
-        public Macro(uint iconId, uint unk, string name, string[] lines)
+        public InternalMacro(uint iconId, uint unk, string name, string[] lines)
         {
             IconId = iconId;
             Unk = unk;

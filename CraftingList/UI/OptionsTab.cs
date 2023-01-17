@@ -1,4 +1,5 @@
-﻿using CraftingList.Utility;
+﻿using CraftingList.Crafting.Macro;
+using CraftingList.Utility;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -129,6 +130,23 @@ namespace CraftingList.UI
 
             ImGui.Checkbox("Ignore <wait.x> and wait intelligently?", ref DalamudApi.Configuration.SmartWait);
 
+            ImGui.NewLine();
+            if (ImGui.Button("Import Old Macros"))
+            {
+                foreach (var macro in DalamudApi.Configuration.Macros)
+                {
+                    var names = DalamudApi.Configuration.PluginMacros.Select(x => x.Name).ToArray();
+                    if (!names.Contains(macro.Name))
+                    {
+                        DalamudApi.Configuration.PluginMacros.Add(PluginMacro.FromTimedIngameMacro(macro));
+                        plugin.PluginUi.OnConfigChange();
+                    }
+                }
+            }
+            if (ImGui.Button("Show Macro Change Message"))
+            {
+                DalamudApi.Configuration.AcknowledgedMacroChange = false;
+            }
             ImGui.Columns(1); 
         }
 

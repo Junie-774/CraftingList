@@ -197,19 +197,7 @@ namespace CraftingList.UI
             }
             DrawPluginMacros();
 
-            ImGui.NewLine();
-            if (ImGui.Button("Import From InGame macros"))
-            {
-                foreach (var macro in DalamudApi.Configuration.Macros)
-                {
-                    var names = DalamudApi.Configuration.PluginMacros.Select(x => x.Name).ToArray();
-                    if (!names.Contains(macro.Name))
-                    {
-                        DalamudApi.Configuration.PluginMacros.Add(PluginMacro.FromTimedIngameMacro(macro));
-                        plugin.PluginUi.OnConfigChange();
-                    }
-                }
-            }
+            
         }
         public void Draw()
         {
@@ -220,10 +208,10 @@ namespace CraftingList.UI
                 return;
             }
 
-            if (ImGui.Checkbox("Use Fancy Plugin Macros?", ref DalamudApi.Configuration.UsePluginMacros))
+            /*if (ImGui.Checkbox("Use Fancy Plugin Macros?", ref DalamudApi.Configuration.UsePluginMacros))
             {
                 plugin.PluginUi.OnConfigChange();
-            }
+            }*/
             
 
             if (DalamudApi.Configuration.UsePluginMacros)
@@ -231,7 +219,7 @@ namespace CraftingList.UI
                 DrawPluginMacroPage();
                 return;
             }
-            else
+            else // Shouldn't run
             {
                 DrawIngameMacroSelector();
 
