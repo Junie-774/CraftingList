@@ -27,7 +27,6 @@ namespace CraftingList.Crafting.Macro
         {
             foreach (var macro in Parse(Text))
             {
-                DalamudApi.ChatGui.Print(macro.Text);
                 await macro.Execute();
             }
 
