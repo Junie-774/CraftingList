@@ -27,7 +27,7 @@ namespace CraftingList
     {
         public int Version { get; set; } = 1;
 
-        public List<CraftingMacro> Macros { get; set; } = new();
+        public List<TimedIngameMacro> Macros { get; set; } = new();
         public List<CListEntry> EntryList { get; set; } = new();
 
         public bool FlashWindowOnHQPrompt = true;

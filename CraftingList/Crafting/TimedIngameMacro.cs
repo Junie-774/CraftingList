@@ -64,7 +64,7 @@ namespace CraftingList.Crafting
             }
         }
     }
-    public unsafe class CraftingMacro
+    public unsafe class TimedIngameMacro
     {
         public string Name = "";
         public int Macro1Num = -1;
@@ -76,7 +76,7 @@ namespace CraftingList.Crafting
         public uint FoodID = 0;
         public uint MedicineID = 0;
 
-        public CraftingMacro(string name, int macro1Num, int macro1DurationSeconds, int macro2Num, int macro2DurationSeconds)
+        public TimedIngameMacro(string name, int macro1Num, int macro1DurationSeconds, int macro2Num, int macro2DurationSeconds)
         {
             Name = name;
             Macro1DurationSeconds = macro1DurationSeconds;
@@ -85,7 +85,7 @@ namespace CraftingList.Crafting
             Macro2DurationSeconds = macro2DurationSeconds;
         }
 
-        public static bool isValidMacro(CraftingMacro macro)
+        public static bool isValidMacro(TimedIngameMacro macro)
         {
             if (macro.Name == null || macro.Name == "") return false;
             if (macro.Macro1Num < 0 || macro.Macro1Num > 99) return false;

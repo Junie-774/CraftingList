@@ -59,7 +59,7 @@ namespace CraftingList.Crafting
                     entry.running = true;
 
                     var macro = configuration.Macros[entry.MacroIndex];
-                    if (!CraftingMacro.isValidMacro(macro))
+                    if (!TimedIngameMacro.isValidMacro(macro))
                     {
                         Cancel($"Error: Macro \"{macro.Name}\" was invalid. This is likely an internal error x.x", true);
                     }
@@ -130,7 +130,7 @@ namespace CraftingList.Crafting
 
         // Takes lastUsedFood and lastUsedMedicine as input/output parameters,
         // because the function needs to return a bool to check for success and trying to mimic union types in C# seems stinky
-        public async Task<(bool, uint, uint)> RepairAndApplyConsumables(CraftingMacro macro, uint lastUsedFood, uint lastUsedMedicine)
+        public async Task<(bool, uint, uint)> RepairAndApplyConsumables(TimedIngameMacro macro, uint lastUsedFood, uint lastUsedMedicine)
         {
             bool needToChangeFood = NeedToChangeConsumable(lastUsedFood, macro.FoodID, false).Result;
             bool needToChangeMedicine = NeedToChangeConsumable(lastUsedMedicine, macro.MedicineID, true).Result;
@@ -312,7 +312,7 @@ namespace CraftingList.Crafting
             return true;
         }
 
-        public async Task<bool> ExecuteMacro(CraftingMacro macro, bool collectible)
+        public async Task<bool> ExecuteMacro(TimedIngameMacro macro, bool collectible)
         {
             PluginLog.Debug($"Executing Macro {macro.Macro1Num}");
 

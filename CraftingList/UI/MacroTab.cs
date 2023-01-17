@@ -27,7 +27,7 @@ namespace CraftingList.UI
 
         private string selectedMacroName = "";
 
-        private CraftingMacro dummyMacro = new("", -1, 0, -1, 0);
+        private TimedIngameMacro dummyMacro = new("", -1, 0, -1, 0);
 
         List<string> macroNames;
 
@@ -250,9 +250,9 @@ namespace CraftingList.UI
                     if (ImGui.Button("+", new Vector2(25, 25)) &&
                         !macroNames.Contains(dummyMacro.Name) &&
                         dummyMacro.Name != newMacroEntryString &&
-                        CraftingMacro.isValidMacro(dummyMacro))
+                        TimedIngameMacro.isValidMacro(dummyMacro))
                     {
-                        plugin.Configuration.Macros.Add(new CraftingMacro(dummyMacro.Name, dummyMacro.Macro1Num, dummyMacro.Macro1DurationSeconds, dummyMacro.Macro2Num, dummyMacro.Macro2DurationSeconds));
+                        plugin.Configuration.Macros.Add(new TimedIngameMacro(dummyMacro.Name, dummyMacro.Macro1Num, dummyMacro.Macro1DurationSeconds, dummyMacro.Macro2Num, dummyMacro.Macro2DurationSeconds));
                         macroNames.Add(dummyMacro.Name);
 
                         selectedMacroName = "";
@@ -266,7 +266,7 @@ namespace CraftingList.UI
                         if (dummyMacro.Name != "" &&
                             dummyMacro.Name != newMacroEntryString &&
                             (dummyMacro.Name == selectedMacroName || !macroNames.Contains(dummyMacro.Name)) &&
-                            CraftingMacro.isValidMacro(dummyMacro))
+                            TimedIngameMacro.isValidMacro(dummyMacro))
                         {
                             currMacro.First().Name = dummyMacro.Name;
                             macroNames[macroNames.FindIndex(m => m == selectedMacroName)] = dummyMacro.Name;
