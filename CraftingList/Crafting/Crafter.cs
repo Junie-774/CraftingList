@@ -299,9 +299,7 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Clicking Synthesize...");
 
-            await Task.Delay(randomDelay.Next(configuration.ClickSynthesizeDelayMinSeconds * 1000,
-                                              configuration.ClickSynthesizeDelayMaxSeconds * 1000)
-             );
+            
 
             seInterface.RecipeNote().Synthesize();
             var waitForSynthWindoResult = seInterface.WaitForAddon("Synthesis", true, configuration.AddonTimeout);
@@ -309,6 +307,10 @@ namespace CraftingList.Crafting
             catch { return false; }
 
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
+
+            await Task.Delay(randomDelay.Next(configuration.ClickSynthesizeDelayMinSeconds * 1000,
+                                              configuration.ClickSynthesizeDelayMaxSeconds * 1000)
+             );
             return true;
         }
 
@@ -316,14 +318,11 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug($"Executing Macro {macro.Macro1Num}");
 
-            // No particular reason for a random delay here, why do you ask?
-            await Task.Delay(randomDelay.Next(configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              configuration.ExecuteMacroDelayMaxSeconds * 1000)
-             );
-
             seInterface.ExecuteMacroByNumber(macro.Macro1Num);
 
             await Task.Delay(macro.Macro1DurationSeconds * 1000 + 1500);
+
+            // No particular reason for a random delay here, why do you ask?
             await Task.Delay(randomDelay.Next(configuration.ExecuteMacroDelayMinSeconds * 1000,
                                               configuration.ExecuteMacroDelayMaxSeconds * 1000)
             );
@@ -339,6 +338,9 @@ namespace CraftingList.Crafting
             try { recipeNote.Wait(); }
             catch { return false; }
 
+            await Task.Delay(randomDelay.Next(configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            );
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
             return true;
 

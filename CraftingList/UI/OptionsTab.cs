@@ -80,10 +80,35 @@ namespace CraftingList.UI
             ImGui.NextColumn();
 
             // auxillary variables to allow for error checking
+            int clickSynthesizeDelayMin = plugin.Configuration.ClickSynthesizeDelayMinSeconds;
+            int clickSynthesizeDelayMax = plugin.Configuration.ClickSynthesizeDelayMaxSeconds;
+
+            ImGui.Text("Delay after clicking synthesize minimum (s): ");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
+            if (ImGui.InputInt("##ClickSynthesizDelayMin", ref clickSynthesizeDelayMin, 0))
+            {
+                if (clickSynthesizeDelayMin > 0 && clickSynthesizeDelayMin < clickSynthesizeDelayMax)
+                    plugin.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMin;
+            }
+
+            ImGui.Text("Delay after clicking synthesize maximum (s): ");
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
+            if (ImGui.InputInt("##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0))
+            {
+                if (clickSynthesizeDelayMax > 0 && clickSynthesizeDelayMin < clickSynthesizeDelayMax)
+                    plugin.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
+            }
+
+            ImGui.NewLine();
+
+            // auxillary variables to allow for error checking
             int executeMacroDelayMin = plugin.Configuration.ExecuteMacroDelayMinSeconds;
             int executeMacroDelayMax = plugin.Configuration.ExecuteMacroDelayMaxSeconds;
+            
 
-            ImGui.Text("Delay before executing macro minimum (s): ");
+            ImGui.Text("Delay after executing macro minimum (s): ");
             ImGui.SameLine();
             ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
             if (ImGui.InputInt("##ExecuteMacroDelayMin", ref executeMacroDelayMin, 0))
@@ -92,37 +117,13 @@ namespace CraftingList.UI
                     plugin.Configuration.ExecuteMacroDelayMinSeconds = executeMacroDelayMin;
             }
 
-            ImGui.Text("Delay before executing macro maximum (s): ");
+            ImGui.Text("Delay after executing macro maximum (s): ");
             ImGui.SameLine();
             ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
             if (ImGui.InputInt("##ExecuteMacroDelayMax", ref executeMacroDelayMax, 0))
             {
                 if (executeMacroDelayMax > 0 && executeMacroDelayMin < executeMacroDelayMax)
                     plugin.Configuration.ExecuteMacroDelayMaxSeconds = executeMacroDelayMax;
-            }
-
-            ImGui.NewLine();
-
-            // auxillary variables to allow for error checking
-            int clickSynthesizeDelayMin = plugin.Configuration.ClickSynthesizeDelayMinSeconds;
-            int clickSynthesizeDelayMax = plugin.Configuration.ClickSynthesizeDelayMaxSeconds;
-
-            ImGui.Text("Delay before clicking Synthesize minimum (s): ");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
-            if (ImGui.InputInt("##ClickSynthesizeDelayMin", ref clickSynthesizeDelayMin, 0))
-            {
-                if (clickSynthesizeDelayMin > 0 && clickSynthesizeDelayMin < clickSynthesizeDelayMax)
-                    plugin.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMin;
-            }
-
-            ImGui.Text("Delay before clicking Synthesize maximum (s): ");
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
-            if (ImGui.InputInt("##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0))
-            {
-                if (clickSynthesizeDelayMax > 0 && clickSynthesizeDelayMin < clickSynthesizeDelayMax)
-                    plugin.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
             }
 
             ImGui.Columns(1); 

@@ -13,7 +13,7 @@ namespace CraftingList
         public int AfterEatFood = 3000;
         public int AfterCompleteMacroHQ = 3500;
         public int AfterCompleteMacroCollectible = 1800;
-        public int AfterExitCrafting = 2000;
+        public int AfterExitCrafting = 2500;
         public int AfterOpenCloseMenu = 500;
         public int AfterRepairConfirm = 3250;
         public int AfterClickOffFood = 1000;
