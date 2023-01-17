@@ -118,6 +118,7 @@ namespace CraftingList.UI
             {
                 macro.FoodID = newFood;
                 DalamudApi.Configuration.Save();
+                plugin.PluginUi.OnConfigChange();
             }
 
 
@@ -134,6 +135,7 @@ namespace CraftingList.UI
             {
                 macro.MedicineID = newMeds;
                 DalamudApi.Configuration.Save();
+                plugin.PluginUi.OnConfigChange();
             }
             var contents = macro.Text;
             
@@ -142,6 +144,7 @@ namespace CraftingList.UI
             {
                 macro.Text = contents;
                 DalamudApi.Configuration.Save();
+                plugin.PluginUi.OnConfigChange();
             }
 
         }
@@ -158,6 +161,7 @@ namespace CraftingList.UI
                     {
                         macro.Name = name;
                         DalamudApi.Configuration.Save();
+                        plugin.PluginUi.OnConfigChange();
                     }
                     
                 }
@@ -189,6 +193,7 @@ namespace CraftingList.UI
                     i++;
                 }
                 DalamudApi.Configuration.PluginMacros.Add(new PluginMacro(baseName + modifier, 0, 0, ""));
+                plugin.PluginUi.OnConfigChange();
             }
             DrawPluginMacros();
 
@@ -201,6 +206,7 @@ namespace CraftingList.UI
                     if (!names.Contains(macro.Name))
                     {
                         DalamudApi.Configuration.PluginMacros.Add(PluginMacro.FromTimedIngameMacro(macro));
+                        plugin.PluginUi.OnConfigChange();
                     }
                 }
             }
