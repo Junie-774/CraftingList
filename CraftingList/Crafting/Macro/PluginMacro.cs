@@ -11,14 +11,14 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CraftingList.Crafting
+namespace CraftingList.Crafting.Macro
 {
     public class PluginMacro : CraftingMacro
     {
         public string Text = string.Empty;
 
         public PluginMacro(string name, uint foodID, uint medicineID, string text)
-            :base(name, foodID, medicineID)
+            : base(name, foodID, medicineID)
         {
 
             Text = text;
@@ -67,13 +67,14 @@ namespace CraftingList.Crafting
 
         public static unsafe string GetMacroText(int macroNum)
         {
-            RaptureMacroModule.Macro* macro = RaptureMacroModule.Instance->GetMacro(0, (uint) macroNum);
+            RaptureMacroModule.Macro* macro = RaptureMacroModule.Instance->GetMacro(0, (uint)macroNum);
             var text = string.Empty;
-            
+
             for (int i = 0; i <= 14; i++)
             {
                 var line = macro->Line[i]->ToString();
-                if (line.Length > 0) {
+                if (line.Length > 0)
+                {
                     text += line;
                     text += "\n";
                 }
@@ -98,5 +99,5 @@ namespace CraftingList.Crafting
         }
     }
 
-    
+
 }

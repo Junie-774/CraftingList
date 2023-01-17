@@ -1,4 +1,4 @@
-﻿using CraftingList.Crafting;
+﻿using CraftingList.Crafting.Macro;
 using CraftingList.Utility;
 using Dalamud.Interface;
 using Dalamud.Logging;

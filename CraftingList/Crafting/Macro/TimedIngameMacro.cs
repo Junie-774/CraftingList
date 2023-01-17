@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureMacroModule;
 
 
-namespace CraftingList.Crafting
+namespace CraftingList.Crafting.Macro
 {
     [StructLayout(LayoutKind.Sequential, Size = 0x688)]
     public unsafe struct Macro
@@ -63,7 +63,7 @@ namespace CraftingList.Crafting
                     if (i < 0 || i > 14) return;
                     fixed (byte* p = data)
                     {
-                        Buffer.MemoryCopy(value, p + sizeof(Utf8String) * i, 0x618 - (sizeof(Utf8String) * i), sizeof(Utf8String));
+                        Buffer.MemoryCopy(value, p + sizeof(Utf8String) * i, 0x618 - sizeof(Utf8String) * i, sizeof(Utf8String));
                     }
                 }
             }
@@ -75,11 +75,11 @@ namespace CraftingList.Crafting
         public int Macro1DurationSeconds = 0;
 
         public int Macro2Num = -1;
-        public int Macro2DurationSeconds  = 0;
+        public int Macro2DurationSeconds = 0;
 
 
         public TimedIngameMacro(string name, int macro1Num, int macro1DurationSeconds, int macro2Num, int macro2DurationSeconds)
-            :base(name, 0, 0)
+            : base(name, 0, 0)
         {
             Macro1DurationSeconds = macro1DurationSeconds;
             Macro1Num = macro1Num;
@@ -109,7 +109,7 @@ namespace CraftingList.Crafting
                 await Task.Delay(Macro2DurationSeconds + completionAnimationTime);
             }
 
-            
+
             var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,
                 DalamudApi.Configuration.MacroExtraTimeoutMs);
 

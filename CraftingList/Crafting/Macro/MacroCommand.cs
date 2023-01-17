@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dalamud.Logging;
 
-namespace CraftingList.Crafting
+namespace CraftingList.Crafting.Macro
 {
     public class MacroCommand
     {
@@ -27,8 +27,8 @@ namespace CraftingList.Crafting
 
         public MacroCommand(string text, int wait, string actionName)
         {
-            this.Text = text;
-            this.WaitMS = wait;
+            Text = text;
+            WaitMS = wait;
             this.actionName = actionName.ToLowerInvariant();
 
         }
@@ -40,7 +40,7 @@ namespace CraftingList.Crafting
             if (waitMatch.Success)
             {
                 var waitValue = waitMatch.Groups["wait"].Value;
-                wait = (int) (float.Parse(waitValue) * 1000);
+                wait = (int)(float.Parse(waitValue) * 1000);
             }
             text = text.Remove(waitMatch.Groups["modifier"].Index, waitMatch.Groups["modifier"].Length);
 
@@ -50,7 +50,7 @@ namespace CraftingList.Crafting
             {
                 actionName = ExtractAndUnquote(nameMatch, "name");
             }
-            
+
             return new MacroCommand(text, wait, actionName);
         }
 
@@ -67,11 +67,11 @@ namespace CraftingList.Crafting
 
         public async Task Execute()
         {
-            PluginLog.Debug(this.Text);
+            PluginLog.Debug(Text);
 
             try
             {
-                SeInterface.SendChatMessage(this.Text);
+                SeInterface.SendChatMessage(Text);
             }
             catch (Exception ex)
             {
@@ -87,7 +87,7 @@ namespace CraftingList.Crafting
             }
             else
             {
-                await Task.Delay(this.WaitMS);
+                await Task.Delay(WaitMS);
             }
             return;
         }

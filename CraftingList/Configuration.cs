@@ -1,4 +1,5 @@
 ﻿using CraftingList.Crafting;
+using CraftingList.Crafting.Macro;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;

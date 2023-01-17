@@ -1,5 +1,5 @@
 ﻿using CraftingList.Crafting;
-using CraftingList.Utility;
+using CraftingList.SeFunctions;
 using Dalamud.Hooking;
 using Dalamud.Logging;
 using Dalamud.Utility.Signatures;
@@ -17,9 +17,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CraftingList.SeFunctions
+namespace CraftingList.Utility
 {
-    
+
     public unsafe class SeInterface
     {
         //Using the Singleton<FunctionObject> pattern doesn't work for this one for reasons I don't understand.
@@ -56,7 +56,7 @@ namespace CraftingList.SeFunctions
         //crashes the game in some circumstances, but directing a call through 
         //the macro system doesn't.
         //I dunno.
-        public Macro CloseNoteMacro;        
+        public Macro CloseNoteMacro;
 
         public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
         public Hook<AgentRecipeNoteReceiveEventDelegate>? recipeAgentREHook;
@@ -74,9 +74,9 @@ namespace CraftingList.SeFunctions
         {
             SignatureHelper.Initialise(this);
             m_baseUiObject = Singleton<GetBaseUiObject>.Get().Invoke() ?? IntPtr.Zero;
-            m_uiProperties = (m_baseUiObject != IntPtr.Zero) ? Marshal.ReadIntPtr(m_baseUiObject, 0x20) : IntPtr.Zero;
+            m_uiProperties = m_baseUiObject != IntPtr.Zero ? Marshal.ReadIntPtr(m_baseUiObject, 0x20) : IntPtr.Zero;
             m_getUiObjectByNameDelegate = Singleton<GetUiObjectByName>.Get().Delegate();
-            m_canGetUiObjects = (m_uiProperties != IntPtr.Zero) && m_getUiObjectByNameDelegate != null;
+            m_canGetUiObjects = m_uiProperties != IntPtr.Zero && m_getUiObjectByNameDelegate != null;
             m_openRecipeDelegate = Singleton<OpenRecipebyRecipeId>.Get().Delegate();
             m_useActionDelegate = Singleton<UseAction>.Get().Delegate();
 
@@ -168,12 +168,12 @@ namespace CraftingList.SeFunctions
 
         public static bool IsAddonAvailable(IntPtr addon, bool needsTobeVisible)
         {
-            return (addon != IntPtr.Zero && (!needsTobeVisible || ((AtkUnitBase*)addon.ToPointer())->IsVisible));
+            return addon != IntPtr.Zero && (!needsTobeVisible || ((AtkUnitBase*)addon.ToPointer())->IsVisible);
         }
 
         public static bool IsAddonUnavailable(IntPtr addon, bool needsToBeVisible)
         {
-            return (addon == IntPtr.Zero || (needsToBeVisible && !((AtkUnitBase*)addon.ToPointer())->IsVisible));
+            return addon == IntPtr.Zero || needsToBeVisible && !((AtkUnitBase*)addon.ToPointer())->IsVisible;
         }
         public static void SwapToDOHJob(int job)
         {
@@ -200,7 +200,7 @@ namespace CraftingList.SeFunctions
 
         public static void Statusoff(string status) => SendChatMessage("/statusoff \"" + status + "\"");
 
-        
+
 
         public static unsafe bool NeedsRepair()
         {
@@ -210,7 +210,7 @@ namespace CraftingList.SeFunctions
             for (int i = 0; i < 13; i++)
             {
                 var condition = InventoryManager()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition;
-                if (condition <= (ushort)30000 * DalamudApi.Configuration.RepairThresholdPercent / 100 || condition == 0)
+                if (condition <= 30000 * DalamudApi.Configuration.RepairThresholdPercent / 100 || condition == 0)
                 {
                     existsItemBelowThreshold = true;
                 }
@@ -264,20 +264,20 @@ namespace CraftingList.SeFunctions
             internal ChatPayload(string text)
             {
                 var stringBytes = Encoding.UTF8.GetBytes(text);
-                this.textPtr = Marshal.AllocHGlobal(stringBytes.Length + 30);
+                textPtr = Marshal.AllocHGlobal(stringBytes.Length + 30);
 
-                Marshal.Copy(stringBytes, 0, this.textPtr, stringBytes.Length);
-                Marshal.WriteByte(this.textPtr + stringBytes.Length, 0);
+                Marshal.Copy(stringBytes, 0, textPtr, stringBytes.Length);
+                Marshal.WriteByte(textPtr + stringBytes.Length, 0);
 
-                this.textLen = (ulong)(stringBytes.Length + 1);
+                textLen = (ulong)(stringBytes.Length + 1);
 
-                this.unk1 = 64;
-                this.unk2 = 0;
+                unk1 = 64;
+                unk2 = 0;
             }
 
             public void Dispose()
             {
-                Marshal.FreeHGlobal(this.textPtr);
+                Marshal.FreeHGlobal(textPtr);
             }
         }
     }

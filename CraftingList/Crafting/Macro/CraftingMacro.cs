@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CraftingList.Crafting
+namespace CraftingList.Crafting.Macro
 {
     public abstract class CraftingMacro
     {
@@ -16,9 +16,9 @@ namespace CraftingList.Crafting
 
         public CraftingMacro(string name, uint foodID, uint medicineID)
         {
-            this.Name = name;
-            this.FoodID = foodID;
-            this.MedicineID = medicineID;
+            Name = name;
+            FoodID = foodID;
+            MedicineID = medicineID;
         }
 
         public abstract Task<bool> Execute(bool collectible);

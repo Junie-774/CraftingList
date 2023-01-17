@@ -1,4 +1,4 @@
-﻿using CraftingList.SeFunctions;
+﻿using CraftingList.Crafting.Macro;
 using CraftingList.Utility;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
