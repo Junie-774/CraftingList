@@ -157,7 +157,7 @@ namespace CraftingList.UI
                 if (ImGui.InputText($"##rename", ref name, 100, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue))
                 {
                     var names = DalamudApi.Configuration.PluginMacros.Select(x => x.Name).ToArray();
-                    if (!names.Contains(macro.Name))
+                    if (!names.Contains(name))
                     {
                         macro.Name = name;
                         DalamudApi.Configuration.Save();

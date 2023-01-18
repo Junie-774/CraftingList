@@ -1,4 +1,5 @@
 ﻿using CraftingList.Utility;
+using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
@@ -27,7 +28,14 @@ namespace CraftingList.Crafting.Macro
         {
             foreach (var macro in Parse(Text))
             {
-                await macro.Execute();
+                try
+                {
+                    await macro.Execute();
+                }
+                catch (Exception ex)
+                {
+                    PluginLog.Error(ex.Message);
+                }
             }
 
             var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,

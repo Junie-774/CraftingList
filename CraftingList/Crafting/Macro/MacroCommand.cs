@@ -66,7 +66,7 @@ namespace CraftingList.Crafting.Macro
 
         public async Task Execute()
         {
-            PluginLog.Debug(Text);
+            PluginLog.Debug($"Executing '{Text}'");
 
             try
             {

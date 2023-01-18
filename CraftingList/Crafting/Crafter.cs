@@ -198,6 +198,7 @@ namespace CraftingList.Crafting
                         .Where(item => item.RowId == entry.ItemId)
                         .First().IsCollectable;
 
+            PluginLog.Debug($"Opening Recipe note to recipe {entry.ItemId}");
             if (!await OpenRecipeByItem((int)entry.ItemId))
             {
                 PluginLog.Debug($"Open Recipe Note failed, stopping craft...");
@@ -205,6 +206,7 @@ namespace CraftingList.Crafting
                 return false;
             }
 
+            PluginLog.Debug("Filling HQ Mats.");
             if (!await FillHQMats(entry.HQSelection))
             {
                 PluginLog.Debug($"Filling HQ Mats failed, stopping craft...");
@@ -213,10 +215,12 @@ namespace CraftingList.Crafting
             }
             await Task.Delay(500);
 
+            PluginLog.Debug("Clicking Synthesize");
             if (!await ClickSynthesize())
             {
                 if (entry.NumCrafts == "max")
                 {
+                    PluginLog.Debug("Synthesize failed, num to craft was 'max'");
                     entry.Complete = true;
                 }
                 else
@@ -229,6 +233,7 @@ namespace CraftingList.Crafting
                 return false;
             }
 
+            PluginLog.Debug("Executing macro.");
             if (!await macro.Execute(isCollectible))
             {
                 PluginLog.Debug($"Executing macro timed out, stopping craft...");
