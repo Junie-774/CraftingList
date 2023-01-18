@@ -28,6 +28,9 @@ namespace CraftingList.Utility
                         .GetRow(meal.ItemAction.Value!.DataHQ[1])!.UnkData1[0].BaseParam;
                     return param == 11 || param == 70 || param == 71;
                 });
+
+            GameEventManager = new();
+            ChatManager= new();
         }
 
 
@@ -71,7 +74,8 @@ namespace CraftingList.Utility
         }
 
         public static System.Collections.Generic.IEnumerable<Item> CraftingConsumables { get; private set; } = null!;
-        
 
+        public static GameEventManager GameEventManager { get; private set; } = null!;
+        public static ChatManager ChatManager { get; private set; } = null!;
     }
 }

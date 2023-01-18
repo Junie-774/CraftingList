@@ -8,11 +8,15 @@ using Dalamud.Game.ClientState.Conditions;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Dalamud.Logging;
+using System.Threading;
 
 namespace CraftingList.Crafting.Macro
 {
     public class MacroCommand
     {
+        private static ManualResetEvent DataWaiter
+        => DalamudApi.GameEventManager.DataAvailableWaiter;
+
         private static readonly Regex WaitRegex = new(@"(?<modifier><wait\.(?<wait>\d+(?:\.\d+)?)>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex ActionNameRegex = new(@"^/(?:ac|action)\s+(?<name>.*?)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -68,9 +72,10 @@ namespace CraftingList.Crafting.Macro
         {
             PluginLog.Debug($"Executing '{Text}'");
 
+            DataWaiter.Reset();
             try
             {
-                SeInterface.SendChatMessage(Text);
+                DalamudApi.ChatManager.SendMessage(Text);
             }
             catch (Exception ex)
             {
@@ -78,11 +83,16 @@ namespace CraftingList.Crafting.Macro
             }
             if (DalamudApi.Configuration.SmartWait)
             {
-                await Task.Delay(100);
+
+                PluginLog.Debug("Waiting...");
+
+                if (!DataWaiter.WaitOne(5000))
+                    PluginLog.Error("Didn't receive a response after using action.");
 
                 while (DalamudApi.Condition[ConditionFlag.Crafting40])
                     await Task.Delay(250);
-                await Task.Delay(100);
+                await Task.Delay(50);
+                PluginLog.Debug("Waiting done.");
             }
             else
             {

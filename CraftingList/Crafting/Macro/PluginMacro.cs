@@ -26,28 +26,36 @@ namespace CraftingList.Crafting.Macro
 
         public override async Task<bool> Execute(bool _)
         {
-            foreach (var macro in Parse(Text))
+            try
             {
-                try
+                foreach (var macro in Parse(Text))
                 {
-                    await macro.Execute();
+                    try
+                    {
+                        await macro.Execute();
+                    }
+                    catch (Exception ex)
+                    {
+                        PluginLog.Error(ex.Message);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    PluginLog.Error(ex.Message);
-                }
+
+                var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,
+                    DalamudApi.Configuration.MacroExtraTimeoutMs);
+
+                try { recipeNote.Wait(); }
+                catch { return false; }
+
+                await Task.Delay(randomDelay.Next(DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                                  DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+                );
+                await Task.Delay(DalamudApi.Configuration.WaitDurations.AfterOpenCloseMenu);
             }
-
-            var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,
-                DalamudApi.Configuration.MacroExtraTimeoutMs);
-
-            try { recipeNote.Wait(); }
-            catch { return false; }
-
-            await Task.Delay(randomDelay.Next(DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
-            );
-            await Task.Delay(DalamudApi.Configuration.WaitDurations.AfterOpenCloseMenu);
+            catch(Exception ex)
+            {
+                PluginLog.Error(ex.Message);
+                return false;
+            }
 
             return true;
         }
