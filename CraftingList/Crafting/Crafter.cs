@@ -237,7 +237,7 @@ namespace CraftingList.Crafting
             if (!await macro.Execute(isCollectible))
             {
                 PluginLog.Debug($"Executing macro timed out, stopping craft...");
-                Cancel($"[CraftingList] Macro '{macro.Name}' timed out before completing the craft, cancelling...", true);
+                Cancel($"[CraftingList] Error: Craft did not complete after executing macro '{macro.Name}'. Cancelling craft job./r", true);
                 return false;
             }
             entry.Decrement();
@@ -316,8 +316,8 @@ namespace CraftingList.Crafting
 
             await Task.Delay(configuration.WaitDurations.AfterOpenCloseMenu);
 
-            await Task.Delay(randomDelay.Next(configuration.ClickSynthesizeDelayMinSeconds * 1000,
-                                              configuration.ClickSynthesizeDelayMaxSeconds * 1000)
+            await Task.Delay(randomDelay.Next((int) DalamudApi.Configuration.ClickSynthesizeDelayMinSeconds * 1000,
+                                              (int) DalamudApi.Configuration.ClickSynthesizeDelayMaxSeconds * 1000)
              );
             return true;
         }

@@ -46,8 +46,8 @@ namespace CraftingList.Crafting.Macro
                 try { recipeNote.Wait(); }
                 catch { return false; }
 
-                await Task.Delay(randomDelay.Next(DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                                  DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+                await Task.Delay(randomDelay.Next((int) DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                                  (int) DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
                 );
                 await Task.Delay(DalamudApi.Configuration.WaitDurations.AfterOpenCloseMenu);
             }

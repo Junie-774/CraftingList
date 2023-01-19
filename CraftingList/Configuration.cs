@@ -52,11 +52,11 @@ namespace CraftingList
         public int SoundEffectListCancel = 4;
         public bool AlertOnTerminate = true;
 
-        public int ExecuteMacroDelayMinSeconds = 1;
-        public int ExecuteMacroDelayMaxSeconds = 5;
+        public float ExecuteMacroDelayMinSeconds = 1;
+        public float ExecuteMacroDelayMaxSeconds = 5;
 
-        public int ClickSynthesizeDelayMinSeconds = 1;
-        public int ClickSynthesizeDelayMaxSeconds = 5;
+        public float ClickSynthesizeDelayMinSeconds = 1;
+        public float ClickSynthesizeDelayMaxSeconds = 5;
 
         public bool SmartWait = false;
 

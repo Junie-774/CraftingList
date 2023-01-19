@@ -97,8 +97,8 @@ namespace CraftingList.Crafting.Macro
             await Task.Delay(Macro1DurationSeconds * 1000 + 1500);
 
             // No particular reason for a random delay here, why do you ask?
-            await Task.Delay(randomDelay.Next(DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            await Task.Delay(randomDelay.Next((int) DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              (int) DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
             );
 
             if (Macro2Num != -1)
@@ -115,8 +115,8 @@ namespace CraftingList.Crafting.Macro
             try { recipeNote.Wait(); }
             catch { return false; }
 
-            await Task.Delay(randomDelay.Next(DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            await Task.Delay(randomDelay.Next((int) DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              (int) DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
             );
             await Task.Delay(DalamudApi.Configuration.WaitDurations.AfterOpenCloseMenu);
 

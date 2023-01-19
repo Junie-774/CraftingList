@@ -1,5 +1,6 @@
 ﻿using CraftingList.Crafting.Macro;
 using CraftingList.Utility;
+using Dalamud.Logging;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -82,13 +83,13 @@ namespace CraftingList.UI
             ImGui.NextColumn();
 
             // auxillary variables to allow for error checking
-            int clickSynthesizeDelayMin = DalamudApi.Configuration.ClickSynthesizeDelayMinSeconds;
-            int clickSynthesizeDelayMax = DalamudApi.Configuration.ClickSynthesizeDelayMaxSeconds;
+            float clickSynthesizeDelayMin = DalamudApi.Configuration.ClickSynthesizeDelayMinSeconds;
+            float clickSynthesizeDelayMax = DalamudApi.Configuration.ClickSynthesizeDelayMaxSeconds;
 
             ImGui.Text("Delay after clicking synthesize minimum (s): ");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
-            if (ImGui.InputInt("##ClickSynthesizDelayMin", ref clickSynthesizeDelayMin, 0))
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("00000").X);
+            if (ImGui.InputFloat("##ClickSynthesizDelayMin", ref clickSynthesizeDelayMin, 0, 0, "%.1f"))
             {
                 if (clickSynthesizeDelayMin > 0 && clickSynthesizeDelayMin < clickSynthesizeDelayMax)
                     DalamudApi.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMin;
@@ -96,8 +97,8 @@ namespace CraftingList.UI
 
             ImGui.Text("Delay after clicking synthesize maximum (s): ");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
-            if (ImGui.InputInt("##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0))
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("00000").X);
+            if (ImGui.InputFloat("##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0, 0, "%.1f"))
             {
                 if (clickSynthesizeDelayMax > 0 && clickSynthesizeDelayMin < clickSynthesizeDelayMax)
                     DalamudApi.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
@@ -106,23 +107,24 @@ namespace CraftingList.UI
             ImGui.NewLine();
 
             // auxillary variables to allow for error checking
-            int executeMacroDelayMin = DalamudApi.Configuration.ExecuteMacroDelayMinSeconds;
-            int executeMacroDelayMax = DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds;
+            float executeMacroDelayMin = DalamudApi.Configuration.ExecuteMacroDelayMinSeconds;
+            float executeMacroDelayMax = DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds;
             
 
             ImGui.Text("Delay after executing macro minimum (s): ");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
-            if (ImGui.InputInt("##ExecuteMacroDelayMin", ref executeMacroDelayMin, 0))
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("00000").X);
+            if (ImGui.InputFloat("##ExecuteMacroDelayMin", ref executeMacroDelayMin, 0, 0, "%.1f"))
             {
                 if (executeMacroDelayMin > 0 && executeMacroDelayMin < executeMacroDelayMax)
+                    PluginLog.Debug("uhhhhh");
                     DalamudApi.Configuration.ExecuteMacroDelayMinSeconds = executeMacroDelayMin;
             }
 
             ImGui.Text("Delay after executing macro maximum (s): ");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000").X);
-            if (ImGui.InputInt("##ExecuteMacroDelayMax", ref executeMacroDelayMax, 0))
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("00000").X);
+            if (ImGui.InputFloat("##ExecuteMacroDelayMax", ref executeMacroDelayMax, 0, 0, "%.1f"))
             {
                 if (executeMacroDelayMax > 0 && executeMacroDelayMin < executeMacroDelayMax)
                     DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds = executeMacroDelayMax;
