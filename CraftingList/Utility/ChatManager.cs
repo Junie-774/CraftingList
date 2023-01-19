@@ -77,7 +77,7 @@ internal class ChatManager : IDisposable
     public void PrintMessage(string message)
         => DalamudApi.ChatGui.PrintChat(new XivChatEntry()
         {
-            Message = $"[SND] {message}",
+            Message = $"[CraftingList] {message}",
         });
 
     /// <summary>
@@ -91,7 +91,7 @@ internal class ChatManager : IDisposable
             {
                 Message = new SeString(
                     new UIForegroundPayload((ushort)color),
-                    new TextPayload($"[SND] {message}"),
+                    new TextPayload($"[CraftingList] {message}"),
                     UIForegroundPayload.UIForegroundOff),
             });
 

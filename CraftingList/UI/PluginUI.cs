@@ -16,9 +16,11 @@ namespace CraftingList
     // to do any cleanup
     unsafe class PluginUI : IDisposable
     {
-        private List<ITab> Tabs;
+        public List<ITab> Tabs;
         private readonly CraftingList plugin;
-
+        public CraftingListTab CraftingListTab;
+        public MacroTab MacroTab;
+        public OptionsTab OptionsTab;
 
 
         // this extra bool exists for ImGui, since you can't ref a property
@@ -36,13 +38,16 @@ namespace CraftingList
             set { this.settingsVisible = value; }
         }
 
-        public PluginUI(CraftingList plugin, Configuration configuration)
+        public PluginUI(CraftingList plugin)
         {
-            this.Tabs = new List<ITab>()
-            {
-                new CraftingListTab(plugin),
-                new MacroTab(plugin),
-                new OptionsTab(plugin),
+            CraftingListTab = new(plugin);
+            MacroTab = new(plugin);
+            OptionsTab = new(plugin);
+
+            Tabs = new() {
+                CraftingListTab,
+                MacroTab,
+                OptionsTab,
             };
             this.plugin = plugin;            
         }
@@ -61,12 +66,6 @@ namespace CraftingList
             // draw delegates as low as possible.
 
             DrawSettingsWindow();
-        }
-                    
-        public void DrawCraftingList()
-        {
-            Tabs[0].Draw();
-
         }
         
         public void DrawExperimentalTab()
@@ -94,23 +93,12 @@ namespace CraftingList
                 if (ImGui.Begin("Crafting List Update!!!", ref this.visible, ImGuiWindowFlags.NoResize))
                 {
                     ImGui.SetWindowFontScale(1.5f);
-                    ImGui.Text("[CraftingList] New Macro system!");
+                    ImGui.Text("[CraftingList] Old Macro system!");
                     ImGui.SetWindowFontScale(1f);
 
-                    ImGui.Text("CraftingList has a new Macro system! This plugin now features in-house macros, with");
-                    ImGui.Text("the text saved in the plugin config, freeing up sapce on your macro page.");
-                    ImGui.NewLine();
-                    ImGui.Text("These new macros are unlimited in length. You can copy+paste them from teamcraft, but");
-                    ImGui.Text("You don't have to worry about their durations anymore. They also support ignoring");
-                    ImGui.Text("the <wait.X> modifiers, and moving on to the next step as soon as it's ready.");
-                    ImGui.NewLine();
-                    ImGui.Text("You won't be able to use the old macros, sorry. I know it's a breaking change, but");
-                    ImGui.Text("it's a better macro system, and I'd rather get the migration over with quickly.");
-                    ImGui.Text("I've tried to make it as painless as possible by adding an import button that will");
-                    ImGui.Text("automatically re-create your old macros in the new format. Hopefully you should be");
-                    ImGui.Text("able to just press the button and be done with the transition. It can be found under");
-                    ImGui.Text("the Options tab.");
-                    ImGui.Text("I'll leave the old macro data there to import for about a month, so import before then.");
+                    ImGui.Text("After some feedback, I've reworked and re-added the old type of macro!");
+                    ImGui.Text("They can be added and edited similarly to the fancy new macros under the Macro tab.");
+                    
 
                     ImGui.NewLine();
                     ImGui.Text("Press the button below to make this message go away. There's a button in the options tab");
@@ -154,15 +142,6 @@ namespace CraftingList
 
             
         }
-
-        public void OnConfigChange()
-        {
-            foreach (var tab in Tabs)
-            {
-                tab.OnConfigChange();
-            }
-        }
-
 
     }
 }

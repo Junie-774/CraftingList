@@ -28,7 +28,7 @@ namespace CraftingList
     {
         public int Version { get; set; } = 1;
 
-        public List<TimedIngameMacro> Macros { get; set; } = new();
+        public List<IngameMacro> IngameMacros { get; set; } = new();
         public List<PluginMacro> PluginMacros { get; set; } = new();
 
         public bool UsePluginMacros = true;
@@ -61,6 +61,11 @@ namespace CraftingList
         public bool SmartWait = false;
 
         public bool AcknowledgedMacroChange = false;
+
+        public IEnumerable<CraftingMacro> GetMacros()
+        {
+            return UsePluginMacros ? PluginMacros : IngameMacros;
+        }
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

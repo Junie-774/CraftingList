@@ -1,4 +1,5 @@
 ﻿using CraftingList.Crafting;
+using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
@@ -48,12 +49,13 @@ namespace CraftingList
             SignatureHelper.Initialise(this);
 
             InitializeSingletons();
+            MacroManager.InitializeMacros();
 
-                        
+
             Crafter = new Crafter(SeInterface.Instance, Configuration);
 
 
-            this.PluginUi = new PluginUI(this, Configuration);
+            this.PluginUi = new PluginUI(this);
 
 
             DalamudApi.CommandManager.AddHandler("/craftinglist", new CommandInfo(OnCraftingList)

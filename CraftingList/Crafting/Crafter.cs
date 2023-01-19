@@ -67,12 +67,21 @@ namespace CraftingList.Crafting
                     if (configuration.HasCraftTimeout && configuration.CraftTimeoutMinutes > 0 && (DateTime.Now - craftStart).TotalMinutes >= configuration.CraftTimeoutMinutes) break;
                     entry.running = true;
 
-                    CraftingMacro macro = DalamudApi.Configuration.UsePluginMacros ? DalamudApi.Configuration.PluginMacros[entry.MacroIndex] :
-                                                                            DalamudApi.Configuration.Macros[entry.MacroIndex];
-                    if (macro is TimedIngameMacro && !TimedIngameMacro.isValidMacro((TimedIngameMacro) macro))
+                    CraftingMacro? macro = MacroManager.GetMacro(entry.MacroName);
+                    if (macro == null)
+                    {
+                        PluginLog.Error($"Entry {entry}'s macro did not match any in the active macro list.");
+                        Cancel("An internal error occurred, stopping craft. Check `/xllog` for more details.", true);
+                        break;
+                    }
+                    
+                    if (macro is IngameMacro && !IngameMacro.IsValidMacro((IngameMacro) macro))
                     {
                         Cancel($"Error: Macro \"{macro.Name}\" was invalid. This is likely an internal error x.x", true);
+                        break;
                     }
+
+                    if (!m_running) break;
 
                     await Task.Delay(1000);                 
                                         
@@ -444,9 +453,6 @@ namespace CraftingList.Crafting
                 PluginLog.Debug("bad amount");
                 return false;
             }
-
-            if (entry.MacroIndex < 0 || entry.MacroIndex > DalamudApi.Configuration.PluginMacros.Count) { PluginLog.Debug("Bad macro"); return false; }
-
             return true;
         }
 

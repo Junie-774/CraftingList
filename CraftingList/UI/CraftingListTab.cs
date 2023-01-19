@@ -1,7 +1,10 @@
 ﻿using CraftingList.Crafting;
+using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
+using Dalamud.Interface;
 using Dalamud.Logging;
+using Dalamud.Utility;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -22,12 +25,12 @@ namespace CraftingList.UI
         private List<string> newEntryItemNameSearchResults;
 
         // Two separate lists because we want to present an empty option for a new list entry, but not present an empty option for an existing entry.
-        readonly List<string> macroNames;
-        readonly List<string> newMacroNames;
 
-        readonly private CListEntry newEntry = new("", 0, "", 0);
+
+        readonly private CListEntry newEntry = new("", 0, "", "");
 
         int newEntryItemNameSelection = 0;
+        int newEntryMacroSelection = 0;
         bool newEntryShowItemNameList = false;
 
         public string Name => "CraftingList";
@@ -43,11 +46,6 @@ namespace CraftingList.UI
             {
                 ""
             };
-            newMacroNames = new List<string>
-            {
-                ""
-            };
-            macroNames = new List<string>();
 
             craftableItems = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
                 .Select(r => r).Where(r => r != null && r.ItemResult.Value != null && r.ItemResult.Value.Name != "");
@@ -56,7 +54,6 @@ namespace CraftingList.UI
             {
                 craftableNames.Add(item!.ItemResult.Value!.Name);
             }
-            PopulateMacroNames();
 
             newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntry.Name)).ToList();
 
@@ -73,7 +70,7 @@ namespace CraftingList.UI
                 plugin.Crafter.CraftAllItems();
             }
             ImGui.SameLine();
-            
+
             if (ImGui.Button("Cancel"))
             {
                 plugin.Crafter.Cancel("Cancelling craft...", false);
@@ -93,17 +90,20 @@ namespace CraftingList.UI
         {
 
             float tableSize = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X);
+            ImGui.PushFont(UiBuilder.IconFont);
+            float fontSize = ImGui.CalcTextSize(FontAwesomeIcon.TrashAlt.ToIconString()).X;
+            ImGui.PopFont();
 
             ImGui.Columns(5);
-            float dynamicAvailWidth = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) - (18 + 18 + 12) - (ImGui.CalcTextSize("Amount").X + ImGui.CalcTextSize("HQ Mats?").X + ImGui.CalcTextSize("Remove").X);
+            float dynamicAvailWidth = (tableSize) - (18 + 18 + 12) - (ImGui.CalcTextSize("Amount").X + ImGui.CalcTextSize("HQ Mats?").X + fontSize);
             ImGui.SetColumnWidth(0, dynamicAvailWidth * 0.6f);
             ImGui.SetColumnWidth(1, 18 + ImGui.CalcTextSize("Amount").X);
             ImGui.SetColumnWidth(2, dynamicAvailWidth * 0.4f);
             ImGui.SetColumnWidth(3, 18 + ImGui.CalcTextSize("HQ Mats").X);
+            ImGui.SetColumnWidth(4, 18 + fontSize);
 
             ImGui.Separator();
             ImGui.SetWindowFontScale(1.1f);
-            ImGui.SetColumnWidth(4, 12 + ImGui.CalcTextSize("Remove").X);
 
             ImGui.Text("Item Name");
             ImGui.NextColumn();
@@ -124,36 +124,43 @@ namespace CraftingList.UI
             ImGui.NextColumn();
             ImGui.NextColumn();
 
-            for (int i = 0; i < DalamudApi.Configuration.EntryList.Count; i++)
+            int i = 0;
+            foreach (var currEntry in plugin.Configuration.EntryList)
             {
-                ImGui.Text(plugin.Configuration.EntryList[i].Name);
+                ImGui.Text(currEntry.Name);
                 ImGui.NextColumn();
 
                 ImGui.SetNextItemWidth(-1);
-                ImGui.InputText("##NumCrafts" + i, ref plugin.Configuration.EntryList[i].NumCrafts, 50);
+                ImGui.InputText("##NumCrafts" + i, ref currEntry.NumCrafts, 50);
                 ImGui.NextColumn();
 
                 ImGui.SetNextItemWidth(-1);
-                if (ImGui.Combo("##Macro" + i, ref plugin.Configuration.EntryList[i].MacroIndex, macroNames.ToArray(), macroNames.Count))
+                int macroIndex = MacroManager.MacroNames.IndexOf(currEntry.MacroName);
+                if (macroIndex == -1 && !currEntry.MacroName.IsNullOrEmpty())
                 {
-                    var macro = DalamudApi.Configuration.PluginMacros.Where(x => x.Name == macroNames[plugin.Configuration.EntryList[i].MacroIndex]);
-                    if (!macro.Any())
-                    {
-                        PluginLog.Debug("Internal error: Macro name does not match any in macro list. This shouldn't happen.");
-                    }
+                    PluginLog.Debug($"Error: Entry {currEntry} had macro name which does not match any in list.");
+                    DalamudApi.ChatManager.PrintMessage("Encountered an internal error. see `/xllog` for details");
+
+                }
+
+                
+                if (ImGui.Combo("##Macro" + i, ref macroIndex, MacroManager.MacroNames.ToArray(), MacroManager.MacroNames.Count()))
+                {
+                    currEntry.MacroName = MacroManager.MacroNames.ElementAt(macroIndex);
                 }
                 ImGui.NextColumn();
 
                 if (ImGui.Button("Select...##" + i))
                 {
-                    hqMatItem = craftableItems.Where(item => item!.ItemResult.Value!.RowId == plugin.Configuration.EntryList[i].ItemId).First();
-                    setHQItemIngredients(hqMatItem!);
+                    hqMatItem = craftableItems.Where(item => item!.ItemResult.Value!.RowId == currEntry.ItemId).First();
+                    SetHQItemIngredients(hqMatItem!);
                     hqMatSelectionCurrEntry = i;
                     ImGui.OpenPopup("HQ Mat Selection");
                 }
                 ImGui.NextColumn();
 
-                if (ImGui.Button("Remove##" + i))
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 15);
+                if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Remove Entry", currEntry.Name + i))
                 {
                     plugin.Configuration.EntryList[i].Complete = true;
                 }
@@ -161,18 +168,19 @@ namespace CraftingList.UI
 
 
                 ImGui.Separator();
+                i++;
             }
 
 
-            plugin.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0");
-            plugin.Configuration.Save();
-
+            DalamudApi.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0");
+            DalamudApi.Configuration.Save();
         }
 
         private void DrawNewListEntry()
         {
+            var newEntryMacroNames = GenerateNewEntrymacroNames().ToArray();
             ImGui.SetNextItemWidth(-1);
-            if (ImGui.InputText("##Item", ref newEntry.Name, 65535, ImGuiInputTextFlags.AllowTabInput))
+            if (ImGui.InputText("##Item", ref newEntry.Name, 100, ImGuiInputTextFlags.AllowTabInput))
             {
                 newEntryItemNameSearchResults = craftableNames.Where(x => newEntry.Name == "" || x.ToLower().Contains(newEntry.Name.ToLower())).ToList();
                 newEntryShowItemNameList = true;
@@ -181,7 +189,7 @@ namespace CraftingList.UI
 
 
             ImGui.SetNextItemWidth(-1);
-            ImGui.InputText("##Amount", ref newEntry.NumCrafts, 65535);
+            ImGui.InputText("##Amount", ref newEntry.NumCrafts, 100);
             if (ImGui.IsItemHovered())
             {
                 ImGui.SetTooltip("Number of crafts. Enter \"max\" to craft until you run out of materials or inventory space.");
@@ -189,38 +197,39 @@ namespace CraftingList.UI
             ImGui.NextColumn();
 
             ImGui.SetNextItemWidth(-1);
-            if (ImGui.Combo("##Macro", ref newEntry.MacroIndex, newMacroNames.ToArray(), newMacroNames.Count))
+            if (ImGui.Combo("##Macro", ref newEntryMacroSelection, newEntryMacroNames, newEntryMacroNames.Length))
             {
-                var macro = plugin.Configuration.PluginMacros.Where(x => x.Name == newMacroNames[newEntry.MacroIndex]);
-                if (!macro.Any())
+                var name = newEntryMacroNames[newEntryMacroSelection];
+                if (!MacroManager.ExistsMacro(name))
                 {
-                    PluginLog.Debug("Internal error: Macro name does not match any in macro list. This shouldn't happen.");
+                    PluginLog.Debug($"Internal error: Macro name '{name}' does not match any in macro list. This shouldn't happen.");
                 }
             }
             ImGui.NextColumn();
 
+            // skip the "delete" button
             ImGui.NextColumn();
+            
             ImGui.SetNextItemWidth(-1);
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 18);
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 15);
 
-            if (ImGui.Button("+", new Vector2(25f, 25f)))
+            if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add New Entry"))
             {
-                
+
                 var items = craftableItems.Where(item => item!.ItemResult.Value!.Name == newEntry.Name);
 
                 if (items.Any() &&
-                    (newEntry.NumCrafts.ToLower() == "max" || (int.TryParse(newEntry.NumCrafts, out _) && int.Parse(newEntry.NumCrafts) > 0))
-                    && newEntry.MacroIndex > 0)
+                    (newEntry.NumCrafts.ToLower() == "max" || (int.TryParse(newEntry.NumCrafts, out _) && int.Parse(newEntry.NumCrafts) > 0)))
                 {
 
                     newEntry.ItemId = items.First()!.ItemResult.Value!.RowId;
                     newEntry.NumCrafts = newEntry.NumCrafts.ToLower();
-                    newEntry.MacroIndex -= 1; //Transition from referring to newMacroName to macroName
-                    var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntry.MacroIndex);
+                    var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntryMacroNames[newEntryMacroSelection]);
+
                     plugin.Configuration.EntryList.Add(entry);
+                    newEntryMacroSelection = 0;
                     newEntry.Name = "";
                     newEntry.NumCrafts = "";
-                    newEntry.MacroIndex = 0;
                 }
             }
             ImGui.Separator();
@@ -269,28 +278,27 @@ namespace CraftingList.UI
 
                 for (int i = 0; i < hqMatItem!.UnkData5.Length; i++)
                 {
-                    
+
                     if (currItemIngredients[i].RowId != 0)
                     {
                         if (currItemIngredients[i].CanBeHq)
                         {
-
                             ImGui.Text(currItemIngredients[i].Name); // + " (" + hqMatItem!.UnkData5[i].AmountIngredient + ")");
                             ImGui.SameLine();
                             ImGui.SetCursorPosX(ImGui.CalcTextSize(maxString + "(XXX)").X);
                             ImGui.SetNextItemWidth(25);
                             ImGui.InputInt($"/{hqMatItem!.UnkData5[i].AmountIngredient}##ingredient_{currItemIngredients[i].Name}", ref entry.HQSelection[i], 0);
                             ImGui.SameLine();
-                            if (ImGui.Button("+", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
+                            if (ImGui.Button($"+##hq{i}", new Vector2(25, 25)))
                             {
                                 entry.HQSelection[i]++;
                             }
                             ImGui.SameLine();
-                            if (ImGui.Button("-", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
+                            if (ImGui.Button($"-##hq{i}", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
                             {
                                 entry.HQSelection[i]--;
                             }
-                            ImGui.PopItemWidth();
+
                             if (entry.HQSelection[i] > hqMatItem!.UnkData5[i].AmountIngredient)
                             {
                                 entry.HQSelection[i] = hqMatItem!.UnkData5[i].AmountIngredient;
@@ -299,7 +307,7 @@ namespace CraftingList.UI
                             {
                                 entry.HQSelection[i] = 0;
                             }
-                            
+
                             hasHQIngredients = true;
                         }
                     }
@@ -317,41 +325,31 @@ namespace CraftingList.UI
             }
         }
 
-        public void OnConfigChange()
+        public static void RemoveMacroName(string macroName)
         {
-            macroNames.Clear();
-            newMacroNames.Clear();
-            newMacroNames.Add("");
 
-            PopulateMacroNames();
-            
-            foreach (var entry in plugin.Configuration.EntryList)
+            foreach (var entry in DalamudApi.Configuration.EntryList)
             {
-                entry.MacroIndex = -1;
+                if (entry.MacroName == macroName)
+                    entry.MacroName = "";
+
             }
-            
         }
 
-        void PopulateMacroNames()
+        public static void UpdateMacroNameInEntries(string oldName, string newName)
         {
-            if (DalamudApi.Configuration.UsePluginMacros)
+            foreach (var entry in DalamudApi.Configuration.EntryList)
             {
-                foreach (var mac in DalamudApi.Configuration.PluginMacros)
-                {
-                    macroNames.Add(mac.Name);
-                    newMacroNames.Add(mac.Name);
-                }
-            }
-            else
-            {
-                foreach (var mac in DalamudApi.Configuration.Macros)
-                {
-                    macroNames.Add(mac.Name);
-                    newMacroNames.Add(mac.Name);
-                }
+                if (entry.MacroName == oldName)
+                    entry.MacroName = newName;
+
             }
         }
-        private void setHQItemIngredients(Recipe recipe)
+
+        public IEnumerable<string> GenerateNewEntrymacroNames()
+            => new List<string>() { "" }.Concat(MacroManager.MacroNames);
+
+        private void SetHQItemIngredients(Recipe recipe)
         {
             currItemIngredients.Clear();
             var itemSheet = DalamudApi.DataManager.GetExcelSheet<Item>();
@@ -367,6 +365,8 @@ namespace CraftingList.UI
                 }
             }
         }
+
+
         public void Dispose()
         {
 

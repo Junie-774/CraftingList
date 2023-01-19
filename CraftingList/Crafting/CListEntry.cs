@@ -12,16 +12,17 @@
         public int[] HQSelection = new int[6];
 
         //Dummy variables to store stuff for the UI
-        public int MacroIndex;
 
-        public CListEntry(string name, uint itemId, string numCrafts, int macroIndex)
+        public string MacroName;
+
+        public CListEntry(string name, uint itemId, string numCrafts, string macroName)
         {
             this.Name = name;
             this.ItemId = itemId;
             this.NumCrafts = numCrafts == "max" || int.TryParse(numCrafts, out _) ? numCrafts : "0";
             
 
-            this.MacroIndex = macroIndex;
+            this.MacroName = macroName;
         }
 
         public void Decrement()
@@ -31,9 +32,14 @@
             if (NumCrafts == "0") Complete = true;
         }
 
+        public override string ToString()
+        {
+            return $"[Name: \"{Name}\", ItemId: {ItemId}, NumCrafts: {NumCrafts}, Macro name: \"{MacroName}\"]";
+        }
+
         public static CListEntry Clone(CListEntry other)
         {
-            return new CListEntry(other.Name, other.ItemId, other.NumCrafts, other.MacroIndex);
+            return new CListEntry(other.Name, other.ItemId, other.NumCrafts, other.Name);
         }
         /*
         public CListEntry(CListEntry other)
