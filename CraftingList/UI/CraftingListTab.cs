@@ -124,7 +124,7 @@ namespace CraftingList.UI
             ImGui.NextColumn();
             ImGui.NextColumn();
 
-            for (int i = 0; i < plugin.Configuration.EntryList.Count; i++)
+            for (int i = 0; i < DalamudApi.Configuration.EntryList.Count; i++)
             {
                 ImGui.Text(plugin.Configuration.EntryList[i].Name);
                 ImGui.NextColumn();
@@ -136,7 +136,7 @@ namespace CraftingList.UI
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.Combo("##Macro" + i, ref plugin.Configuration.EntryList[i].MacroIndex, macroNames.ToArray(), macroNames.Count))
                 {
-                    var macro = plugin.Configuration.Macros.Where(x => x.Name == macroNames[plugin.Configuration.EntryList[i].MacroIndex]);
+                    var macro = DalamudApi.Configuration.PluginMacros.Where(x => x.Name == macroNames[plugin.Configuration.EntryList[i].MacroIndex]);
                     if (!macro.Any())
                     {
                         PluginLog.Debug("Internal error: Macro name does not match any in macro list. This shouldn't happen.");
@@ -191,7 +191,7 @@ namespace CraftingList.UI
             ImGui.SetNextItemWidth(-1);
             if (ImGui.Combo("##Macro", ref newEntry.MacroIndex, newMacroNames.ToArray(), newMacroNames.Count))
             {
-                var macro = plugin.Configuration.Macros.Where(x => x.Name == newMacroNames[newEntry.MacroIndex]);
+                var macro = plugin.Configuration.PluginMacros.Where(x => x.Name == newMacroNames[newEntry.MacroIndex]);
                 if (!macro.Any())
                 {
                     PluginLog.Debug("Internal error: Macro name does not match any in macro list. This shouldn't happen.");
@@ -274,12 +274,23 @@ namespace CraftingList.UI
                     {
                         if (currItemIngredients[i].CanBeHq)
                         {
-                            
-                            ImGui.Text(currItemIngredients[i].Name + " (" + hqMatItem!.UnkData5[i].AmountIngredient + ")");
+
+                            ImGui.Text(currItemIngredients[i].Name); // + " (" + hqMatItem!.UnkData5[i].AmountIngredient + ")");
                             ImGui.SameLine();
                             ImGui.SetCursorPosX(ImGui.CalcTextSize(maxString + "(XXX)").X);
-                            ImGui.SetNextItemWidth(100);
-                            ImGui.InputInt("##ingredient_" + currItemIngredients[i].Name, ref entry.HQSelection[i], 1);
+                            ImGui.SetNextItemWidth(25);
+                            ImGui.InputInt($"/{hqMatItem!.UnkData5[i].AmountIngredient}##ingredient_{currItemIngredients[i].Name}", ref entry.HQSelection[i], 0);
+                            ImGui.SameLine();
+                            if (ImGui.Button("+", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
+                            {
+                                entry.HQSelection[i]++;
+                            }
+                            ImGui.SameLine();
+                            if (ImGui.Button("-", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
+                            {
+                                entry.HQSelection[i]--;
+                            }
+                            ImGui.PopItemWidth();
                             if (entry.HQSelection[i] > hqMatItem!.UnkData5[i].AmountIngredient)
                             {
                                 entry.HQSelection[i] = hqMatItem!.UnkData5[i].AmountIngredient;
