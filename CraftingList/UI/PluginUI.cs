@@ -119,6 +119,7 @@ namespace CraftingList
                     if (ImGui.Button("ACKNOWLEDGE"))
                     {
                         DalamudApi.Configuration.AcknowledgedMacroChange = true;
+                        DalamudApi.Configuration.Save();
                     }
                 }
             }
