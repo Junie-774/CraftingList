@@ -1,4 +1,5 @@
-﻿using Dalamud.Data;
+﻿using CraftingList.Crafting.Macro;
+using Dalamud.Data;
 using Dalamud.Game;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Conditions;
@@ -30,7 +31,7 @@ namespace CraftingList.Utility
                 });
 
             GameEventManager = new();
-            ChatManager= new();
+            ChatManager = new();
         }
 
 
@@ -77,5 +78,6 @@ namespace CraftingList.Utility
 
         public static GameEventManager GameEventManager { get; private set; } = null!;
         public static ChatManager ChatManager { get; private set; } = null!;
+
     }
 }

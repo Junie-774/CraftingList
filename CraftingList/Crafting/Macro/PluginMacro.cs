@@ -79,25 +79,9 @@ namespace CraftingList.Crafting.Macro
             yield break;
         }
 
-        public static unsafe string GetMacroText(int macroNum)
-        {
-            RaptureMacroModule.Macro* macro = RaptureMacroModule.Instance->GetMacro(0, (uint)macroNum);
-            var text = string.Empty;
+        
 
-            for (int i = 0; i <= 14; i++)
-            {
-                var line = macro->Line[i]->ToString();
-                if (line.Length > 0)
-                {
-                    text += line;
-                    text += "\n";
-                }
-            }
-
-            return text;
-        }
-
-        public static PluginMacro FromTimedIngameMacro(TimedIngameMacro timedIngameMacro)
+        public static PluginMacro FromTimedIngameMacro(IngameMacro timedIngameMacro)
         {
             var name = timedIngameMacro.Name;
             var foodId = timedIngameMacro.FoodID;
@@ -105,9 +89,9 @@ namespace CraftingList.Crafting.Macro
 
             var text = "";
             if (timedIngameMacro.Macro1Num >= 0 && timedIngameMacro.Macro1Num <= 99)
-                text += GetMacroText(timedIngameMacro.Macro1Num);
+                text += IngameMacro.GetMacroText(timedIngameMacro.Macro1Num);
             if (timedIngameMacro.Macro2Num >= 0 && timedIngameMacro.Macro2Num <= 99)
-                text += GetMacroText(timedIngameMacro.Macro2Num);
+                text += IngameMacro.GetMacroText(timedIngameMacro.Macro2Num);
 
             return new PluginMacro(name, foodId, medID, text);
         }
