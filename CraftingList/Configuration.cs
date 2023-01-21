@@ -61,14 +61,16 @@ namespace CraftingList
         public bool AlertOnTerminate = true;
 
         public float ExecuteMacroDelayMinSeconds = 1;
-        public float ExecuteMacroDelayMaxSeconds = 5;
+        public float ExecuteMacroDelayMaxSeconds = 3;
 
         public float ClickSynthesizeDelayMinSeconds = 1;
-        public float ClickSynthesizeDelayMaxSeconds = 5;
+        public float ClickSynthesizeDelayMaxSeconds = 3;
 
         public bool SmartWait = false;
-
+        public bool SkipCraftingActionsWhenNotCrafting = false;
         public bool AcknowledgedMacroChange = false;
+
+        public int MaxMacroCommandTimeoutRetries = 1;
 
         public bool CanaryTestFlag = false;
 

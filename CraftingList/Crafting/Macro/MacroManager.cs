@@ -81,29 +81,39 @@ namespace CraftingList.Crafting.Macro
             return baseNewName + modifier;
         }
 
+        public static void AddPluginMacro(PluginMacro newMacro)
+        {
+            newMacro.Name = GenerateUniqueName(MacroNames, newMacro.Name);
+            PluginMacros.Add(newMacro);
+            RegenerateMacroNames();
+        }
+
+        public static void AddIngameMacro(IngameMacro newMacro)
+        {
+            newMacro.Name = GenerateUniqueName(MacroNames, newMacro.Name);
+            IngameMacros.Add(newMacro);
+            RegenerateMacroNames();
+        }
+
         public static void AddEmptyPluginMacro(string newName)
         {
             var newMacro = new PluginMacro(GenerateUniqueName(MacroNames, newName), 0, 0, "");
-            
-            PluginMacros.Add(newMacro);
-            MacroNames.Add(newMacro.Name);
+            AddPluginMacro(newMacro);
         }
 
         public static void AddEmptyIngameMacro(string newName)
         {
             var newMacro = new IngameMacro(newName, -1, -1);
 
-            IngameMacros.Add(newMacro);
-            MacroNames.Add(newMacro.Name);
+            AddIngameMacro(newMacro);
         }
 
-        public static void RemoveMacro(string macroName)
+        public static int RemoveMacro(string macroName)
         {
-            if (PluginMacros.RemoveAll(m => m.Name == macroName) > 0)
-                MacroNames.Remove(macroName);
+            MacroNames.RemoveAll(m => m == macroName);
 
-            else if (IngameMacros.RemoveAll(m => m.Name == macroName) > 0)
-                MacroNames.Remove(macroName);
+            return PluginMacros.RemoveAll(m => m.Name == macroName)
+                    + IngameMacros.RemoveAll(m => m.Name == macroName);
         }
 
         public static void RenameMacro(string currName, string newName)
@@ -123,9 +133,9 @@ namespace CraftingList.Crafting.Macro
             }
 
             MacroNames[index] = newName;
-            
-            
+
         }
+
 
         public static IEnumerable<MacroCommand> Parse(string macroText)
         {
@@ -146,22 +156,43 @@ namespace CraftingList.Crafting.Macro
             yield break;
         }
 
+        // Regenerate them to make sure they always keep a consistent order
+        private static void RegenerateMacroNames()
+        {
+            MacroNames.Clear();
+            MacroNames.Add("<Quick Synth>");
+
+            foreach (var macro in PluginMacros)
+            {
+                MacroNames.Add(macro.Name);
+            }
+
+            foreach (var macro in IngameMacros)
+            {
+                MacroNames.Add(macro.Name);
+            }
+        }
+
         public static async Task<bool> ExecuteMacroCommands(IEnumerable<MacroCommand> commands)
         {
             foreach (var command in commands)
             {
-                try
+                for (int retry = 0; retry <= Service.Configuration.MaxMacroCommandTimeoutRetries; retry++)
                 {
-                    if (!await command.Execute())
+                    if (await command.Execute())
                     {
-                        return false;
+                        PluginLog.Debug("Success!");
+                        break;
+                    }
+                    else
+                    {
+                        if (retry == Service.Configuration.MaxMacroCommandTimeoutRetries)
+                        {
+                            return false;
+                        }
                     }
                 }
-                catch (Exception ex)
-                {
-                    PluginLog.Error(ex.Message);
-                    return false;
-                }
+
             }
 
             var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,

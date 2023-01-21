@@ -248,7 +248,7 @@ namespace CraftingList.Crafting
 
             if (!await macro.Execute(isCollectible))
             {
-                Cancel($"Craft did not complete after executing macro '{macro.Name}'. Cancelling craft job./r", true);
+                Cancel($"Craft did not complete after executing macro '{macro.Name}'. Cancelling craft job.", true);
                 return false;
             }
             entry.Decrement();

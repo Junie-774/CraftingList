@@ -25,6 +25,8 @@ namespace CraftingList.UI
 
         private readonly CraftingList plugin;
 
+        private string toDelete = "";
+
         public MacroTab(CraftingList plugin)
         {
             this.plugin = plugin;
@@ -79,7 +81,7 @@ namespace CraftingList.UI
                 foreach (var macro in MacroManager.IngameMacros)
                 {
                     var expanded = ImGui.TreeNode($"{macro.Name}##tree");
-                    DrawMacroPopup(macro);
+                    DrawIngameMacroPopup(macro);
                     if (expanded)
                     {
                         DrawIngameMacro(macro);
@@ -102,7 +104,7 @@ namespace CraftingList.UI
                 foreach (var macro in MacroManager.PluginMacros)
                 {
                     var expanded = ImGui.TreeNode($"{macro.Name}##tree");
-                    DrawMacroPopup(macro);
+                    DrawPluginMacroPopup(macro);
                     if (expanded)
                     {
                         DrawPluginMacro(macro);
@@ -142,38 +144,62 @@ namespace CraftingList.UI
             }
 
         }
-
-        private void DrawMacroPopup(CraftingMacro macro)
+        private void DrawPluginMacroPopup(PluginMacro macro)
         {
             if (ImGui.BeginPopupContextItem($"##{macro.Name}-popup"))
             {
-                var name = macro.Name;
-                if (ImGui.InputText($"##rename", ref name, 100, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue))
-                {
-                    CraftingListTab.UpdateMacroNameInEntries(macro.Name, name);
-                    MacroManager.RenameMacro(macro.Name, name);
-                    
-                    Service.Configuration.Save();
-                }
+                DrawMacroPopupContent(macro);
+                ImGui.SameLine();
 
-                if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Delete"))
+                ImGui.EndPopup();
+            }
+        }
+        private void DrawIngameMacroPopup(IngameMacro macro)
+        {
+            if (ImGui.BeginPopupContextItem($"##{macro.Name}-popup"))
+            {
+                DrawMacroPopupContent(macro);
+                ImGui.SameLine();
+
+                if (ImGuiAddons.IconButton(FontAwesomeIcon.FileImport, "Import to In-Plugin Macros"))
                 {
-                    CraftingListTab.RemoveMacroName(macro.Name);
-                    MacroManager.RemoveMacro(macro.Name);
+                    MacroManager.AddPluginMacro(PluginMacro.FromIngameMacro(macro));
                     Service.Configuration.Save();
                 }
                 ImGui.EndPopup();
-                return;
+
             }
-            return;
+        }
+        private void DrawMacroPopupContent(CraftingMacro macro)
+        {
+            var name = macro.Name;
+            if (ImGui.InputText($"##rename", ref name, 100, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue))
+            {
+                CraftingListTab.UpdateMacroNameInEntries(macro.Name, name);
+                MacroManager.RenameMacro(macro.Name, name);
+                
+                Service.Configuration.Save();
+            }
+            if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Delete"))
+            {
+                toDelete = macro.Name;
+            }
+
         }
         
-        public void DrawPluginMacroPage()
+        public void DrawMacroPage()
         {
             ImGui.Text("Macros:");
 
             DrawPluginMacros();
             DrawIngameMacros();
+
+            if (toDelete != "")
+            {
+                CraftingListTab.RemoveMacroName(toDelete);
+                MacroManager.RemoveMacro(toDelete);
+                toDelete = "";
+            }
         }
 
         public void Draw()
@@ -185,17 +211,9 @@ namespace CraftingList.UI
                 return;
             }
 
-            /*if (ImGui.Checkbox("Use Fancy Plugin Macros?", ref DalamudApi.Configuration.UsePluginMacros))
-            {
-                plugin.PluginUi.OnConfigChange();
-            }*/
-            
 
-            if (Service.Configuration.UsePluginMacros)
-            {
-                DrawPluginMacroPage();
-                return;
-            }
+            DrawMacroPage();
+
         }
 
    

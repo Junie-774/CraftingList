@@ -44,7 +44,6 @@ namespace CraftingList.Utility
                     if (data->ActionType == ActionType.MainCommand || data->ActionType == ActionType.CraftAction)
                     {
                         this.CraftingData = *data;
-
                         this.DataAvailableWaiter.Set();
                     }
                 }

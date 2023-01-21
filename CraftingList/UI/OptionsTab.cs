@@ -153,7 +153,12 @@ namespace CraftingList.UI
                 Service.Configuration.AcknowledgedMacroChange = false;
             }
 
-            ImGui.Columns(1); 
+            ImGui.Columns(1);
+        }
+
+        public void MacroOptionsSection()
+        {
+
         }
 
     }

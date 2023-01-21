@@ -2,6 +2,7 @@
 using CraftingList.Utility;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using Dalamud.Game.ClientState.Conditions;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
@@ -151,7 +152,7 @@ namespace CraftingList.Crafting
             SeInterface.ExecuteFFXIVInternalMacro(SeInterface.Instance.CloseNoteMacro);
             if (!await WaitForCloseAddon("RecipeNote", true, Service.Configuration.AddonTimeout))
                 return false;
-            
+
             if (!await Service.WaitForCondition(Dalamud.Game.ClientState.Conditions.ConditionFlag.Crafting, false, 5000))
             {
                 PluginLog.Error("[CraftHelper.ExitCrafting()] Took too long to exit crafting stance");
@@ -287,7 +288,7 @@ namespace CraftingList.Crafting
             bool existsBrokenItem = false;
             for (int i = 0; i < 13; i++)
             {
-                
+
                 var condition = SeInterface.InventoryManager()->GetInventoryContainer(InventoryType.EquippedItems)->GetInventorySlot(i)->Condition;
 
                 //30000 is the '100%' threshold for durability ingame.
@@ -311,5 +312,8 @@ namespace CraftingList.Crafting
 
             return existsItemBelowThreshold;
         }
+
+        public static bool IsCrafting()
+            => Service.Condition[ConditionFlag.Crafting] && !Service.Condition[ConditionFlag.PreparingToCraft];
     }
 }

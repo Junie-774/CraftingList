@@ -290,11 +290,12 @@ namespace CraftingList.UI
                             ImGui.InputInt($"/{hqMatItem!.UnkData5[i].AmountIngredient}##ingredient_{currItemIngredients[i].Name}", ref entry.HQSelection[i], 0);
                             ImGui.SameLine();
                             
-                            ImGui.SameLine();
                             if (ImGui.Button($"-##hq{i}", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
                             {
                                 entry.HQSelection[i]--;
                             }
+                            ImGui.SameLine();
+
                             if (ImGui.Button($"+##hq{i}", new Vector2(25, 25)))
                             {
                                 entry.HQSelection[i]++;
@@ -328,6 +329,7 @@ namespace CraftingList.UI
 
         public List<string> GetMacroNames()
             => MacroManager.MacroNames;
+
         public static void RemoveMacroName(string macroName)
         {
 

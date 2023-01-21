@@ -19,7 +19,7 @@ namespace CraftingList.Crafting.Macro
         }
 
 
-        public static PluginMacro FromTimedIngameMacro(IngameMacro timedIngameMacro)
+        public static PluginMacro FromIngameMacro(IngameMacro timedIngameMacro)
         {
             var name = timedIngameMacro.Name;
             var foodId = timedIngameMacro.FoodID;
