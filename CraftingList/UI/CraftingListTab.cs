@@ -219,7 +219,8 @@ namespace CraftingList.UI
                 var items = craftableItems.Where(item => item!.ItemResult.Value!.Name == newEntry.Name);
 
                 if (items.Any() &&
-                    (newEntry.NumCrafts.ToLower() == "max" || (int.TryParse(newEntry.NumCrafts, out _) && int.Parse(newEntry.NumCrafts) > 0)))
+                    (newEntry.NumCrafts.ToLower() == "max" || (int.TryParse(newEntry.NumCrafts, out _) && int.Parse(newEntry.NumCrafts) > 0))
+                    && newEntryMacroNames[newEntryMacroSelection] != "")
                 {
 
                     newEntry.ItemId = items.First()!.ItemResult.Value!.RowId;
