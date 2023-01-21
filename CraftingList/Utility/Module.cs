@@ -131,6 +131,12 @@ namespace CraftingList.Utility
             return Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(new IntPtr(ptr));
         }
 
+        public static IntPtr ObtainReceiveEventDelegatePtr(void* addon)
+        {
+            var table = ObtainVTable(addon);
+            return (IntPtr) table[2];
+        }
+
         public static void ClickAddon(void* addon, void* target, EventType type, int which, void* eventData, void* helper)
         {
             var receiveEvent = ObtainReceiveEventDelegate(addon);

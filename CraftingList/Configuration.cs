@@ -10,15 +10,23 @@ namespace CraftingList
     [Serializable]
     public struct WaitDurationHelper
     {
-        public int AfterChangeJobs = 1500;
-        public int AfterEatFood = 3000;
+        
+        
         public int AfterCompleteMacroHQ = 3500;
         public int AfterCompleteMacroCollectible = 1800;
+        
+        public int AfterRepairConfirm = 3250;
+
+        public int AfterChangeJobs = 2000;
         public int AfterExitCrafting = 2500;
         public int AfterOpenCloseMenu = 500;
-        public int AfterRepairConfirm = 3250;
+        public int AfterEatFood = 3000;
         public int AfterClickOffFood = 1000;
-        public int QuickSynthPerItem = 3000;
+
+        public int WaitForConditionLoop = 250;
+        public int AfterWaitForCondition = 150;
+
+        public int CraftingActionMaxDelay = 5000;
 
         public WaitDurationHelper() { }
     }
@@ -61,6 +69,8 @@ namespace CraftingList
         public bool SmartWait = false;
 
         public bool AcknowledgedMacroChange = false;
+
+        public bool CanaryTestFlag = false;
 
         public IEnumerable<CraftingMacro> GetMacros()
         {

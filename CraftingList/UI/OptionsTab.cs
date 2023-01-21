@@ -33,58 +33,58 @@ namespace CraftingList.UI
             float availWidth = ImGui.GetColumnWidth();
 
             ImGui.SetNextItemWidth(300 - 0 - ImGui.CalcTextSize("Repair threshold: ").X);
-            ImGui.SliderInt("Repair Threshold##RepairThreshold", ref DalamudApi.Configuration.RepairThresholdPercent, 0, 99);
+            ImGui.SliderInt("Repair Threshold##RepairThreshold", ref Service.Configuration.RepairThresholdPercent, 0, 99);
 
-            ImGui.Checkbox("Only repair if durability for all items is below 99?", ref DalamudApi.Configuration.OnlyRepairIfBelow99);
+            ImGui.Checkbox("Only repair if durability for all items is below 99?", ref Service.Configuration.OnlyRepairIfBelow99);
             ImGui.NewLine();
 
             // auxillary variables to allow for error checking
-            int completeSoundEffect = DalamudApi.Configuration.SoundEffectListComplete;
-            int cancelSoundEffect = DalamudApi.Configuration.SoundEffectListCancel;
+            int completeSoundEffect = Service.Configuration.SoundEffectListComplete;
+            int cancelSoundEffect = Service.Configuration.SoundEffectListCancel;
 
 
-            ImGui.Checkbox("Play Sound effect when crafting terminates?", ref DalamudApi.Configuration.AlertOnTerminate);
-            if (DalamudApi.Configuration.AlertOnTerminate)
+            ImGui.Checkbox("Play Sound effect when crafting terminates?", ref Service.Configuration.AlertOnTerminate);
+            if (Service.Configuration.AlertOnTerminate)
             {
                 ImGui.PushItemWidth(ImGui.CalcTextSize("00000").X);
                 ImGui.Dummy(new Vector2(50f, 0));
                 ImGui.SameLine();
                 if (ImGui.InputInt("List Complete Sound Effect", ref completeSoundEffect, 0))
                 {
-                    if (completeSoundEffect >= 1 && completeSoundEffect <= 16) DalamudApi.Configuration.SoundEffectListComplete = completeSoundEffect;
+                    if (completeSoundEffect >= 1 && completeSoundEffect <= 16) Service.Configuration.SoundEffectListComplete = completeSoundEffect;
                 }
 
                 ImGui.Dummy(new Vector2(50f, 0));
                 ImGui.SameLine();
                 if (ImGui.InputInt("List Cancelled Sound Effect", ref cancelSoundEffect, 0))
                 {
-                    if (cancelSoundEffect >= 1 && cancelSoundEffect <= 16) DalamudApi.Configuration.SoundEffectListCancel = cancelSoundEffect;
+                    if (cancelSoundEffect >= 1 && cancelSoundEffect <= 16) Service.Configuration.SoundEffectListCancel = cancelSoundEffect;
                 }
                 ImGui.PopItemWidth();
             }
             ImGui.NewLine();
 
-            int extraTimeout = DalamudApi.Configuration.MacroExtraTimeoutMs;
+            int extraTimeout = Service.Configuration.MacroExtraTimeoutMs;
             ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000000").X);
 
             if (ImGui.InputInt("Extra Timeout on Macros (ms)", ref extraTimeout, 0))
             {
-                if (extraTimeout > 0) DalamudApi.Configuration.MacroExtraTimeoutMs = extraTimeout;
+                if (extraTimeout > 0) Service.Configuration.MacroExtraTimeoutMs = extraTimeout;
             }
 
-            int addonTimeout = DalamudApi.Configuration.AddonTimeout;
+            int addonTimeout = Service.Configuration.AddonTimeout;
             ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000000").X);
             if (ImGui.InputInt("Timeout on Waiting for Menus (ms)", ref addonTimeout, 0))
             {
-                if (addonTimeout > 0) DalamudApi.Configuration.AddonTimeout = addonTimeout;
+                if (addonTimeout > 0) Service.Configuration.AddonTimeout = addonTimeout;
             }
 
 
             ImGui.NextColumn();
 
             // auxillary variables to allow for error checking
-            float clickSynthesizeDelayMin = DalamudApi.Configuration.ClickSynthesizeDelayMinSeconds;
-            float clickSynthesizeDelayMax = DalamudApi.Configuration.ClickSynthesizeDelayMaxSeconds;
+            float clickSynthesizeDelayMin = Service.Configuration.ClickSynthesizeDelayMinSeconds;
+            float clickSynthesizeDelayMax = Service.Configuration.ClickSynthesizeDelayMaxSeconds;
 
             ImGui.PushItemWidth(ImGui.CalcTextSize("00000").X);
 
@@ -94,7 +94,7 @@ namespace CraftingList.UI
             if (ImGui.InputFloat("Min. (s)##ClickSynthesizDelayMin", ref clickSynthesizeDelayMin, 0, 0, "%.1f"))
             {
                 if (clickSynthesizeDelayMin > 0 && clickSynthesizeDelayMin <= clickSynthesizeDelayMax)
-                    DalamudApi.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMin;
+                    Service.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMin;
             }
 
             ImGui.Dummy(new Vector2(18f, 0));
@@ -102,14 +102,14 @@ namespace CraftingList.UI
             if (ImGui.InputFloat("Max. (s)##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0, 0, "%.1f"))
             {
                 if (clickSynthesizeDelayMax > 0 && clickSynthesizeDelayMin <= clickSynthesizeDelayMax)
-                    DalamudApi.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
+                    Service.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
             }
 
             ImGui.NewLine();
 
             // auxillary variables to allow for error checking
-            float executeMacroDelayMin = DalamudApi.Configuration.ExecuteMacroDelayMinSeconds;
-            float executeMacroDelayMax = DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds;
+            float executeMacroDelayMin = Service.Configuration.ExecuteMacroDelayMinSeconds;
+            float executeMacroDelayMax = Service.Configuration.ExecuteMacroDelayMaxSeconds;
 
             ImGui.Text("Delay after executing macro");
 
@@ -118,7 +118,7 @@ namespace CraftingList.UI
             if (ImGui.InputFloat("Min. (s).##ExecuteMacroDelayMin", ref executeMacroDelayMin, 0, 0, "%.1f"))
             {
                 if (executeMacroDelayMin > 0 && executeMacroDelayMin <= executeMacroDelayMax)
-                    DalamudApi.Configuration.ExecuteMacroDelayMinSeconds = executeMacroDelayMin;
+                    Service.Configuration.ExecuteMacroDelayMinSeconds = executeMacroDelayMin;
             }
 
             ImGui.Dummy(new Vector2(18f, 0));
@@ -126,11 +126,11 @@ namespace CraftingList.UI
             if (ImGui.InputFloat("Max. (s)##ExecuteMacroDelayMax", ref executeMacroDelayMax, 0, 0, "%.1f"))
             {
                 if (executeMacroDelayMax > 0 && executeMacroDelayMin <= executeMacroDelayMax)
-                    DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds = executeMacroDelayMax;
+                    Service.Configuration.ExecuteMacroDelayMaxSeconds = executeMacroDelayMax;
             }
             ImGui.PopItemWidth();
 
-            ImGui.Checkbox("Ignore <wait.x> and wait intelligently?", ref DalamudApi.Configuration.SmartWait);
+            ImGui.Checkbox("Ignore <wait.x> and wait intelligently?", ref Service.Configuration.SmartWait);
 
             ImGui.NewLine();
             /*
@@ -150,7 +150,7 @@ namespace CraftingList.UI
             }*/
             if (ImGui.Button("Show Macro Change Message"))
             {
-                DalamudApi.Configuration.AcknowledgedMacroChange = false;
+                Service.Configuration.AcknowledgedMacroChange = false;
             }
 
             ImGui.Columns(1); 

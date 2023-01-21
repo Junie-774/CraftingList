@@ -15,7 +15,7 @@ namespace CraftingList.Crafting.Macro
     public class MacroCommand
     {
         private static ManualResetEvent DataWaiter
-        => DalamudApi.GameEventManager.DataAvailableWaiter;
+        => Service.GameEventManager.DataAvailableWaiter;
 
         private static readonly Regex WaitRegex = new(@"(?<modifier><wait\.(?<wait>\d+(?:\.\d+)?)>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex ActionNameRegex = new(@"^/(?:ac|action)\s+(?<name>.*?)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -68,37 +68,43 @@ namespace CraftingList.Crafting.Macro
             return groupValue;
         }
 
-        public async Task Execute()
+        public async Task<bool> Execute()
         {
             PluginLog.Debug($"Executing '{Text}'");
+            PluginLog.Debug($"Will wait {WaitMS} ms");
 
             DataWaiter.Reset();
             try
             {
-                DalamudApi.ChatManager.SendMessage(Text);
+                Service.ChatManager.SendMessage(Text);
             }
             catch (Exception ex)
             {
                 PluginLog.Error(ex.Message);
+                return false;
             }
-            if (DalamudApi.Configuration.SmartWait)
+
+            if (Service.Configuration.SmartWait && WaitMS != 0)
             {
+                if (!DataWaiter.WaitOne(Service.Configuration.WaitDurations.CraftingActionMaxDelay))
+                {
+                    PluginLog.Error("[MacroCommand.Execute()] Didn't receive a response after using action.");
+                    return false;
+                }
 
-                PluginLog.Debug("Waiting...");
-
-                if (!DataWaiter.WaitOne(5000))
-                    PluginLog.Error("Didn't receive a response after using action.");
-
-                while (DalamudApi.Condition[ConditionFlag.Crafting40])
-                    await Task.Delay(250);
-                await Task.Delay(50);
-                PluginLog.Debug("Waiting done.");
+                if (!await Service.WaitForCondition(ConditionFlag.Crafting40, false, Service.Configuration.WaitDurations.CraftingActionMaxDelay))
+                {
+                    PluginLog.Error("[MacroCommand.Execute()] (?????? This shouldn't happen) Waiting for action to finish took too long");
+                }
+                return true;
             }
             else
             {
                 await Task.Delay(WaitMS);
             }
-            return;
+            return true;
         }
+
+        
     }
 }

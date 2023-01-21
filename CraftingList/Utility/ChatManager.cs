@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Channels;
 using CraftingList.Utility;
 using Dalamud.Game;
+using Dalamud.Game.Gui;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -15,35 +16,18 @@ namespace CraftingList.Utility;
 
 public enum UiColor
 {
-    /// <summary>
-    /// Orange.
-    /// </summary>
+
     Orange = 500,
 
-    /// <summary>
-    /// Blue.
-    /// </summary>
     Blue = 502,
 
-    /// <summary>
-    /// Green.
-    /// </summary>
     Green = 504,
 
-    /// <summary>
-    /// Yellow.
-    /// </summary>
     Yellow = 506,
 
-    /// <summary>
-    /// Red.
-    /// </summary>
     Red = 508,
 }
 
-/// <summary>
-/// Manager that handles displaying output in the chat box.
-/// </summary>
 internal class ChatManager : IDisposable
 {
     private readonly Channel<string> chatBoxMessages = Channel.CreateUnbounded<string>();
@@ -51,42 +35,32 @@ internal class ChatManager : IDisposable
     [Signature("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9")]
     private readonly ProcessChatBoxDelegate processChatBox = null!;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ChatManager"/> class.
-    /// </summary>
-    public ChatManager()
+    private ChatGui ChatGui;
+    public ChatManager(ChatGui chatGui)
     {
         SignatureHelper.Initialise(this);
-        DalamudApi.Framework.Update += this.FrameworkUpdate;
+        Service.Framework.Update += this.FrameworkUpdate;
+        this.ChatGui = chatGui;
     }
 
     private unsafe delegate void ProcessChatBoxDelegate(UIModule* uiModule, IntPtr message, IntPtr unused, byte a4);
 
-    /// <inheritdoc/>
     public void Dispose()
     {
-        DalamudApi.Framework.Update -= this.FrameworkUpdate;
+        Service.Framework.Update -= this.FrameworkUpdate;
 
         this.chatBoxMessages.Writer.Complete();
     }
 
-    /// <summary>
-    /// Print a normal message.
-    /// </summary>
-    /// <param name="message">The message to print.</param>
+
     public void PrintMessage(string message)
-        => DalamudApi.ChatGui.PrintChat(new XivChatEntry()
+        => ChatGui.PrintChat(new XivChatEntry()
         {
             Message = $"[CraftingList] {message}",
         });
 
-    /// <summary>
-    /// Print a happy message.
-    /// </summary>
-    /// <param name="message">The message to print.</param>
-    /// <param name="color">UiColor value.</param>
     public void PrintColor(string message, UiColor color)
-        => DalamudApi.ChatGui.PrintChat(
+        => ChatGui.PrintChat(
             new XivChatEntry()
             {
                 Message = new SeString(
@@ -95,28 +69,19 @@ internal class ChatManager : IDisposable
                     UIForegroundPayload.UIForegroundOff),
             });
 
-    /// <summary>
-    /// Print an error message.
-    /// </summary>
-    /// <param name="message">The message to print.</param>
+
     public void PrintError(string message)
-        => DalamudApi.ChatGui.PrintChat(new XivChatEntry()
+        => ChatGui.PrintChat(new XivChatEntry()
         {
+            Type = XivChatType.Urgent,
             Message = $"[CraftingList] {message}",
         });
 
-    /// <summary>
-    /// Process a command through the chat box.
-    /// </summary>
-    /// <param name="message">Message to send.</param>
     public async void SendMessage(string message)
     {
         await this.chatBoxMessages.Writer.WriteAsync(message);
     }
 
-    /// <summary>
-    /// Clear the queue of messages to send to the chatbox.
-    /// </summary>
     public void Clear()
     {
         var reader = this.chatBoxMessages.Reader;

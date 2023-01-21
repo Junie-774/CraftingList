@@ -1,15 +1,4 @@
-﻿using CraftingList.Utility;
-using Dalamud.Logging;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace CraftingList.Crafting.Macro
 {
@@ -24,62 +13,11 @@ namespace CraftingList.Crafting.Macro
             Text = text;
         }
 
-        public override async Task<bool> Execute(bool _)
+        public override async Task<bool> Execute(bool _) // unused bool is IsCollectible
         {
-            try
-            {
-                foreach (var macro in Parse(Text))
-                {
-                    try
-                    {
-                        await macro.Execute();
-                    }
-                    catch (Exception ex)
-                    {
-                        PluginLog.Error(ex.Message);
-                    }
-                }
-
-                var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,
-                    DalamudApi.Configuration.MacroExtraTimeoutMs);
-
-                try { recipeNote.Wait(); }
-                catch { return false; }
-
-                await Task.Delay(randomDelay.Next((int) DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                                  (int) DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
-                );
-                await Task.Delay(DalamudApi.Configuration.WaitDurations.AfterOpenCloseMenu);
-            }
-            catch(Exception ex)
-            {
-                PluginLog.Error(ex.Message);
-                return false;
-            }
-
-            return true;
+            return await MacroManager.ExecuteMacroCommands(MacroManager.Parse(Text));
         }
 
-        public static IEnumerable<MacroCommand> Parse(string macroText)
-        {
-            var line = string.Empty;
-            using var reader = new StringReader(macroText);
-
-            while ((line = reader.ReadLine()) != null)
-            {
-                line = line.Trim();
-
-                if (line.Length == 0)
-                {
-                    continue;
-                }
-
-                yield return MacroCommand.Parse(line);
-            }
-            yield break;
-        }
-
-        
 
         public static PluginMacro FromTimedIngameMacro(IngameMacro timedIngameMacro)
         {

@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -29,42 +30,46 @@ namespace CraftingList.Crafting.Macro
             Macro2Num = macro2Num;
         }
 
-        public override async Task<bool> Execute(bool collectible)
+        public override async Task<bool> Execute(bool _)
+        {
+            return await ExecuteWithMacroCommands();
+        }
+        public async Task<bool> ExecuteByCallingIngameMacro(bool collectible)
         {
            
             int macro1Duration = GetWaitTimeFromMacroText(Macro1Num);
             PluginLog.Debug($"Executing Ingame Macro {Macro1Num}");
-            int completionAnimationTime = collectible ? DalamudApi.Configuration.WaitDurations.AfterCompleteMacroCollectible :
-                                                        DalamudApi.Configuration.WaitDurations.AfterCompleteMacroHQ;
+            int completionAnimationTime = collectible ? Service.Configuration.WaitDurations.AfterCompleteMacroCollectible :
+                                                        Service.Configuration.WaitDurations.AfterCompleteMacroHQ;
 
-            SeInterface.ExecuteMacroByNumber(Macro1Num);
+            SeInterface.ExecuteFFXivInternalMacroByNumber(Macro1Num);
 
             await Task.Delay(macro1Duration + 1500);
 
             // No particular reason for a random delay here, why do you ask?
-            await Task.Delay(randomDelay.Next((int) DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              (int) DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            await Task.Delay(randomDelay.Next((int) Service.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              (int) Service.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
             );
 
             if (Macro2Num != -1)
             {
                 int macro2Duration = GetWaitTimeFromMacroText(Macro2Num);
                 PluginLog.Debug($"Executing Ingame Macro {Macro2Num}");
-                SeInterface.ExecuteMacroByNumber(Macro2Num);
+                SeInterface.ExecuteFFXivInternalMacroByNumber(Macro2Num);
                 await Task.Delay(macro2Duration + completionAnimationTime);
             }
 
 
             var recipeNote = SeInterface.WaitForAddon("RecipeNote", true,
-                DalamudApi.Configuration.MacroExtraTimeoutMs);
+                Service.Configuration.MacroExtraTimeoutMs);
 
             try { recipeNote.Wait(); }
             catch { return false; }
 
-            await Task.Delay(randomDelay.Next((int) DalamudApi.Configuration.ExecuteMacroDelayMinSeconds * 1000,
-                                              (int) DalamudApi.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
+            await Task.Delay(randomDelay.Next((int) Service.Configuration.ExecuteMacroDelayMinSeconds * 1000,
+                                              (int) Service.Configuration.ExecuteMacroDelayMaxSeconds * 1000)
             );
-            await Task.Delay(DalamudApi.Configuration.WaitDurations.AfterOpenCloseMenu);
+            await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
 
             return true;
         }
@@ -112,8 +117,20 @@ namespace CraftingList.Crafting.Macro
             return macroNum > 0 && macroNum <= 99;
         }
 
+        public async Task<bool> ExecuteWithMacroCommands()
+        {
+            var text1 = GetMacroText(Macro1Num);
+            var text2 = GetMacroText(Macro2Num);
+
+            var commands = MacroManager.Parse(text1).Concat(MacroManager.Parse(text2));
+
+            return await MacroManager.ExecuteMacroCommands(commands);
+        }
         public static unsafe string GetMacroText(int macroNum)
         {
+            if (!IsMacroNumInBounds(macroNum))
+                return "";
+
             RaptureMacroModule.Macro* macro = RaptureMacroModule.Instance->GetMacro(0, (uint)macroNum);
             var text = string.Empty;
 

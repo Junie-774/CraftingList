@@ -27,12 +27,10 @@ namespace CraftingList.SeFunctions
             Module.ClickAddon(Pointer, null/*Pointer->SynthesizeButton->AtkComponentBase.OwnerNode*/, EventType.Change, SynthesizeButtonId);
         }
 
-
-
         public void QuickSynthesize()
         {
             if (Pointer == null) return;
-            Module.ClickAddon(Pointer, null, EventType.Click, QuickSynthButtonId);
+            Module.ClickAddon(Pointer, null, EventType.Change, QuickSynthButtonId);
         }
 
         public void ClickJob(int which)

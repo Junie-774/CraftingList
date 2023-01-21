@@ -1,4 +1,5 @@
 ﻿using Dalamud.Logging;
+using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -32,6 +33,7 @@ namespace CraftingList.Utility
 
         public Task<IntPtr> Add(string name, bool needsVisible, int timeoutMs, Func<string, IntPtr> pollResult, Func<IntPtr, bool, bool> checkResult)
         {
+            PluginLog.Debug($"Adding: {name}");
             var initialResult = pollResult(name);
             var completionSource = new TaskCompletionSource<IntPtr>();
 
@@ -48,7 +50,7 @@ namespace CraftingList.Utility
             {
                 if (Waitlist.Count == 0)
                 {
-                    DalamudApi.Framework.Update += OnFrameworkUpdate;
+                    Service.Framework.Update += OnFrameworkUpdate;
                 }
                 Waitlist.Add(waitInfo);
             }
@@ -58,7 +60,7 @@ namespace CraftingList.Utility
 
         public void Dispose()
         {
-            DalamudApi.Framework.Update -= OnFrameworkUpdate;
+            Service.Framework.Update -= OnFrameworkUpdate;
             foreach (var waitInfo in Waitlist)
             {
                 waitInfo.TaskCompletionSource.SetCanceled();
@@ -71,6 +73,7 @@ namespace CraftingList.Utility
             foreach (AddonWaitInfo waitInfo in Waitlist)
             {
                 var currTime = (ulong)DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
                 if (waitInfo.TimeOut < currTime)
                 {
                     PluginLog.Debug($"Addon {waitInfo.Name} timed out");
@@ -78,16 +81,17 @@ namespace CraftingList.Utility
                     continue;
                 }
                 var res = waitInfo.PollResult(waitInfo.Name);
+
                 if (waitInfo.CheckResult(res, waitInfo.NeedsToBeVisible))
                 {
                     waitInfo.TaskCompletionSource.SetResult(res);
                 }
             }
 
-            Waitlist.RemoveAll(waitInfo => waitInfo.TaskCompletionSource.Task.IsCompleted);
-            if (Waitlist.Count == 0)
+            Waitlist.RemoveAll(waitInfo => waitInfo.TaskCompletionSource.Task.IsCompleted || waitInfo.TaskCompletionSource.Task.IsCanceled);
+                        if (Waitlist.Count == 0)
             {
-                DalamudApi.Framework.Update -= OnFrameworkUpdate;
+                Service.Framework.Update -= OnFrameworkUpdate;
             }
         }
     }

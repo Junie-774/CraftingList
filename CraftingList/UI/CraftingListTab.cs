@@ -47,7 +47,7 @@ namespace CraftingList.UI
                 ""
             };
 
-            craftableItems = DalamudApi.DataManager.GetExcelSheet<Recipe>()!
+            craftableItems = Service.DataManager.GetExcelSheet<Recipe>()!
                 .Select(r => r).Where(r => r != null && r.ItemResult.Value != null && r.ItemResult.Value.Name != "");
 
             foreach (var item in craftableItems)
@@ -88,7 +88,7 @@ namespace CraftingList.UI
 
         private void DrawEntryTable()
         {
-
+            var macroNames = GetMacroNames();
             float tableSize = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X);
             ImGui.PushFont(UiBuilder.IconFont);
             float fontSize = ImGui.CalcTextSize(FontAwesomeIcon.TrashAlt.ToIconString()).X;
@@ -135,18 +135,18 @@ namespace CraftingList.UI
                 ImGui.NextColumn();
 
                 ImGui.SetNextItemWidth(-1);
-                int macroIndex = MacroManager.MacroNames.IndexOf(currEntry.MacroName);
+                int macroIndex = macroNames.IndexOf(currEntry.MacroName);
                 if (macroIndex == -1 && !currEntry.MacroName.IsNullOrEmpty())
                 {
                     PluginLog.Debug($"Error: Entry {currEntry} had macro name which does not match any in list.");
-                    DalamudApi.ChatManager.PrintMessage("Encountered an internal error. see `/xllog` for details");
+                    Service.ChatManager.PrintMessage("Encountered an internal error. see `/xllog` for details");
 
                 }
 
                 
-                if (ImGui.Combo("##Macro" + i, ref macroIndex, MacroManager.MacroNames.ToArray(), MacroManager.MacroNames.Count()))
+                if (ImGui.Combo("##Macro" + i, ref macroIndex, macroNames.ToArray(), macroNames.Count()))
                 {
-                    currEntry.MacroName = MacroManager.MacroNames.ElementAt(macroIndex);
+                    currEntry.MacroName = macroNames.ElementAt(macroIndex);
                 }
                 ImGui.NextColumn();
 
@@ -172,8 +172,8 @@ namespace CraftingList.UI
             }
 
 
-            DalamudApi.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0");
-            DalamudApi.Configuration.Save();
+            Service.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0");
+            Service.Configuration.Save();
         }
 
         private void DrawNewListEntry()
@@ -289,14 +289,15 @@ namespace CraftingList.UI
                             ImGui.SetNextItemWidth(25);
                             ImGui.InputInt($"/{hqMatItem!.UnkData5[i].AmountIngredient}##ingredient_{currItemIngredients[i].Name}", ref entry.HQSelection[i], 0);
                             ImGui.SameLine();
-                            if (ImGui.Button($"+##hq{i}", new Vector2(25, 25)))
-                            {
-                                entry.HQSelection[i]++;
-                            }
+                            
                             ImGui.SameLine();
                             if (ImGui.Button($"-##hq{i}", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
                             {
                                 entry.HQSelection[i]--;
+                            }
+                            if (ImGui.Button($"+##hq{i}", new Vector2(25, 25)))
+                            {
+                                entry.HQSelection[i]++;
                             }
 
                             if (entry.HQSelection[i] > hqMatItem!.UnkData5[i].AmountIngredient)
@@ -325,10 +326,12 @@ namespace CraftingList.UI
             }
         }
 
+        public List<string> GetMacroNames()
+            => MacroManager.MacroNames;
         public static void RemoveMacroName(string macroName)
         {
 
-            foreach (var entry in DalamudApi.Configuration.EntryList)
+            foreach (var entry in Service.Configuration.EntryList)
             {
                 if (entry.MacroName == macroName)
                     entry.MacroName = "";
@@ -338,7 +341,7 @@ namespace CraftingList.UI
 
         public static void UpdateMacroNameInEntries(string oldName, string newName)
         {
-            foreach (var entry in DalamudApi.Configuration.EntryList)
+            foreach (var entry in Service.Configuration.EntryList)
             {
                 if (entry.MacroName == oldName)
                     entry.MacroName = newName;
@@ -352,7 +355,7 @@ namespace CraftingList.UI
         private void SetHQItemIngredients(Recipe recipe)
         {
             currItemIngredients.Clear();
-            var itemSheet = DalamudApi.DataManager.GetExcelSheet<Item>();
+            var itemSheet = Service.DataManager.GetExcelSheet<Item>();
             for (int i = 0; i < recipe.UnkData5.Length; i++)
             {
                 

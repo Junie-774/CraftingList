@@ -1,6 +1,7 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.UI;
 using CraftingList.Utility;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
@@ -70,6 +71,14 @@ namespace CraftingList
         
         public void DrawExperimentalTab()
         {
+            //PluginLog.Debug($"Crafting: {DalamudApi.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Crafting]}");
+            for(int i = 0; i < Dalamud.Game.ClientState.Conditions.Condition.MaxConditionEntries; i++)
+            {
+                if (Service.Condition[i])
+                {
+                    PluginLog.Debug($"Condition true: {i}");
+                }
+            }
             ImGui.Text("Wait durations (ms)");
             ImGui.PushItemWidth(ImGui.CalcTextSize("0000000").X);
 
@@ -87,30 +96,7 @@ namespace CraftingList
         }
         public void DrawSettingsWindow()
         {
-            if (!DalamudApi.Configuration.AcknowledgedMacroChange)
-            {
-                ImGui.SetNextWindowSizeConstraints(new Vector2(550f, 500f), new Vector2(550f, 500f));
-                if (ImGui.Begin("Crafting List Update!!!", ref this.visible, ImGuiWindowFlags.NoResize))
-                {
-                    ImGui.SetWindowFontScale(1.5f);
-                    ImGui.Text("[CraftingList] Old Macro system!");
-                    ImGui.SetWindowFontScale(1f);
-
-                    ImGui.Text("After some feedback, I've reworked and re-added the old type of macro!");
-                    ImGui.Text("They can be added and edited similarly to the fancy new macros under the Macro tab.");
-                    
-
-                    ImGui.NewLine();
-                    ImGui.Text("Press the button below to make this message go away. There's a button in the options tab");
-                    ImGui.Text("to make this message re-appear.");
-
-                    if (ImGui.Button("ACKNOWLEDGE"))
-                    {
-                        DalamudApi.Configuration.AcknowledgedMacroChange = true;
-                        DalamudApi.Configuration.Save();
-                    }
-                }
-            }
+ 
             if (!Visible)
             {
                 return;

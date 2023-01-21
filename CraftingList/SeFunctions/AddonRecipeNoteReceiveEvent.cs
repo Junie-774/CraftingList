@@ -1,9 +1,10 @@
 ﻿using Dalamud.Game;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
 
 namespace CraftingList.SeFunctions
 {
-    public delegate void AddonRecipeNoteReceiveEventDelegate(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused);
+    public unsafe delegate void AddonRecipeNoteReceiveEventDelegate(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused);
     internal class AddonRecipeNoteReceiveEvent : SeFunction<AddonRecipeNoteReceiveEventDelegate>
     {
         public AddonRecipeNoteReceiveEvent(SigScanner sig)

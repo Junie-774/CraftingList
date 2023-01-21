@@ -32,8 +32,8 @@ namespace CraftingList.UI
             foodNames = new List<string>();
             medicineNames = new List<string>();
 
-            craftingFoods = DalamudApi.CraftingConsumables.Where(meal => meal.ItemAction.Value!.Type == 844 || meal.ItemAction.Value!.Type == 845);
-            craftingMedicine = DalamudApi.CraftingConsumables.Where(meal => meal.ItemAction.Value!.Type == 846);
+            craftingFoods = Service.CraftingConsumables.Where(meal => meal.ItemAction.Value!.Type == 844 || meal.ItemAction.Value!.Type == 845);
+            craftingMedicine = Service.CraftingConsumables.Where(meal => meal.ItemAction.Value!.Type == 846);
 
 
             foreach (var item in craftingFoods)
@@ -136,8 +136,9 @@ namespace CraftingList.UI
             if (ImGui.InputTextMultiline($"##{macro.Name}-editor", ref contents, 100_000,
                 ImGuiHelpers.ScaledVector2(350, 14 * ImGui.CalcTextSize("Z").Y)))
             {
+                PluginLog.Debug(contents);
                 macro.Text = contents;
-                DalamudApi.Configuration.Save();
+                Service.Configuration.Save();
             }
 
         }
@@ -152,14 +153,14 @@ namespace CraftingList.UI
                     CraftingListTab.UpdateMacroNameInEntries(macro.Name, name);
                     MacroManager.RenameMacro(macro.Name, name);
                     
-                    DalamudApi.Configuration.Save();
+                    Service.Configuration.Save();
                 }
 
                 if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Delete"))
                 {
                     CraftingListTab.RemoveMacroName(macro.Name);
                     MacroManager.RemoveMacro(macro.Name);
-                    DalamudApi.Configuration.Save();
+                    Service.Configuration.Save();
                 }
                 ImGui.EndPopup();
                 return;
@@ -190,7 +191,7 @@ namespace CraftingList.UI
             }*/
             
 
-            if (DalamudApi.Configuration.UsePluginMacros)
+            if (Service.Configuration.UsePluginMacros)
             {
                 DrawPluginMacroPage();
                 return;
@@ -213,7 +214,7 @@ namespace CraftingList.UI
                     isConsumableHQ = true;
                     consumableName = consumableName[5..];
                 }
-                uint consumableID = selection == 0 ? 0 : DalamudApi.CraftingConsumables.Where(x => x!.Name == consumableName).First()!.RowId;
+                uint consumableID = selection == 0 ? 0 : Service.CraftingConsumables.Where(x => x!.Name == consumableName).First()!.RowId;
                 if (isConsumableHQ) consumableID += 1000000;
 
                 return consumableID;
@@ -225,7 +226,7 @@ namespace CraftingList.UI
         }
         public void FoodSelectionBox(CraftingMacro macro)
         {
-            int selectedFood1 = macro.FoodID != 0 ? foodNames.IndexOf(DalamudApi.GetRowFromId(GetBaseFoodID(macro.FoodID))!.Name) : 0;
+            int selectedFood1 = macro.FoodID != 0 ? foodNames.IndexOf(Service.GetRowFromId(GetBaseFoodID(macro.FoodID))!.Name) : 0;
             if (IsItemHQ(macro.FoodID))
                 selectedFood1--;
 
@@ -233,13 +234,13 @@ namespace CraftingList.UI
             if (newFood != macro.FoodID)
             {
                 macro.FoodID = newFood;
-                DalamudApi.Configuration.Save();
+                Service.Configuration.Save();
             }
         }
 
         public void MedicineSelectionBox(CraftingMacro macro)
         {
-            int selectedMeds1 = macro.MedicineID != 0 ? medicineNames.IndexOf(DalamudApi.GetRowFromId(GetBaseFoodID(macro.MedicineID))!.Name) : 0;
+            int selectedMeds1 = macro.MedicineID != 0 ? medicineNames.IndexOf(Service.GetRowFromId(GetBaseFoodID(macro.MedicineID))!.Name) : 0;
             if (IsItemHQ(macro.MedicineID))
                 selectedMeds1--;
 
@@ -247,7 +248,7 @@ namespace CraftingList.UI
             if (newMeds != macro.MedicineID)
             {
                 macro.MedicineID = newMeds;
-                DalamudApi.Configuration.Save();
+                Service.Configuration.Save();
             }
         }
 

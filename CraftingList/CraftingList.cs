@@ -3,18 +3,16 @@ using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using System;
+using System.Threading.Tasks;
 
 namespace CraftingList
 {
 
 
-    public unsafe sealed class CraftingList : IDalamudPlugin
+    public sealed class CraftingList : IDalamudPlugin
     {
         public string Name => "Crafting List";
 
@@ -25,18 +23,18 @@ namespace CraftingList
 
         public static void InitializeSingletons()
         {
-            Singleton<OpenRecipebyRecipeId>.Set(DalamudApi.SigScanner);
-            Singleton<GetBaseUiObject>.Set(DalamudApi.SigScanner);
-            Singleton<GetUiObjectByName>.Set(DalamudApi.SigScanner);
-            Singleton<OpenRecipeByItemId>.Set(DalamudApi.SigScanner);
-            Singleton<UseAction>.Set(DalamudApi.SigScanner);
-            Singleton<OpenContextMenuForAddon>.Set(DalamudApi.SigScanner);
-            Singleton<AgentRepairReceiveEvent>.Set(DalamudApi.SigScanner);
-            Singleton<AgentRecipeNoteReceiveEvent>.Set(DalamudApi.SigScanner);
-            Singleton<AddonRepairReceiveEvent>.Set(DalamudApi.SigScanner);
-            Singleton<AddonRecipeNoteReceiveEvent>.Set(DalamudApi.SigScanner);
-            Singleton<AgentRecipeNoteHide>.Set(DalamudApi.SigScanner);
-            Singleton<AgentRecipeMaterialListReceiveEvent>.Set(DalamudApi.SigScanner);
+            Singleton<OpenRecipebyRecipeId>.Set(Service.SigScanner);
+            Singleton<GetBaseUiObject>.Set(Service.SigScanner);
+            Singleton<GetUiObjectByName>.Set(Service.SigScanner);
+            Singleton<OpenRecipeByItemId>.Set(Service.SigScanner);
+            Singleton<UseAction>.Set(Service.SigScanner);
+            Singleton<OpenContextMenuForAddon>.Set(Service.SigScanner);
+            Singleton<AgentRepairReceiveEvent>.Set(Service.SigScanner);
+            Singleton<AgentRecipeNoteReceiveEvent>.Set(Service.SigScanner);
+            Singleton<AddonRepairReceiveEvent>.Set(Service.SigScanner);
+            Singleton<AddonRecipeNoteReceiveEvent>.Set(Service.SigScanner);
+            Singleton<AgentRecipeNoteHide>.Set(Service.SigScanner);
+            Singleton<AgentRecipeMaterialListReceiveEvent>.Set(Service.SigScanner);
         }
 
         public CraftingList(DalamudPluginInterface pluginInterface)
@@ -44,48 +42,47 @@ namespace CraftingList
             Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Configuration.Initialize(pluginInterface);
 
-            DalamudApi.Initialize(pluginInterface, Configuration);
+            Service.Initialize(pluginInterface, Configuration);
             Module.Initialize();
             SignatureHelper.Initialise(this);
 
             InitializeSingletons();
             MacroManager.InitializeMacros();
 
-
-            Crafter = new Crafter(SeInterface.Instance, Configuration);
+            Crafter = new Crafter();
 
 
             this.PluginUi = new PluginUI(this);
 
 
-            DalamudApi.CommandManager.AddHandler("/craftinglist", new CommandInfo(OnCraftingList)
+            Service.CommandManager.AddHandler("/craftinglist", new CommandInfo(OnCraftingList)
             {
                 HelpMessage = "Create a list of items to craft"
             });
-            DalamudApi.CommandManager.AddHandler("/clist", new CommandInfo(OnCraftingList)
+            Service.CommandManager.AddHandler("/clist", new CommandInfo(OnCraftingList)
             {
                 HelpMessage = "Abbreviation for /craftinglist"
             });
 
-            DalamudApi.CommandManager.AddHandler("/craftallitems", new CommandInfo(OnCraftAllItems)
+            Service.CommandManager.AddHandler("/craftallitems", new CommandInfo(OnCraftAllItems)
             {
                 HelpMessage = "Craft all items in your list"
             });
 
-            DalamudApi.CommandManager.AddHandler("/clcancel", new CommandInfo(OnCancel)
+            Service.CommandManager.AddHandler("/clcancel", new CommandInfo(OnCancel)
             {
                 HelpMessage = "Cancel current craft."
             });
-            DalamudApi.CommandManager.AddHandler("/testcommand", new CommandInfo(OnCommand)
+            Service.CommandManager.AddHandler("/testcommand", new CommandInfo(OnCommand)
             {
                 ShowInHelp = false
             });
-            DalamudApi.CommandManager.AddHandler("/closerecipenote", new CommandInfo(OnCloseRecipeNote)
+            Service.CommandManager.AddHandler("/closerecipenote", new CommandInfo(OnCloseRecipeNote)
             {
                 ShowInHelp = false
             });
         
-            DalamudApi.PluginInterface.UiBuilder.Draw += DrawUI;
+            Service.PluginInterface.UiBuilder.Draw += DrawUI;
             //DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
         }
 
@@ -93,21 +90,22 @@ namespace CraftingList
         {
             SeInterface.Dispose();
             PluginUi.Dispose();
-            DalamudApi.CommandManager.RemoveHandler("/craftinglist");
-            DalamudApi.CommandManager.RemoveHandler("/craftallitems");
-            DalamudApi.CommandManager.RemoveHandler("/clist");
-            DalamudApi.CommandManager.RemoveHandler("/clcancel");
-            DalamudApi.CommandManager.RemoveHandler("/testcommand");
-            DalamudApi.CommandManager.RemoveHandler("/closerecipenote");
+            Service.CommandManager.RemoveHandler("/craftinglist");
+            Service.CommandManager.RemoveHandler("/craftallitems");
+            Service.CommandManager.RemoveHandler("/clist");
+            Service.CommandManager.RemoveHandler("/clcancel");
+            Service.CommandManager.RemoveHandler("/testcommand");
+            Service.CommandManager.RemoveHandler("/closerecipenote");
 
             //DalamudApi.CommandManager.RemoveHandler("/clconfig");
         }
 
         private void OnCommand(string command, string args)
         {
-            DalamudApi.ChatGui.Print(args);
-            //int button = int.Parse(args);
-            //((PtrSynthesisSimpleDialog)SeInterface.GetUiObject("SynthesisSimpleDialog")).ClickButton(button);
+            Configuration.CanaryTestFlag = !Configuration.CanaryTestFlag;
+            PluginLog.Debug($"Canary: {Configuration.CanaryTestFlag}");
+
+            SeInterface.Repair().ClickRepairAll();
         }
 
         private void OnCraftingList(string command, string args)

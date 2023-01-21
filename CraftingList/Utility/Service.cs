@@ -6,32 +6,35 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
 using Dalamud.IoC;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
+using System;
 using System.Collections;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CraftingList.Utility
 {
-    internal class DalamudApi
+    internal class Service
     {
         public static void Initialize(DalamudPluginInterface pluginInterface, Configuration config)
         {
-            pluginInterface.Create<DalamudApi>();
+            pluginInterface.Create<Service>();
             Configuration = config;
 
             CraftingConsumables = DataManager.GetExcelSheet<Item>()!
                 .Where(item => item.ItemAction.Value!.DataHQ[1] != 0 && DataManager.GetExcelSheet<ItemFood>()!.Select(m => m.RowId).Contains(item.ItemAction.Value.DataHQ[1]))
                 .Where(meal =>
                 {
-                    int param = DalamudApi.DataManager.GetExcelSheet<ItemFood>()!
+                    int param = Service.DataManager.GetExcelSheet<ItemFood>()!
                         .GetRow(meal.ItemAction.Value!.DataHQ[1])!.UnkData1[0].BaseParam;
                     return param == 11 || param == 70 || param == 71;
                 });
 
             GameEventManager = new();
-            ChatManager = new();
+            ChatManager = new(ChatGui);
         }
 
 
@@ -47,7 +50,7 @@ namespace CraftingList.Utility
 
         [PluginService]
         [RequiredVersion("1.0")]
-        public static ChatGui ChatGui { get; private set; } = null!;
+        private static ChatGui ChatGui { get; set; } = null!;
 
         [PluginService]
         [RequiredVersion("1.0")]
@@ -79,5 +82,27 @@ namespace CraftingList.Utility
         public static GameEventManager GameEventManager { get; private set; } = null!;
         public static ChatManager ChatManager { get; private set; } = null!;
 
+        public static async Task<bool> WaitForCondition(ConditionFlag condition, bool value, int timeoutMS)
+        {
+            var startTime = (ulong)DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            var timeout = (ulong)timeoutMS;
+            var endTime = startTime + timeout;
+
+            while (Condition[condition] != value)
+            {
+                var currTime = (ulong)DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
+                if (currTime > endTime)
+                {
+                    return false;
+                }
+
+                await Task.Delay(Configuration.WaitDurations.WaitForConditionLoop);
+            }
+
+            await Task.Delay(Configuration.WaitDurations.AfterWaitForCondition);
+
+            return true;
+        }
     }
 }

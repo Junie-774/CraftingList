@@ -27,8 +27,18 @@
 
         public void Decrement()
         {
-            if (NumCrafts.ToLower() == "max") return;
-            NumCrafts = (int.Parse(NumCrafts) - 1).ToString();
+            if (!int.TryParse(NumCrafts, out int numCrafts))
+                return;
+            NumCrafts = (numCrafts - 1).ToString();
+            if (NumCrafts == "0") Complete = true;
+        }
+
+        public void Decrement(int numCompleted)
+        {
+            if (!int.TryParse(NumCrafts, out int numCrafts))
+                return;
+
+            NumCrafts = (numCrafts - numCompleted).ToString();
             if (NumCrafts == "0") Complete = true;
         }
 
