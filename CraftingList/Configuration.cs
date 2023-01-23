@@ -2,6 +2,7 @@
 using CraftingList.Crafting.Macro;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
+using ImGuiNET;
 using System;
 using System.Collections.Generic;
 
@@ -86,6 +87,14 @@ namespace CraftingList
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
             this.pluginInterface = pluginInterface;
+
+            WaitDurationHelper waitDurationHelper = new();
+            foreach (var field in typeof(WaitDurationHelper).GetFields())
+            {
+                int toref = (int)(field.GetValue(this.WaitDurations) ?? 2000);
+                if (toref == 0)
+                    field.SetValue(WaitDurations, field.GetValue(waitDurationHelper));
+            }
         }
 
         public void Save()

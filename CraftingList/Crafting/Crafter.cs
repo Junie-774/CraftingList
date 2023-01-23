@@ -321,29 +321,67 @@ namespace CraftingList.Crafting
                 entry.running = false;
                 return false;
             }
+
+            return await WaitForQuickSynthToFinish(entry, numToQuickSynth);
+        }
+
+        public async Task<bool> WaitForQuickSynthToFinish(CListEntry entry, int numToQuickSynth)
+        {
             var simpleSynthDialog = SeInterface.GetUiObject("SynthesisSimple");
 
+            int lastNumCompleted = 0; // Idk how to name this well, but its an auxillary variable that lags behind numCompleted so we can check if numCompleted has changed.
+            var lastCompletionTime = DateTime.Now;
             int numCompleted;
             PluginLog.Debug("Starting l00p");
-            for (numCompleted = 0; numCompleted < numToQuickSynth; numCompleted = ((PtrSynthesisSimple) simpleSynthDialog).GetCurrCrafts())
+            for (numCompleted = 0; numCompleted < numToQuickSynth; numCompleted = ((PtrSynthesisSimple)simpleSynthDialog).GetCurrCrafts())
             {
                 await Task.Delay(Service.Configuration.WaitDurations.WaitForConditionLoop);
 
-                bool needsRepair = CraftHelper.NeedsRepair();
-                
+                if (lastNumCompleted != numCompleted) // if numCompleted changed since last iteration
+                {
+                    PluginLog.Debug("completed changed.");
+                    lastCompletionTime = DateTime.Now;
+                    lastNumCompleted = numCompleted;
+                }
+
+                if (DateTime.Now.CompareTo(lastCompletionTime.AddSeconds(5)) > 0)
+                {
+                    if (!await CraftHelper.CloseQuickSynthWindow())
+                    {
+                        CraftHelper.CancelEntry(entry, $"A problem occured while trying to exit the Quick Synth window for entry {entry.Name}. You may fail quick synths due to gear breaking.", true);
+                        continue;
+                    }
+                    await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
+
+                    entry.Decrement(numCompleted);
+                    CraftHelper.CancelEntry(entry, $"Quick Synth finished early, skipping rest of entry {entry.Name}.", true);
+                    return false;
+                }
+
+
                 if (!SeInterface.IsAddonAvailable(simpleSynthDialog, true))
                 {
                     entry.Decrement(numCompleted);
                     Cancel("The Quick Synthesis Window closed unexpectdly. Stopping craft.", true);
+
+
+
+                    if (!await CraftHelper.ExitCrafting())
+                    {
+                        Cancel($"A problem occured trying to exit the crafting stance after quick synthing {entry.Name}.", true);
+                        return false;
+                    }
+
                     return false;
-                } 
+                }
+                bool needsRepair = CraftHelper.NeedsRepair();
+
                 //Quit this synth early if gear breaks or cancelled
                 if (needsRepair || !m_running)
                 {
-                    ((PtrSynthesisSimple) simpleSynthDialog).ClickQuit();
+                    ((PtrSynthesisSimple)simpleSynthDialog).ClickQuit();
 
-                    // Add 3000 to allow for a full quick synth to complete because the game waits for that synth to finish before closing.
-                    if (!await CraftHelper.WaitForCloseAddon("SynthesisSimple", true, Service.Configuration.AddonTimeout + 3000))
+                    if (!await CraftHelper.CloseQuickSynthWindow())
                     {
                         CraftHelper.CancelEntry(entry, $"A problem occured while trying to exit the Quick Synth window for entry {entry.Name}. You may fail quick synths due to gear breaking.", true);
                         continue;
@@ -370,15 +408,13 @@ namespace CraftingList.Crafting
                             return false;
                     }
 
-
                     return true;
                 }
-
             }
 
             entry.Decrement(numToQuickSynth);
 
-            ((PtrSynthesisSimple) simpleSynthDialog).ClickQuit();
+            ((PtrSynthesisSimple)simpleSynthDialog).ClickQuit();
             if (!await CraftHelper.WaitForCloseAddon("SynthesisSimple", true, Service.Configuration.AddonTimeout))
             {
                 Cancel("Error exiting quick synth window", true);

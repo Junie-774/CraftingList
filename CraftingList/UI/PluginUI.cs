@@ -72,13 +72,7 @@ namespace CraftingList
         public void DrawExperimentalTab()
         {
             //PluginLog.Debug($"Crafting: {DalamudApi.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Crafting]}");
-            for(int i = 0; i < Dalamud.Game.ClientState.Conditions.Condition.MaxConditionEntries; i++)
-            {
-                if (Service.Condition[i])
-                {
-                    PluginLog.Debug($"Condition true: {i}");
-                }
-            }
+
             ImGui.Text("Wait durations (ms)");
             ImGui.PushItemWidth(ImGui.CalcTextSize("0000000").X);
 

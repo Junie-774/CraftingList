@@ -134,7 +134,8 @@ namespace CraftingList.Utility
         public static void Statusoff(string status) => Service.ChatManager.SendMessage("/statusoff \"" + status + "\"");
 
 
-        
+        public static int GetItemCountInInevntory(uint itemId, bool isHQ = false, bool checkEquipped = true, bool checkArmory = true, short minCollectability = 0)
+            => InventoryManager()->GetInventoryItemCount(itemId, isHQ, checkEquipped, checkArmory, minCollectability);
 
         public static bool HasStatusID(uint statusID)
         {

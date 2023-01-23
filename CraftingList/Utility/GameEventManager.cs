@@ -6,13 +6,14 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace CraftingList.Utility
 {
-    internal class GameEventManager
+    public class GameEventManager
     {
         [Signature("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 54 24 ?? 56 57 41 56 48 83 EC 50", DetourName = nameof(EventFrameworkDetour))]
         private readonly Hook<EventFrameworkDelegate> eventFrameworkHook = null!;
@@ -43,6 +44,7 @@ namespace CraftingList.Utility
                 {
                     if (data->ActionType == ActionType.MainCommand || data->ActionType == ActionType.CraftAction)
                     {
+                        
                         this.CraftingData = *data;
                         this.DataAvailableWaiter.Set();
                     }

@@ -77,6 +77,12 @@ namespace CraftingList.Utility
             return DataManager.GetExcelSheet<Item>()!.GetRow(id);
         }
 
+        public static Recipe? GetRecipeFromResultId(uint id)
+        {
+            var result = DataManager.GetExcelSheet<Recipe>()!.Where(r => r!.ItemResult!.Value!.RowId == id);
+            return result.Any() ? result.First() : null;
+        }
+
         public static System.Collections.Generic.IEnumerable<Item> CraftingConsumables { get; private set; } = null!;
 
         public static GameEventManager GameEventManager { get; private set; } = null!;

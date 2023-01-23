@@ -5,6 +5,7 @@ using CraftingList.Utility;
 using Dalamud.Interface;
 using Dalamud.Logging;
 using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -20,9 +21,8 @@ namespace CraftingList.UI
     {
         readonly private IEnumerable<Recipe?> craftableItems;
         readonly private List<string> craftableNames;
-        private Recipe? hqMatItem;
-        private List<Item> currItemIngredients = new();
         private List<string> newEntryItemNameSearchResults;
+        private IEnumerable<IngredientSummaryListing> ingredientSummaries;
 
         // Two separate lists because we want to present an empty option for a new list entry, but not present an empty option for an existing entry.
 
@@ -37,7 +37,6 @@ namespace CraftingList.UI
 
         private readonly CraftingList plugin;
 
-        int hqMatSelectionCurrEntry = -1;
 
         public CraftingListTab(CraftingList plugin)
         {
@@ -56,15 +55,16 @@ namespace CraftingList.UI
             }
 
             newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntry.Name)).ToList();
+            ingredientSummaries = RegenerateIngredientSummary();
 
         }
         public void Draw()
         {
             DrawEntryTable();
             DrawNewListEntry();
-            DrawHQMatSelection();
+            //DrawHQMatSelection();
             ImGui.NewLine();
-
+            ImGui.Columns(2);
             if (ImGui.Button("Craft!"))
             {
                 plugin.Crafter.CraftAllItems();
@@ -84,6 +84,13 @@ namespace CraftingList.UI
             ImGui.InputInt("##CraftTimeout", ref plugin.Configuration.CraftTimeoutMinutes, 0, 0);
             ImGui.SameLine();
             ImGui.Text(" Minutes");
+
+            ImGui.NextColumn();
+            foreach (var ingredient in ingredientSummaries)
+            {
+                ImGui.Text($"{ingredient.Name}: {ingredient.Amount}{(ingredient.HasMax ? " + max" : "")}");// ({SeInterface.GetItemCountInInevntory(ingredient.ItemId)}");
+            }
+            ImGui.Columns(1);
         }
 
         private void DrawEntryTable()
@@ -131,7 +138,12 @@ namespace CraftingList.UI
                 ImGui.NextColumn();
 
                 ImGui.SetNextItemWidth(-1);
-                ImGui.InputText("##NumCrafts" + i, ref currEntry.NumCrafts, 50);
+                if (ImGui.InputText("##NumCrafts" + i, ref currEntry.NumCrafts, 50))
+                {
+                    ingredientSummaries = RegenerateIngredientSummary();
+                    Service.Configuration.Save();
+
+                }
                 ImGui.NextColumn();
 
                 ImGui.SetNextItemWidth(-1);
@@ -143,26 +155,27 @@ namespace CraftingList.UI
 
                 }
 
-                
                 if (ImGui.Combo("##Macro" + i, ref macroIndex, macroNames.ToArray(), macroNames.Count()))
                 {
                     currEntry.MacroName = macroNames.ElementAt(macroIndex);
+                    Service.Configuration.Save();
+
                 }
                 ImGui.NextColumn();
-
                 if (ImGui.Button("Select...##" + i))
                 {
-                    hqMatItem = craftableItems.Where(item => item!.ItemResult.Value!.RowId == currEntry.ItemId).First();
-                    SetHQItemIngredients(hqMatItem!);
-                    hqMatSelectionCurrEntry = i;
-                    ImGui.OpenPopup("HQ Mat Selection");
+                    ImGui.OpenPopup($"##popup-{currEntry.Name}-{i}");
                 }
+                DrawHQMatSelection(currEntry);
+
                 ImGui.NextColumn();
 
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() / 2) - 15);
                 if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Remove Entry", currEntry.Name + i))
                 {
                     plugin.Configuration.EntryList[i].Complete = true;
+                    Service.Configuration.Save();
+
                 }
                 ImGui.NextColumn();
 
@@ -172,8 +185,10 @@ namespace CraftingList.UI
             }
 
 
-            Service.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0");
-            Service.Configuration.Save();
+            if (Service.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0") > 0)
+            {
+                ingredientSummaries = RegenerateIngredientSummary();
+            }
         }
 
         private void DrawNewListEntry()
@@ -231,6 +246,8 @@ namespace CraftingList.UI
                     newEntryMacroSelection = 0;
                     newEntry.Name = "";
                     newEntry.NumCrafts = "";
+                    Service.Configuration.Save();
+
                 }
             }
             ImGui.Separator();
@@ -253,83 +270,105 @@ namespace CraftingList.UI
 
         }
 
-        public void DrawHQMatSelection()
+        public static void HQMat(string name, int amount, ref int outInt, float size)
         {
-            if (hqMatSelectionCurrEntry == -1) return;
-            if (hqMatItem == null) return;
-
-            CListEntry entry = plugin.Configuration.EntryList[hqMatSelectionCurrEntry];
-
-
-            bool hasHQIngredients = false;
-            string maxString = "";
-            foreach (var ingredient in currItemIngredients)
+            ImGui.Text(name);
+            ImGui.SameLine();
+            ImGui.SetCursorPosX(size);
+            ImGui.SetNextItemWidth(25);
+            if (ImGui.InputInt($"/{amount}##ingredient_{name}", ref outInt, 0))
             {
-                if (ingredient.RowId != 0)
-                {
-                    if (ingredient.Name.ToString().Length > maxString.Length)
-                    {
-                        maxString = ingredient.Name;
-                    }
-                }
+                Service.Configuration.Save();
+            }
+            ImGui.SameLine();
+
+            if (ImGui.Button($"-##hq-{name}", new Vector2(22, 22)))
+            {
+                outInt--;
+                Service.Configuration.Save();
+
+            }
+            ImGui.SameLine();
+
+            if (ImGui.Button($"+##hq-{name}", new Vector2(22, 22)))
+            {
+                outInt++;
+                Service.Configuration.Save();
+
             }
 
-            if (ImGui.BeginPopup("HQ Mat Selection"))
+            if (outInt > amount)
             {
+                outInt = amount;
+            }
+            if (outInt < 0)
+            {
+                outInt = 0;
+            }
+        }
+        public void DrawHQMatSelection(CListEntry entry)
+        {
+            if (ImGui.BeginPopupContextItem($"##popup-{entry.Name}-{Service.Configuration.EntryList.IndexOf(entry)}"))
+            {
+                var matches = craftableItems.Where(r => r!.ItemResult.Value!.RowId == entry.ItemId);
+                if (!matches.Any()) {
+                    ImGui.EndPopup();
+                    return;
+                }
 
-                for (int i = 0; i < hqMatItem!.UnkData5.Length; i++)
+                var recipe = craftableItems.Where(r => r!.ItemResult.Value!.RowId == entry.ItemId).First()!;
+
+                var recipeIngredients = MaterialsSummary.GetIngredientListFromRecipe(recipe);
+                var maxString = GetLongest(recipeIngredients.Select(i => i.Name));
+                bool hasHqItem = false;
+                for (int i = 0; i < recipe.UnkData5.Length; i++) 
                 {
+                    if (recipe.UnkData5[i].ItemIngredient <= 0)
+                        continue;
 
-                    if (currItemIngredients[i].RowId != 0)
-                    {
-                        if (currItemIngredients[i].CanBeHq)
-                        {
-                            ImGui.Text(currItemIngredients[i].Name); // + " (" + hqMatItem!.UnkData5[i].AmountIngredient + ")");
-                            ImGui.SameLine();
-                            ImGui.SetCursorPosX(ImGui.CalcTextSize(maxString + "(XXX)").X);
-                            ImGui.SetNextItemWidth(25);
-                            ImGui.InputInt($"/{hqMatItem!.UnkData5[i].AmountIngredient}##ingredient_{currItemIngredients[i].Name}", ref entry.HQSelection[i], 0);
-                            ImGui.SameLine();
-                            
-                            if (ImGui.Button($"-##hq{i}", new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight())))
-                            {
-                                entry.HQSelection[i]--;
-                            }
-                            ImGui.SameLine();
+                    var item = Service.GetRowFromId((uint)recipe.UnkData5[i].ItemIngredient)!;
 
-                            if (ImGui.Button($"+##hq{i}", new Vector2(25, 25)))
-                            {
-                                entry.HQSelection[i]++;
-                            }
-
-                            if (entry.HQSelection[i] > hqMatItem!.UnkData5[i].AmountIngredient)
-                            {
-                                entry.HQSelection[i] = hqMatItem!.UnkData5[i].AmountIngredient;
-                            }
-                            if (entry.HQSelection[i] < 0)
-                            {
-                                entry.HQSelection[i] = 0;
-                            }
-
-                            hasHQIngredients = true;
-                        }
-                    }
+                    if (!item.CanBeHq)
+                        continue;
+                    else
+                        hasHqItem = true;
+                    
+                    HQMat(item.Name,
+                        recipe.UnkData5[i].AmountIngredient,
+                        ref entry.HQSelection[i],
+                        ImGui.CalcTextSize(maxString + "0000").X);
 
                 }
-                if (!hasHQIngredients)
+
+                if (!hasHqItem)
                 {
-                    ImGui.Text("No HQ ingredients.");
+                    ImGui.Text("No HQ-able ingredients");
                 }
                 ImGui.EndPopup();
             }
-            else
+        }
+
+       
+        public static string GetLongest(IEnumerable<string> strings)
+        {
+            string max = "";
+            foreach (var str in strings)
             {
-                hqMatSelectionCurrEntry = -1;
+                if (str.Length > max.Length)
+                    max = str;
             }
+
+            return max;
         }
 
         public List<string> GetMacroNames()
             => MacroManager.MacroNames;
+
+
+        public IEnumerable<IngredientSummaryListing> RegenerateIngredientSummary()
+        {
+            return MaterialsSummary.GetIngredientListFromEntryList(Service.Configuration.EntryList).OrderBy(i => i.ItemId);
+        }
 
         public static void RemoveMacroName(string macroName)
         {
@@ -354,24 +393,6 @@ namespace CraftingList.UI
 
         public IEnumerable<string> GenerateNewEntrymacroNames()
             => new List<string>() { "" }.Concat(MacroManager.MacroNames);
-
-        private void SetHQItemIngredients(Recipe recipe)
-        {
-            currItemIngredients.Clear();
-            var itemSheet = Service.DataManager.GetExcelSheet<Item>();
-            for (int i = 0; i < recipe.UnkData5.Length; i++)
-            {
-                
-                int ingredientID = hqMatItem!.UnkData5[i].ItemIngredient;
-                var matches = itemSheet!.Where(it => it.RowId == ingredientID);
-
-                if (matches.Any())
-                {
-                    currItemIngredients.Add(matches.First());
-                }
-            }
-        }
-
 
         public void Dispose()
         {

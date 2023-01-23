@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CraftingList.Crafting
 {
-    internal enum CraftingCondition : uint
+    public enum CraftingCondition : uint
     {
         /// <summary>
         /// Normal condition.
@@ -58,7 +58,7 @@ namespace CraftingList.Crafting
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0x64)]
-    internal struct CraftingState
+    public struct CraftingState
     {
         /// <summary>
         /// Gets the action type.

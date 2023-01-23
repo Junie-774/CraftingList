@@ -211,7 +211,10 @@ namespace CraftingList.Crafting
         public static async Task<bool> Repair()
         {
             PluginLog.Debug($"[CraftHelper.Repair()] Repairing...");
-            SeInterface.ToggleRepairWindow();
+
+            if (!SeInterface.IsAddonAvailable(SeInterface.GetUiObject("Repair"), true)) {
+                SeInterface.ToggleRepairWindow();
+            }
 
             if (!await WaitForAddon("Repair", true, Service.Configuration.AddonTimeout))
                 return false;
@@ -226,12 +229,11 @@ namespace CraftingList.Crafting
             await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
 
 
-            //Can't wait for any addons here because the yesno dialog closes immediately on animation start and the repair window doesn't close
-            // We wait for a static time instead.
+            //Occupied39, conveniently, signals that the player is busy repairing. Or at least it flags as on while the player repairs
             PluginLog.Debug("[CraftHelper.Repair()] Clicking confirm...");
             SeInterface.SelectYesNo().ClickYes();
 
-            if (!await Service.WaitForCondition(Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39, false, 5000))
+            if (!await Service.WaitForCondition(ConditionFlag.Occupied39, false, 5000))
             {
                 PluginLog.Error($"[CraftHelper.Repair()] Waiting for repair to finish timed out.");
             }
@@ -279,6 +281,21 @@ namespace CraftingList.Crafting
             }
             PluginLog.Debug($"[WaitForAddon] Wait completed for '{addonName}'");
             return Task.FromResult(true);
+        }
+
+        public static async Task<bool> CloseQuickSynthWindow()
+        {
+            ((PtrSynthesisSimple)SeInterface.GetUiObject("SynthesisSimple")).ClickQuit();
+
+            // Add 3500 to allow for a full quick synth to complete because the game waits for that synth to finish before closing.
+            if (!await CraftHelper.WaitForCloseAddon("SynthesisSimple", true, Service.Configuration.AddonTimeout + 3500))
+            {
+                PluginLog.Debug($"[CraftHelper.CloseQuickSynthWindow()] A problem occured while trying to exit the Quick Synth window for entryk.", true);
+                return false;
+            }
+            await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
+
+            return true;
         }
 
         public static unsafe bool NeedsRepair()
