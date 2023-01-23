@@ -1,4 +1,5 @@
 ﻿using CraftingList.Crafting.Macro;
+using CraftingList.UI.CraftingListTab;
 using CraftingList.Utility;
 using Dalamud.Interface;
 using Dalamud.Logging;
@@ -175,7 +176,7 @@ namespace CraftingList.UI
             var name = macro.Name;
             if (ImGui.InputText($"##rename", ref name, 100, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue))
             {
-                CraftingListTab.UpdateMacroNameInEntries(macro.Name, name);
+                EntryListTable.UpdateMacroNameInEntries(macro.Name, name);
                 MacroManager.RenameMacro(macro.Name, name);
                 
                 Service.Configuration.Save();
@@ -196,7 +197,7 @@ namespace CraftingList.UI
 
             if (toDelete != "")
             {
-                CraftingListTab.RemoveMacroName(toDelete);
+                EntryListTable.RemoveMacroName(toDelete);
                 MacroManager.RemoveMacro(toDelete);
                 toDelete = "";
             }

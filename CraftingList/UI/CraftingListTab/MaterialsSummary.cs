@@ -10,16 +10,17 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CraftingList.UI
+namespace CraftingList.UI.CraftingListTab
 {
-    
-    internal class IngredientSummaryListing
+
+    public class IngredientSummaryListing
     {
         public uint ItemId { get; set; }
         public string Name { get; set; } = "";
         public int Amount { get; set; }
 
-        public bool HasMax { get; set; }
+        public bool HasMax { get; set; } // Used for aggregate listings for more than one entry. Allows keeping track of the amount needed by other entries
+                                         // while still being able to indicate that there's at least one entry that will go 'max'
         public bool CanBeHQ { get; set; }
     }
 

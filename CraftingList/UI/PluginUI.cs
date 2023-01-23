@@ -1,5 +1,6 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.UI;
+using CraftingList.UI.CraftingListTab;
 using CraftingList.Utility;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
@@ -117,7 +118,6 @@ namespace CraftingList
                 ImGui.EndTabBar();
 
             }
-            plugin.Configuration.Save();
             ImGui.End();
 
             
