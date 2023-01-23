@@ -44,7 +44,7 @@ namespace CraftingList.UI.CraftingListTab
 
         public static void DisplayListing(IngredientSummaryListing ingredient)
         {
-            int inInventory = SeInterface.GetItemCountInInevntory(ingredient.ItemId);
+            int inInventory = SeInterface.GetItemCountInInevntory(ingredient.ItemId, false) + SeInterface.GetItemCountInInevntory(ingredient.ItemId, true);
             ImGui.Text($"{ingredient.Name}: {ingredient.Amount}{(ingredient.HasMax ? " + max" : "")}");
             ImGui.SameLine();
             Vector4 color = ImGuiColors.DalamudGrey;

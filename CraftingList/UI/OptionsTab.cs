@@ -88,6 +88,7 @@ namespace CraftingList.UI
             {
 
                 MacroOptionsSection();
+                ImGui.TreePop();
             }
             ImGui.NewLine();
 

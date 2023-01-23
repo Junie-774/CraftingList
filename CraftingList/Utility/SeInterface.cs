@@ -127,9 +127,9 @@ namespace CraftingList.Utility
             UseAction((IntPtr)ActionManager.Instance(), 2, itemId, 0xE0000000, 65535, 0, 0, (IntPtr)null);
         }
 
-        public static void RemoveFood() => Service.ChatManager.SendMessage("Well Fed");
+        public static void RemoveFood() => Statusoff(Localization.GetWellFedStatusString());
 
-        public static void RemoveMedicated() => Statusoff("Medicated");
+        public static void RemoveMedicated() => Statusoff(Localization.GetMedicatedString());
 
         public static void Statusoff(string status) => Service.ChatManager.SendMessage("/statusoff \"" + status + "\"");
 
@@ -153,6 +153,8 @@ namespace CraftingList.Utility
             }
             return hasStatus;
         }
+
+
 
 
     }

@@ -28,12 +28,12 @@ namespace CraftingList.Crafting
         {
             if (m_running)
             {
-                Service.ChatManager.PrintError("[CraftingList] A craft is already running!");
+                Service.ChatManager.PrintError("A craft is already running!");
                 return Task.FromResult(false);
             }
             if (!IsListValid())
             {
-                Service.ChatManager.PrintError("[CraftingList] An error occured validating the list. Please make sure all of your amounts are correct, and that all of your macros are selected.");
+                Service.ChatManager.PrintError("An error occured validating the list. Please make sure all of your amounts are correct, and that all of your macros are selected.");
                 return Task.FromResult(false);
             }
 
@@ -41,7 +41,7 @@ namespace CraftingList.Crafting
 
             return Task.Run(async () =>
             {
-                Service.ChatManager.PrintMessage("[CraftingList] Starting crafting!");
+                Service.ChatManager.PrintMessage("Starting crafting!");
 
                 var craftStart = DateTime.Now;
 
@@ -97,6 +97,7 @@ namespace CraftingList.Crafting
                     }
                 }
                 Service.Configuration.EntryList.RemoveAll(x => x.Complete);
+                Service.Configuration.Save();
                 await Task.Delay(500);
                 TerminationAlert();
                 m_running = false;
@@ -438,7 +439,7 @@ namespace CraftingList.Crafting
 
         private static void SendAlert(string message, int soundEffect)
         {
-            Service.ChatManager.SendMessage("/echo [CraftingList] " + message + " <se." + soundEffect + ">");
+            Service.ChatManager.SendMessage("/echo " + message + " <se." + soundEffect + ">");
         }
 
 

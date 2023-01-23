@@ -141,7 +141,6 @@ namespace CraftingList.Crafting.Macro
                     if (name.Length == 0)
                         continue;
 
-                    PluginLog.Debug("Action: " + name);
                     CraftingActionNames.Add(name);
                 }
             }

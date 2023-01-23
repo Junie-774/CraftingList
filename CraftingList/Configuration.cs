@@ -1,6 +1,7 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Crafting.Macro;
 using Dalamud.Configuration;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 using ImGuiNET;
 using System;
@@ -91,12 +92,22 @@ namespace CraftingList
             this.pluginInterface = pluginInterface;
 
             WaitDurationHelper waitDurationHelper = new();
+            object copy = this.WaitDurations;
             foreach (var field in typeof(WaitDurationHelper).GetFields())
             {
-                int toref = (int)(field.GetValue(this.WaitDurations) ?? 2000);
+                PluginLog.Debug($"Field: {field.Name}. Value: {field.GetValue(copy)}");
+                int toref = (int)(field.GetValue(copy) ?? 2000);
+                PluginLog.Debug($"  Value: {toref}");
                 if (toref == 0)
-                    field.SetValue(WaitDurations, field.GetValue(waitDurationHelper));
+                {
+                    PluginLog.Debug($"  Default: {field.GetValue(waitDurationHelper)}");
+                    field.SetValue(copy, field.GetValue(waitDurationHelper));
+                }
+                PluginLog.Debug($"  New value: {field.GetValue(copy)}");
             }
+
+            this.WaitDurations = (WaitDurationHelper) copy;
+            Save();
         }
 
         public void Save()
