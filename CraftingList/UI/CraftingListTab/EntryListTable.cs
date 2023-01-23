@@ -19,11 +19,11 @@ namespace CraftingList.UI.CraftingListTab
         readonly private IEnumerable<Recipe?> craftableItems;
         readonly private List<string> craftableNames;
         private List<string> newEntryItemNameSearchResults;
-        public IEnumerable<IngredientSummaryListing> ingredientSummaries;
+        public MaterialsSummary IngredientSummary = new();
 
         // Two separate lists because we want to present an empty option for a new list entry, but not present an empty option for an existing entry.
 
-        HQIngredientSelectWindow hqIngredientWindow = new();
+        readonly private HQIngredientSelectWindow hqIngredientWindow = new();
 
         readonly private CListEntry newEntry = new("", 0, "", "");
 
@@ -47,7 +47,7 @@ namespace CraftingList.UI.CraftingListTab
             }
 
             newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntry.Name)).ToList();
-            ingredientSummaries = RegenerateIngredientSummary();
+            IngredientSummary.UpdateIngredients();
         }
 
 
@@ -98,9 +98,13 @@ namespace CraftingList.UI.CraftingListTab
                 ImGui.SetNextItemWidth(-1);
                 if (ImGui.InputText("##NumCrafts" + i, ref currEntry.NumCrafts, 50))
                 {
-                    ingredientSummaries = RegenerateIngredientSummary();
+                    IngredientSummary.UpdateIngredients();
                     Service.Configuration.Save();
 
+                }
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip("Number of crafts. Enter \"max\" to craft until you run out of materials or inventory space.");
                 }
                 ImGui.NextColumn();
 
@@ -147,7 +151,8 @@ namespace CraftingList.UI.CraftingListTab
 
             if (Service.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0") > 0)
             {
-                ingredientSummaries = RegenerateIngredientSummary();
+                IngredientSummary.UpdateIngredients();
+
             }
         }
 
@@ -197,12 +202,13 @@ namespace CraftingList.UI.CraftingListTab
                     (newEntry.NumCrafts.ToLower() == "max" || int.TryParse(newEntry.NumCrafts, out _) && int.Parse(newEntry.NumCrafts) > 0)
                     && newEntryMacroNames[newEntryMacroSelection] != "")
                 {
-
                     newEntry.ItemId = items.First()!.ItemResult.Value!.RowId;
                     newEntry.NumCrafts = newEntry.NumCrafts.ToLower();
-                    var entry = new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntryMacroNames[newEntryMacroSelection]);
 
-                    Service.Configuration.EntryList.Add(entry);
+                    Service.Configuration.EntryList.Add(new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntryMacroNames[newEntryMacroSelection]));
+
+                    IngredientSummary.UpdateIngredients();
+
                     newEntryMacroSelection = 0;
                     newEntry.Name = "";
                     newEntry.NumCrafts = "";

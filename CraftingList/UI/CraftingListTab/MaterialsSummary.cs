@@ -1,6 +1,9 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Utility;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface;
 using Dalamud.Logging;
+using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections;
@@ -9,6 +12,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
+using System.Numerics;
 
 namespace CraftingList.UI.CraftingListTab
 {
@@ -18,15 +22,44 @@ namespace CraftingList.UI.CraftingListTab
         public uint ItemId { get; set; }
         public string Name { get; set; } = "";
         public int Amount { get; set; }
-
         public bool HasMax { get; set; } // Used for aggregate listings for more than one entry. Allows keeping track of the amount needed by other entries
-                                         // while still being able to indicate that there's at least one entry that will go 'max'
         public bool CanBeHQ { get; set; }
+
     }
 
-    internal class MaterialsSummary
+    public class MaterialsSummary
     {
+        public IEnumerable<IngredientSummaryListing> Ingredients { get; set; } = new List<IngredientSummaryListing>();
 
+        public void UpdateIngredients()
+            => Ingredients = GetIngredientListFromEntryList(Service.Configuration.EntryList).OrderBy(i => i.ItemId);
+
+        public void DisplayListings()
+        {
+            foreach (var ingredient in Ingredients)
+            {
+                DisplayListing(ingredient);
+            }
+        }
+
+        public static void DisplayListing(IngredientSummaryListing ingredient)
+        {
+            int inInventory = SeInterface.GetItemCountInInevntory(ingredient.ItemId);
+            ImGui.Text($"{ingredient.Name}: {ingredient.Amount}{(ingredient.HasMax ? " + max" : "")}");
+            ImGui.SameLine();
+            Vector4 color = ImGuiColors.DalamudGrey;
+
+            if (inInventory < ingredient.Amount)
+                color = ImGuiColors.DalamudRed;
+
+            ImGui.TextColored(color, $" ({inInventory} in inventory) ");
+
+            if (inInventory >= ingredient.Amount)
+            {
+                ImGui.SameLine();
+                ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, FontAwesomeIcon.Check);
+            }
+        }
 
         public static List<IngredientSummaryListing> GetIngredientListFromRecipe(Recipe recipe)
         {
@@ -34,6 +67,7 @@ namespace CraftingList.UI.CraftingListTab
             var ingredients = recipe.UnkData5;
 
             List<IngredientSummaryListing> ingredientAmounts = new();
+
 
             for (int i = 0; i < ingredients.Length; i++)
             {

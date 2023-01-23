@@ -82,83 +82,100 @@ namespace CraftingList.UI
 
             ImGui.NextColumn();
 
-            // auxillary variables to allow for error checking
-            float clickSynthesizeDelayMin = Service.Configuration.ClickSynthesizeDelayMinSeconds;
-            float clickSynthesizeDelayMax = Service.Configuration.ClickSynthesizeDelayMaxSeconds;
-
-            ImGui.PushItemWidth(ImGui.CalcTextSize("00000").X);
-
-            ImGui.Text("Delay after clicking synthesize");
-            ImGui.Dummy(new Vector2(18f, 0));
-            ImGui.SameLine();
-            if (ImGui.InputFloat("Min. (s)##ClickSynthesizDelayMin", ref clickSynthesizeDelayMin, 0, 0, "%.1f"))
-            {
-                if (clickSynthesizeDelayMin > 0 && clickSynthesizeDelayMin <= clickSynthesizeDelayMax)
-                    Service.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMin;
-            }
-
-            ImGui.Dummy(new Vector2(18f, 0));
-            ImGui.SameLine();
-            if (ImGui.InputFloat("Max. (s)##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0, 0, "%.1f"))
-            {
-                if (clickSynthesizeDelayMax > 0 && clickSynthesizeDelayMin <= clickSynthesizeDelayMax)
-                    Service.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
-            }
-
             ImGui.NewLine();
 
-            // auxillary variables to allow for error checking
-            float executeMacroDelayMin = Service.Configuration.ExecuteMacroDelayMinSeconds;
-            float executeMacroDelayMax = Service.Configuration.ExecuteMacroDelayMaxSeconds;
-
-            ImGui.Text("Delay after executing macro");
-
-            ImGui.Dummy(new Vector2(18f, 0));
-            ImGui.SameLine();
-            if (ImGui.InputFloat("Min. (s).##ExecuteMacroDelayMin", ref executeMacroDelayMin, 0, 0, "%.1f"))
+            if (ImGui.TreeNode("Macro options"))
             {
-                if (executeMacroDelayMin > 0 && executeMacroDelayMin <= executeMacroDelayMax)
-                    Service.Configuration.ExecuteMacroDelayMinSeconds = executeMacroDelayMin;
+
+                MacroOptionsSection();
             }
-
-            ImGui.Dummy(new Vector2(18f, 0));
-            ImGui.SameLine();
-            if (ImGui.InputFloat("Max. (s)##ExecuteMacroDelayMax", ref executeMacroDelayMax, 0, 0, "%.1f"))
-            {
-                if (executeMacroDelayMax > 0 && executeMacroDelayMin <= executeMacroDelayMax)
-                    Service.Configuration.ExecuteMacroDelayMaxSeconds = executeMacroDelayMax;
-            }
-            ImGui.PopItemWidth();
-
-            ImGui.Checkbox("Ignore <wait.x> and wait intelligently?", ref Service.Configuration.SmartWait);
-
             ImGui.NewLine();
-            /*
-            if (ImGui.Button("Import Old Macros"))
-            {
-                foreach (var macro in DalamudApi.Configuration.IngameMacros)
-                {
-                    var names = DalamudApi.Configuration.PluginMacros.Select(x => x.Name).ToArray();
-                    if (!names.Contains(macro.Name))
-                    {
-                        var newName = MacroManager.GenerateUniqueName(MacroManager.MacroNames, macro.Name);
-                        var newMacro = PluginMacro.FromTimedIngameMacro(macro);
-                        newMacro.Name = newName;
-                        DalamudApi.Configuration.PluginMacros.Add(newMacro);
-                    }
-                }
-            }*/
-            if (ImGui.Button("Show Macro Change Message"))
-            {
-                Service.Configuration.AcknowledgedMacroChange = false;
-            }
 
             ImGui.Columns(1);
         }
 
         public void MacroOptionsSection()
         {
+            ImGui.Checkbox("Ignore <wait.x> and wait intelligently?", ref Service.Configuration.SmartWait);
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Uses the next action as soon as possible.\nMacros can't complete the craft early if this option is enabled.");
+            }
 
+            ImGui.InputInt("Number of retries allowed for macro actions before giving up?", ref Service.Configuration.MaxMacroCommandTimeoutRetries);
+
+            AfterClickSynthesisOption();
+
+            AfterExecuteMacroOption();
+        }
+
+        public void AfterExecuteMacroOption()
+        {
+            // auxillary variables to allow for error checking
+            float executeMacroDelayMin = Service.Configuration.ExecuteMacroDelayMinSeconds;
+            float executeMacroDelayMax = Service.Configuration.ExecuteMacroDelayMaxSeconds;
+
+            ImGui.Checkbox("Wait after executing macro?", ref Service.Configuration.ExecuteMacroDelay);
+            if (Service.Configuration.ExecuteMacroDelay)
+            {
+
+                ImGui.Dummy(new Vector2(25, 0));
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(ImGui.CalcTextSize(executeMacroDelayMin.ToString()).X + 20);
+                if (ImGui.InputFloat("s  to ##ExecuteMacroDelayMin", ref executeMacroDelayMin, 0, 0, "%.1f"))
+                {
+                    if (executeMacroDelayMin > 0 && executeMacroDelayMin <= executeMacroDelayMax)
+                    {
+                        Service.Configuration.ExecuteMacroDelayMinSeconds = executeMacroDelayMin;
+                        Service.Configuration.Save();
+                    }
+                }
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(ImGui.CalcTextSize(executeMacroDelayMax.ToString()).X + 20);
+                if (ImGui.InputFloat("s##ExecuteMacroDelayMax", ref executeMacroDelayMax, 0, 0, "%.1f"))
+                {
+                    if (executeMacroDelayMax > 0 && executeMacroDelayMin <= executeMacroDelayMax)
+                    {
+                        Service.Configuration.ExecuteMacroDelayMaxSeconds = executeMacroDelayMax;
+                        Service.Configuration.Save();
+                    }
+                }
+            }
+        }
+
+        public void AfterClickSynthesisOption()
+        {
+            // auxillary variables to allow for error checking
+            float clickSynthesizeDelayMin = Service.Configuration.ClickSynthesizeDelayMinSeconds;
+            float clickSynthesizeDelayMax = Service.Configuration.ClickSynthesizeDelayMaxSeconds;
+
+
+            ImGui.Checkbox("Wait after clicking synthesize?", ref Service.Configuration.ClicksynthesizeDelay);
+
+            if (Service.Configuration.ClicksynthesizeDelay)
+            {
+                ImGui.Dummy(new Vector2(25, 0));
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(ImGui.CalcTextSize(clickSynthesizeDelayMin.ToString()).X + 20);
+                if (ImGui.InputFloat("Min. (s)##ClickSynthesizDelayMin", ref clickSynthesizeDelayMin, 0, 0, "%.1f"))
+                {
+                    if (clickSynthesizeDelayMin > 0 && clickSynthesizeDelayMin <= clickSynthesizeDelayMax)
+                    {
+                        Service.Configuration.ClickSynthesizeDelayMinSeconds = clickSynthesizeDelayMin;
+                        Service.Configuration.Save();
+                    }
+                }
+                ImGui.SetNextItemWidth(ImGui.CalcTextSize(clickSynthesizeDelayMax.ToString()).X + 20);
+                ImGui.SameLine();
+                if (ImGui.InputFloat("Max. (s)##ClickSynthesizeDelayMax", ref clickSynthesizeDelayMax, 0, 0, "%.1f"))
+                {
+                    if (clickSynthesizeDelayMax > 0 && clickSynthesizeDelayMin <= clickSynthesizeDelayMax)
+                    {
+                        Service.Configuration.ClickSynthesizeDelayMaxSeconds = clickSynthesizeDelayMax;
+                        Service.Configuration.Save();
+                    }
+                }
+            }
         }
 
     }

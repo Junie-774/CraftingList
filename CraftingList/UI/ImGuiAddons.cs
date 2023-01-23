@@ -11,7 +11,19 @@ namespace CraftingList.UI
 {
     internal static class ImGuiAddons
     {
+        public static void IconText(FontAwesomeIcon icon)
+        {
+            ImGui.PushFont(UiBuilder.IconFont);
+            ImGui.Text(icon.ToIconString());
+            ImGui.PopFont();
+        }
 
+        public static void IconTextColored(Vector4 color, FontAwesomeIcon icon)
+        {
+            ImGui.PushFont(UiBuilder.IconFont);
+            ImGui.TextColored(color, icon.ToIconString());
+            ImGui.PopFont();
+        }
         public static bool IconButton(FontAwesomeIcon icon, string tooltip, string extraID = "")
         {
             ImGui.PushFont(UiBuilder.IconFont);

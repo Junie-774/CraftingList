@@ -3,6 +3,7 @@ using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Logging;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -73,10 +74,9 @@ namespace CraftingList.UI.CraftingListTab
             ImGui.Text(" Minutes");
 
             ImGui.NextColumn();
-            foreach (var ingredient in EntryListTable.ingredientSummaries)
-            {
-                ImGui.Text($"{ingredient.Name}: {ingredient.Amount}{(ingredient.HasMax ? " + max" : "")}");// ({SeInterface.GetItemCountInInevntory(ingredient.ItemId)}");
-            }
+
+            EntryListTable.IngredientSummary.DisplayListings();
+
             ImGui.Columns(1);
         }
 
