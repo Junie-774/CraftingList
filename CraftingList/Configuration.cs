@@ -1,5 +1,6 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Crafting.Macro;
+using CraftingList.Utility;
 using Dalamud.Configuration;
 using Dalamud.Logging;
 using Dalamud.Plugin;
@@ -44,8 +45,6 @@ namespace CraftingList
         public bool UsePluginMacros = true;
 
         public List<CListEntry> EntryList { get; set; } = new();
-
-        public bool FlashWindowOnHQPrompt = true;
 
         public int RepairThresholdPercent = 99;
 
@@ -95,15 +94,11 @@ namespace CraftingList
             object copy = this.WaitDurations;
             foreach (var field in typeof(WaitDurationHelper).GetFields())
             {
-                PluginLog.Debug($"Field: {field.Name}. Value: {field.GetValue(copy)}");
                 int toref = (int)(field.GetValue(copy) ?? 2000);
-                PluginLog.Debug($"  Value: {toref}");
                 if (toref == 0)
                 {
-                    PluginLog.Debug($"  Default: {field.GetValue(waitDurationHelper)}");
                     field.SetValue(copy, field.GetValue(waitDurationHelper));
                 }
-                PluginLog.Debug($"  New value: {field.GetValue(copy)}");
             }
 
             this.WaitDurations = (WaitDurationHelper) copy;
@@ -113,6 +108,11 @@ namespace CraftingList
         public void Save()
         {
             pluginInterface!.SavePluginConfig(this);
+        }
+
+        public void Dispose()
+        {
+            Save();
         }
     }
 }

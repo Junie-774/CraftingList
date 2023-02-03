@@ -24,6 +24,27 @@ namespace CraftingList.UI
             ImGui.TextColored(color, icon.ToIconString());
             ImGui.PopFont();
         }
+
+        public static bool BoundedInputInt(string text, ref int val, int min, int max)
+        {
+            int copy = val;
+            if (ImGui.InputInt(text, ref copy, 0, 0))
+            {
+                if (copy >= min && copy <= max)
+                { 
+                    val = copy;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool BoundedAutoWidthInputInt(string text, ref int val, int min, int max)
+        {
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize(val.ToString()).X + 20);
+            return BoundedInputInt(text, ref val, min, max);
+        }
+
         public static bool IconButton(FontAwesomeIcon icon, string tooltip, string extraID = "")
         {
             ImGui.PushFont(UiBuilder.IconFont);

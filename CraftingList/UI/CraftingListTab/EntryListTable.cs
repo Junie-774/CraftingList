@@ -20,6 +20,7 @@ namespace CraftingList.UI.CraftingListTab
         readonly private List<string> craftableNames;
         private List<string> newEntryItemNameSearchResults;
         public MaterialsSummary IngredientSummary = new();
+        public TimeSpan EstimatedTime;
 
         // Two separate lists because we want to present an empty option for a new list entry, but not present an empty option for an existing entry.
 
@@ -31,8 +32,11 @@ namespace CraftingList.UI.CraftingListTab
         int newEntryMacroSelection = 0;
         bool newEntryShowItemNameList = false;
 
-        public EntryListTable()
+        public Crafter crafter;
+
+        public EntryListTable(Crafter crafter)
         {
+            this.crafter = crafter;
             craftableNames = new List<string>
             {
                 ""
@@ -99,6 +103,7 @@ namespace CraftingList.UI.CraftingListTab
                 if (ImGui.InputText("##NumCrafts" + i, ref currEntry.NumCrafts, 50))
                 {
                     IngredientSummary.UpdateIngredients();
+                    EstimateTime();
                     Service.Configuration.Save();
 
                 }
@@ -120,6 +125,7 @@ namespace CraftingList.UI.CraftingListTab
                 if (ImGui.Combo("##Macro" + i, ref macroIndex, macroNames.ToArray(), macroNames.Count()))
                 {
                     currEntry.MacroName = macroNames.ElementAt(macroIndex);
+                    EstimateTime();
                     Service.Configuration.Save();
 
                 }
@@ -149,11 +155,16 @@ namespace CraftingList.UI.CraftingListTab
             }
 
 
-            if (Service.Configuration.EntryList.RemoveAll(x => x.Complete || x.NumCrafts == "0") > 0)
+            if (Service.Configuration.EntryList.RemoveAll(x => x.Complete) > 0 || crafter.CraftUpdateEvent.WaitOne(0))
             {
+                crafter.CraftUpdateEvent.Reset();
                 IngredientSummary.UpdateIngredients();
-
+                EstimateTime();
+                Service.Configuration.Save();
             }
+            
+            EstimateTime();
+
         }
 
         public void DrawNewListEntry()
@@ -208,6 +219,7 @@ namespace CraftingList.UI.CraftingListTab
                     Service.Configuration.EntryList.Add(new CListEntry(newEntry.Name, newEntry.ItemId, newEntry.NumCrafts, newEntryMacroNames[newEntryMacroSelection]));
 
                     IngredientSummary.UpdateIngredients();
+                    EstimateTime();
 
                     newEntryMacroSelection = 0;
                     newEntry.Name = "";
@@ -254,6 +266,16 @@ namespace CraftingList.UI.CraftingListTab
                     entry.MacroName = "";
 
             }
+        }
+
+        public void EstimateTime()
+        {
+            int estimatedTime = 0;
+            foreach (var entry in Service.Configuration.EntryList)
+            {
+                estimatedTime += TimeEstimation.EstimateEntryDurationMS(entry);
+            }
+            EstimatedTime = TimeSpan.FromMilliseconds(estimatedTime);
         }
 
         public static void UpdateMacroNameInEntries(string oldName, string newName)

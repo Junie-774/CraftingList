@@ -14,6 +14,9 @@ namespace CraftingList.Crafting.Macro
         public uint FoodID = 0;
         public uint MedicineID = 0;
 
+        public bool HasMinStats = false;
+        public CraftingStats? MinStats = null;
+
         public CraftingMacro(string name, uint foodID, uint medicineID)
         {
             Name = name;

@@ -91,7 +91,7 @@ namespace CraftingList
         }
         public void DrawSettingsWindow()
         {
- 
+           
             if (!Visible)
             {
                 return;

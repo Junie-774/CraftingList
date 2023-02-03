@@ -112,6 +112,8 @@ namespace CraftingList
         {
 
             this.PluginUi.Visible = true;
+            this.PluginUi.CraftingListTab.EntryListTable.EstimateTime();
+            this.PluginUi.CraftingListTab.EntryListTable.IngredientSummary.UpdateIngredients();
         }
 
         private void OnCraftAllItems(string command, string args)

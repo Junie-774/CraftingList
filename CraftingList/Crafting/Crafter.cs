@@ -9,6 +9,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -16,6 +17,7 @@ namespace CraftingList.Crafting
 {
     public class Crafter
     {
+        public ManualResetEvent CraftUpdateEvent = new(false);
 
         private bool m_running = false;
         uint lastUsedFood = 0;
@@ -253,6 +255,7 @@ namespace CraftingList.Crafting
                 return false;
             }
             entry.Decrement();
+            CraftUpdateEvent.Set();
             return true;
         }
 
@@ -282,6 +285,7 @@ namespace CraftingList.Crafting
                 {
                     entry.running = false;
                 }
+                CraftUpdateEvent.Set();
             }
             return true;
         }
@@ -333,16 +337,17 @@ namespace CraftingList.Crafting
             int lastNumCompleted = 0; // Idk how to name this well, but its an auxillary variable that lags behind numCompleted so we can check if numCompleted has changed.
             var lastCompletionTime = DateTime.Now;
             int numCompleted;
-            PluginLog.Debug("Starting l00p");
+
+            PluginLog.Debug("[WaitForQuickSynthToFinish] Starting loop waiting for quicksynth to finish.");
             for (numCompleted = 0; numCompleted < numToQuickSynth; numCompleted = ((PtrSynthesisSimple)simpleSynthDialog).GetCurrCrafts())
             {
-                await Task.Delay(Service.Configuration.WaitDurations.WaitForConditionLoop);
 
                 if (lastNumCompleted != numCompleted) // if numCompleted changed since last iteration
                 {
-                    PluginLog.Debug("completed changed.");
                     lastCompletionTime = DateTime.Now;
                     lastNumCompleted = numCompleted;
+                    entry.Decrement();
+                    CraftUpdateEvent.Set();
                 }
 
                 if (DateTime.Now.CompareTo(lastCompletionTime.AddSeconds(5)) > 0)
@@ -354,7 +359,6 @@ namespace CraftingList.Crafting
                     }
                     await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
 
-                    entry.Decrement(numCompleted);
                     CraftHelper.CancelEntry(entry, $"Quick Synth finished early, skipping rest of entry {entry.Name}.", true);
                     return false;
                 }
@@ -362,10 +366,7 @@ namespace CraftingList.Crafting
 
                 if (!SeInterface.IsAddonAvailable(simpleSynthDialog, true))
                 {
-                    entry.Decrement(numCompleted);
                     Cancel("The Quick Synthesis Window closed unexpectdly. Stopping craft.", true);
-
-
 
                     if (!await CraftHelper.ExitCrafting())
                     {
@@ -390,10 +391,10 @@ namespace CraftingList.Crafting
                     await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
 
 
-                    numCompleted++; // We've closed the dialog now and have no way to get the number, so we add one 
-                                    // after clicking quit because the current craft is finished before the dialog closes.
+                    // We've closed the dialog now and have no way to get the number, so we decrement one 
+                    // after clicking quit because the current craft is finished before the dialog closes.
 
-                    entry.Decrement(numCompleted);
+                    entry.Decrement();
 
                     await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
 
@@ -411,10 +412,11 @@ namespace CraftingList.Crafting
 
                     return true;
                 }
+                await Task.Delay(Service.Configuration.WaitDurations.WaitForConditionLoop);
+
             }
 
-            entry.Decrement(numToQuickSynth);
-
+            entry.Decrement();
             ((PtrSynthesisSimple)simpleSynthDialog).ClickQuit();
             if (!await CraftHelper.WaitForCloseAddon("SynthesisSimple", true, Service.Configuration.AddonTimeout))
             {
@@ -466,7 +468,7 @@ namespace CraftingList.Crafting
             return true;
         }
 
-        public bool IsListValid()
+        public static bool IsListValid()
         {
             foreach (var entry in Service.Configuration.EntryList)
             {

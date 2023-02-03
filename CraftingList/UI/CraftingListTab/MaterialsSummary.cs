@@ -32,7 +32,9 @@ namespace CraftingList.UI.CraftingListTab
         public IEnumerable<IngredientSummaryListing> Ingredients { get; set; } = new List<IngredientSummaryListing>();
 
         public void UpdateIngredients()
-            => Ingredients = GetIngredientListFromEntryList(Service.Configuration.EntryList).OrderBy(i => i.ItemId);
+        {
+            Ingredients = GetIngredientListFromEntryList(Service.Configuration.EntryList).OrderBy(i => i.ItemId);
+        }
 
         public void DisplayListings()
         {
@@ -41,7 +43,7 @@ namespace CraftingList.UI.CraftingListTab
                 DisplayListing(ingredient);
             }
         }
-
+        
         public static void DisplayListing(IngredientSummaryListing ingredient)
         {
             int inInventory = SeInterface.GetItemCountInInevntory(ingredient.ItemId, false) + SeInterface.GetItemCountInInevntory(ingredient.ItemId, true);
@@ -106,12 +108,17 @@ namespace CraftingList.UI.CraftingListTab
                     }
                     else
                     {
-                        copy.Amount *= int.Parse(entry.NumCrafts);
+                        if (!int.TryParse(entry.NumCrafts, out var numCrafts))
+                        {
+                            copy.Amount = 0;
+                        }
+                        copy.Amount *= numCrafts;
                     }
 
                     if (result.TryGetValue(copy.Name, out IngredientSummaryListing? dictResult))
                     {
                         dictResult!.Amount += copy.Amount;
+                        dictResult!.HasMax |= copy.HasMax;
                     }
                     else
                     {

@@ -33,7 +33,6 @@ namespace CraftingList.Utility
 
         public Task<IntPtr> Add(string name, bool needsVisible, int timeoutMs, Func<string, IntPtr> pollResult, Func<IntPtr, bool, bool> checkResult)
         {
-            PluginLog.Debug($"Adding: {name}");
             var initialResult = pollResult(name);
             var completionSource = new TaskCompletionSource<IntPtr>();
 
@@ -76,7 +75,7 @@ namespace CraftingList.Utility
 
                 if (waitInfo.TimeOut < currTime)
                 {
-                    PluginLog.Debug($"Addon {waitInfo.Name} timed out");
+                    PluginLog.Error($"Addon {waitInfo.Name} timed out");
                     waitInfo.TaskCompletionSource.SetCanceled();
                     continue;
                 }

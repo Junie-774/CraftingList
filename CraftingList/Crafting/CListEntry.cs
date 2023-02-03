@@ -1,4 +1,6 @@
-﻿namespace CraftingList.Crafting
+﻿using CraftingList.Utility;
+
+namespace CraftingList.Crafting
 {
     public unsafe class CListEntry
     {
@@ -31,6 +33,7 @@
                 return;
             NumCrafts = (numCrafts - 1).ToString();
             if (NumCrafts == "0") Complete = true;
+            Service.Configuration.Save();
         }
 
         public void Decrement(int numCompleted)
@@ -40,6 +43,7 @@
 
             NumCrafts = (numCrafts - numCompleted).ToString();
             if (NumCrafts == "0") Complete = true;
+            Service.Configuration.Save();
         }
 
         public override string ToString()

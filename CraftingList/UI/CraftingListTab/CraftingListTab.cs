@@ -20,7 +20,7 @@ namespace CraftingList.UI.CraftingListTab
 {
     public class CraftingListTab : ITab, IDisposable
     {
-        public EntryListTable EntryListTable = new();
+        public EntryListTable EntryListTable;
         readonly private IEnumerable<Recipe?> craftableItems;
         readonly private List<string> craftableNames;
 
@@ -34,6 +34,7 @@ namespace CraftingList.UI.CraftingListTab
         public CraftingListTab(CraftingList plugin)
         {
             this.plugin = plugin;
+            EntryListTable = new(plugin.Crafter);
             craftableNames = new List<string>
             {
                 ""
@@ -73,9 +74,15 @@ namespace CraftingList.UI.CraftingListTab
             ImGui.SameLine();
             ImGui.Text(" Minutes");
 
+
+            ImGui.Text($"{EntryListTable.EstimatedTime.Hours} hours, {EntryListTable.EstimatedTime.Minutes} minutes, {EntryListTable.EstimatedTime.Seconds} seconds.");
+
             ImGui.NextColumn();
 
-            EntryListTable.IngredientSummary.DisplayListings();
+            if (!plugin.Crafter.IsRunning())
+            {
+                EntryListTable.IngredientSummary.DisplayListings();
+            }
 
             ImGui.Columns(1);
         }

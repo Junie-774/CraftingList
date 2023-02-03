@@ -27,62 +27,12 @@ namespace CraftingList.UI
         }
         void ITab.Draw()
         {
-            ImGui.Columns(2);
-            ImGui.SetColumnWidth(1, 350);
-            ImGui.SetColumnWidth(2, 350);
-            float availWidth = ImGui.GetColumnWidth();
 
-            ImGui.SetNextItemWidth(300 - 0 - ImGui.CalcTextSize("Repair threshold: ").X);
-            ImGui.SliderInt("Repair Threshold##RepairThreshold", ref Service.Configuration.RepairThresholdPercent, 0, 99);
-
-            ImGui.Checkbox("Only repair if durability for all items is below 99?", ref Service.Configuration.OnlyRepairIfBelow99);
-            ImGui.NewLine();
-
-            // auxillary variables to allow for error checking
-            int completeSoundEffect = Service.Configuration.SoundEffectListComplete;
-            int cancelSoundEffect = Service.Configuration.SoundEffectListCancel;
-
-
-            ImGui.Checkbox("Play Sound effect when crafting terminates?", ref Service.Configuration.AlertOnTerminate);
-            if (Service.Configuration.AlertOnTerminate)
+            if (ImGui.TreeNode("Crafting Options"))
             {
-                ImGui.PushItemWidth(ImGui.CalcTextSize("00000").X);
-                ImGui.Dummy(new Vector2(50f, 0));
-                ImGui.SameLine();
-                if (ImGui.InputInt("List Complete Sound Effect", ref completeSoundEffect, 0))
-                {
-                    if (completeSoundEffect >= 1 && completeSoundEffect <= 16) Service.Configuration.SoundEffectListComplete = completeSoundEffect;
-                }
-
-                ImGui.Dummy(new Vector2(50f, 0));
-                ImGui.SameLine();
-                if (ImGui.InputInt("List Cancelled Sound Effect", ref cancelSoundEffect, 0))
-                {
-                    if (cancelSoundEffect >= 1 && cancelSoundEffect <= 16) Service.Configuration.SoundEffectListCancel = cancelSoundEffect;
-                }
-                ImGui.PopItemWidth();
+                CraftingOptionsSection();
+                ImGui.TreePop();
             }
-            ImGui.NewLine();
-
-            int extraTimeout = Service.Configuration.MacroExtraTimeoutMs;
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000000").X);
-
-            if (ImGui.InputInt("Extra Timeout on Macros (ms)", ref extraTimeout, 0))
-            {
-                if (extraTimeout > 0) Service.Configuration.MacroExtraTimeoutMs = extraTimeout;
-            }
-
-            int addonTimeout = Service.Configuration.AddonTimeout;
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("0000000").X);
-            if (ImGui.InputInt("Timeout on Waiting for Menus (ms)", ref addonTimeout, 0))
-            {
-                if (addonTimeout > 0) Service.Configuration.AddonTimeout = addonTimeout;
-            }
-
-
-            ImGui.NextColumn();
-
-            ImGui.NewLine();
 
             if (ImGui.TreeNode("Macro options"))
             {
@@ -92,24 +42,70 @@ namespace CraftingList.UI
             }
             ImGui.NewLine();
 
-            ImGui.Columns(1);
+        }
+
+        public void CraftingOptionsSection()
+        {
+            ImGui.SetNextItemWidth(300 - ImGui.CalcTextSize("Repair threshold: ").X);
+            if (ImGui.SliderInt("Repair Threshold##RepairThreshold", ref Service.Configuration.RepairThresholdPercent, 0, 99))
+                Service.Configuration.Save();
+
+
+            if (ImGui.Checkbox("Only repair if durability for all items is below 99?", ref Service.Configuration.OnlyRepairIfBelow99))
+                Service.Configuration.Save();
+
+
+            SoundEffectOption();
+
+
+            if (ImGuiAddons.BoundedAutoWidthInputInt("Timeout on Waiting for Menus (ms)", ref Service.Configuration.AddonTimeout, 500, 50000))
+                Service.Configuration.Save();
         }
 
         public void MacroOptionsSection()
         {
-            ImGui.Checkbox("Ignore <wait.x> and wait intelligently?", ref Service.Configuration.SmartWait);
+            ImGui.Checkbox("Ignore <wait.x> and use actions as soon as available?", ref Service.Configuration.SmartWait);
             if (ImGui.IsItemHovered())
             {
                 ImGui.SetTooltip("Uses the next action as soon as possible.\nMacros can't complete the craft early if this option is enabled.");
             }
 
-            ImGui.InputInt("Number of retries allowed for macro actions before giving up?", ref Service.Configuration.MaxMacroCommandTimeoutRetries);
+            int maxRetries = Service.Configuration.MaxMacroCommandTimeoutRetries;
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize(maxRetries.ToString()).X + 16);
+            if (ImGui.InputInt("Number of retries allowed for macro actions before giving up?", ref maxRetries, 0, 0))
+            {
+                if (maxRetries > 0)
+                    Service.Configuration.MaxMacroCommandTimeoutRetries = maxRetries;
+            }
 
             AfterClickSynthesisOption();
 
             AfterExecuteMacroOption();
         }
 
+        public void SoundEffectOption()
+        {
+            // auxillary variables to allow for error checking
+            int completeSoundEffect = Service.Configuration.SoundEffectListComplete;
+            int cancelSoundEffect = Service.Configuration.SoundEffectListCancel;
+
+
+            ImGui.Checkbox("Play Sound effect when crafting terminates?", ref Service.Configuration.AlertOnTerminate);
+            if (Service.Configuration.AlertOnTerminate)
+            {
+                ImGui.Dummy(new Vector2(25, 0));
+                ImGui.SameLine();
+
+                if (ImGuiAddons.BoundedAutoWidthInputInt("List Complete Sound Effect", ref Service.Configuration.SoundEffectListComplete, 1, 16))
+                    Service.Configuration.Save();
+
+                ImGui.Dummy(new Vector2(25, 0));
+                ImGui.SameLine();
+
+                if (ImGuiAddons.BoundedAutoWidthInputInt("List Cancel Sound Effect", ref Service.Configuration.SoundEffectListCancel, 1, 16))
+                    Service.Configuration.Save();
+            }
+        }
         public void AfterExecuteMacroOption()
         {
             // auxillary variables to allow for error checking
