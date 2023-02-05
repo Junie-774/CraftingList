@@ -95,7 +95,7 @@ namespace CraftingList
 
         private void OnCommand(string command, string args)
         {
-            PluginLog.Debug($"{Service.DataManager.GetExcelSheet<Item>()!.RowCount} items");
+            PluginLog.Debug($"");
         }
 
         private void OnCraftingList(string command, string args)

@@ -65,5 +65,12 @@ namespace CraftingList.Crafting
             return numCrafts.ToLower() == "max" || (int.TryParse(numCrafts, out int result) && result > 0);
         }
 
+        public static int GetCraftNum(string numCrafts)
+        {
+            if (int.TryParse(numCrafts, out int result))
+                return result;
+            return 0;
+        }
+
     }
 }

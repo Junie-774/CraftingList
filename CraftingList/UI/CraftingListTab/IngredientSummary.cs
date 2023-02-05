@@ -24,7 +24,7 @@ namespace CraftingList.UI.CraftingListTab
         public int Amount { get; set; }
         public bool HasMax { get; set; } // Used for aggregate listings for more than one entry. Allows keeping track of the amount needed by other entries
         public bool CanBeHQ { get; set; }
-
+        public bool NeedsHQ { get; set; }
     }
 
     public class IngredientSummary
@@ -46,7 +46,7 @@ namespace CraftingList.UI.CraftingListTab
         
         public static void DisplayListing(IngredientSummaryListing ingredient)
         {
-            int inInventory = SeInterface.GetItemCountInInevntory(ingredient.ItemId, false) + SeInterface.GetItemCountInInevntory(ingredient.ItemId, true);
+            int inInventory = SeInterface.GetItemCountInInevntory(ingredient.ItemId, ingredient.NeedsHQ);// + SeInterface.GetItemCountInInevntory(ingredient.ItemId, true);
             if (inInventory >= ingredient.Amount)
             {
                 ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, FontAwesomeIcon.Check);
@@ -101,6 +101,7 @@ namespace CraftingList.UI.CraftingListTab
         public static List<IngredientSummaryListing> GetIngredientListFromEntryList(IEnumerable<CListEntry> list)
         {
             Dictionary<string, IngredientSummaryListing> result = new();
+            /*
             foreach (var entry in list)
             {
                 var recipe = Service.Recipes[entry.RecipeId];
@@ -133,8 +134,63 @@ namespace CraftingList.UI.CraftingListTab
                 }
 
             }
+            */
 
+            foreach (var entry in list)
+            {
+                if (entry.NumCrafts.ToLower() == "max")
+                {
+                    continue;
+                }
+                var recipe = Service.Recipes[entry.RecipeId];
+                var entryIngredientList = GetIngredientListFromRecipe(recipe);
+                for(int i = 0; i < entryIngredientList.Count; i++)
+                {
+                    var copy = entryIngredientList[i];
+
+                    if (entryIngredientList[i].CanBeHQ)
+                    {
+                        IngredientSummaryListing hqIngredientCopy = new()
+                        {
+                            ItemId = copy.ItemId,
+                            Name = copy.Name,
+                            Amount = copy.Amount,
+                            HasMax = copy.HasMax,
+                            CanBeHQ = copy.CanBeHQ,
+                            NeedsHQ = copy.NeedsHQ,
+                        };
+                        hqIngredientCopy.Name = "" + hqIngredientCopy.Name;
+                        hqIngredientCopy.NeedsHQ = true;
+                        hqIngredientCopy.Amount = entry.HQSelection[i] * CListEntry.GetCraftNum(entry.NumCrafts);
+
+                        if (hqIngredientCopy.Amount > 0)
+                            AddToDict(result, hqIngredientCopy);
+
+                        copy.Amount -= entry.HQSelection[i];
+                        
+                    }
+                    copy.Amount *= CListEntry.GetCraftNum(entry.NumCrafts);
+
+                    if (copy.Amount > 0)
+                        AddToDict(result, copy);
+
+                }
+
+            }
             return result.Values.ToList();
+        }
+
+        private static void AddToDict(Dictionary<string, IngredientSummaryListing> dict, IngredientSummaryListing listing)
+        {
+            if (dict.TryGetValue(listing.Name, out IngredientSummaryListing? result))
+            {
+                result!.Amount = listing.Amount;
+                result.HasMax |= listing.HasMax;
+            }
+            else
+            {
+                dict.Add(listing.Name, listing);
+            }
         }
     }
 }

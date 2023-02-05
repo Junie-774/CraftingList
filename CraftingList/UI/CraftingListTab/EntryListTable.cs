@@ -68,7 +68,7 @@ namespace CraftingList.UI.CraftingListTab
 
             //ImGui.BeginGroup();
 
-            if (ImGui.BeginTable("##EntryList", 4, ImGuiTableFlags.BordersOuter,
+            if (ImGui.BeginTable("##EntryList", 4, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg,
                 new Vector2(ImGui.GetContentRegionAvail().X * .98f, // scale to prevent it from leaving the border.
                             ImGui.GetFrameHeight() * (EntryListManager.Entries.Count + 1))))
             {
@@ -100,6 +100,7 @@ namespace CraftingList.UI.CraftingListTab
                         DrawEntry(entry);
                         ImGui.TreePop();
                     }
+
                     ImGui.TableSetColumnIndex(1);
                     ImGui.Text(entry.NumCrafts);
 
@@ -181,6 +182,7 @@ namespace CraftingList.UI.CraftingListTab
                 
                 DrawEntry(newEntry);
 
+                ImGui.NewLine();
                 if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add Entry", "NewEntry"))
                 {
                     if (newEntry.RecipeId >= 0 &&
@@ -211,7 +213,7 @@ namespace CraftingList.UI.CraftingListTab
             }
         }
 
-        public static void DrawIngredientsForEntry(CListEntry entry)
+        public void DrawIngredientsForEntry(CListEntry entry)
         {
             if (entry.RecipeId < 0)
             {
@@ -225,6 +227,7 @@ namespace CraftingList.UI.CraftingListTab
             bool hasHqItem = false;
             for (int i = 0; i < recipe.UnkData5.Length; i++)
             {
+                PluginLog.Debug($"{i}: {recipe.UnkData5[i].ItemIngredient}, {Service.Items[recipe.UnkData5[i].ItemIngredient].Name}");
                 if (recipe.UnkData5[i].ItemIngredient <= 0)
                     continue;
 
@@ -242,12 +245,16 @@ namespace CraftingList.UI.CraftingListTab
                     ImGui.SameLine();
                 }
 
-                HQMat(item.Name,
+                if (HQMat(item.Name,
                     recipe.UnkData5[i].AmountIngredient,
                     ref entry.HQSelection[i],
-                    ImGui.CalcTextSize(maxString).X + 40);
+                    ImGui.CalcTextSize(maxString).X + 40))
+                {
+                    IngredientSummary.UpdateIngredients();
+                }
 
             }
+            PluginLog.Debug("--");
 
             if (!hasHqItem)
             {
@@ -375,14 +382,16 @@ namespace CraftingList.UI.CraftingListTab
             return max;
         }
 
-        public static void HQMat(string name, int amount, ref int outInt, float size)
+        public static bool HQMat(string name, int amount, ref int outInt, float size)
         {
+            bool ret = false;
             ImGui.Text(name + ": ");
             ImGui.SameLine();
             //ImGui.SetCursorPosX(size);
             ImGui.SetNextItemWidth(25);
             if (ImGui.InputInt($"/{amount}##ingredient_{name}", ref outInt, 0))
             {
+                ret = true;
                 Service.Configuration.Save();
             }
             ImGui.SameLine();
@@ -390,6 +399,7 @@ namespace CraftingList.UI.CraftingListTab
             if (ImGui.Button($"-##hq-{name}", new Vector2(22, 22)))
             {
                 outInt--;
+                ret = true;
                 Service.Configuration.Save();
 
             }
@@ -398,6 +408,7 @@ namespace CraftingList.UI.CraftingListTab
             if (ImGui.Button($"+##hq-{name}", new Vector2(22, 22)))
             {
                 outInt++;
+                ret = true;
                 Service.Configuration.Save();
 
             }
@@ -410,6 +421,7 @@ namespace CraftingList.UI.CraftingListTab
             {
                 outInt = 0;
             }
+            return ret;
         }
         public void EstimateTime()
         {

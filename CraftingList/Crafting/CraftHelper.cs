@@ -184,7 +184,7 @@ namespace CraftingList.Crafting
         public static async Task<bool> ChangeFood(uint newFoodId, bool medication)
         {
             PluginLog.Debug($"[CraftHelper.ChangeFood()] Changing food/medication to {newFoodId}");
-            string relevantStatus = medication ? Localization.GetWellFedStatusString() : Localization.GetMedicatedString();
+            string relevantStatus = medication ? Localization.GetMedicatedString() : Localization.GetWellFedStatusString();
 
             SeInterface.Statusoff(relevantStatus);
 
