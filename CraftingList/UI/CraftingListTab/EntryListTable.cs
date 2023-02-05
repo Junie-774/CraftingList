@@ -64,11 +64,11 @@ namespace CraftingList.UI.CraftingListTab
 
         public void DrawEntries()
         {
-            ImGuiAddons.BeginGroupPanel("Entry list", new Vector2(-1, -1));
+            ImGuiAddons.BeginGroupPanel("Crafting List", new Vector2(-1, -1));
 
             //ImGui.BeginGroup();
 
-            if (ImGui.BeginTable("##EntryList", 4, ImGuiTableFlags.None,
+            if (ImGui.BeginTable("##EntryList", 4, ImGuiTableFlags.BordersOuter,
                 new Vector2(ImGui.GetContentRegionAvail().X * .98f, // scale to prevent it from leaving the border.
                             ImGui.GetFrameHeight() * (EntryListManager.Entries.Count + 1))))
             {
@@ -151,8 +151,11 @@ namespace CraftingList.UI.CraftingListTab
             ImGui.Text("Number of crafts: ");
             ImGui.SameLine();
             ImGui.SetNextItemWidth(ImGui.CalcTextSize(entry.NumCrafts).X + 20);
-            if (ImGui.InputText($"##NumCrafts-{entry.EntryId}", ref entry.NumCrafts, 50))
+            var numCrafts = entry.NumCrafts;
+            if (ImGui.InputText($"##NumCrafts-{entry.EntryId}", ref numCrafts, 50)
+                && CListEntry.IsValidNumCrafts(numCrafts))
             {
+                entry.NumCrafts = numCrafts;
                 IngredientSummary.UpdateIngredients();
                 EstimateTime();
                 Service.Configuration.Save();

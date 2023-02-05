@@ -119,7 +119,7 @@ namespace CraftingList.Crafting.Macro
         public static void RenameMacro(string currName, string newName)
         {
             var macro = GetMacro(currName);
-            if (macro == null)
+            if (macro == null || macro.Name == newName)
                 return;
             
             macro.Name = GenerateUniqueName(MacroNames, newName);

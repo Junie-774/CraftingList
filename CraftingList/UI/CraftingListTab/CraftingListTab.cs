@@ -26,7 +26,7 @@ namespace CraftingList.UI.CraftingListTab
 
 
         // Two separate lists because we want to present an empty option for a new list entry, but not present an empty option for an existing entry.
-        public string Name => "CraftingList";
+        public string Name => "Crafting";
 
         private readonly CraftingList plugin;
 

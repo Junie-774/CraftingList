@@ -60,5 +60,10 @@ namespace CraftingList.Crafting
             return new int[] { 0, 0, 0, 0, 0, 0 };
         }
 
+        public static bool IsValidNumCrafts(string numCrafts)
+        {
+            return numCrafts.ToLower() == "max" || (int.TryParse(numCrafts, out int result) && result > 0);
+        }
+
     }
 }
