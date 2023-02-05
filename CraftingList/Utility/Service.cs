@@ -12,6 +12,7 @@ using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -35,6 +36,10 @@ namespace CraftingList.Utility
 
             GameEventManager = new();
             ChatManager = new(ChatGui);
+
+            Recipes = DataManager.GetExcelSheet<Recipe>()!.Where(r => r.RowId != 0 && r.ItemResult.Row > 0).ToList();
+            Jobs = DataManager.GetExcelSheet<ClassJob>()!.ToList();
+            Items = DataManager.GetExcelSheet<Item>()!.ToList();
         }
 
 
@@ -83,7 +88,14 @@ namespace CraftingList.Utility
             return result.Any() ? result.First() : null;
         }
 
-        public static System.Collections.Generic.IEnumerable<Item> CraftingConsumables { get; private set; } = null!;
+        public static List<Recipe> Recipes { get; private set; } = null!;
+
+        public static List<ClassJob> Jobs { get; private set; } = null!;
+
+        public static List<Item> Items { get; private set; } = null!;
+
+        public static IEnumerable<Item> CraftingConsumables { get; private set; } = null!;
+
 
         public static GameEventManager GameEventManager { get; private set; } = null!;
         public static ChatManager ChatManager { get; private set; } = null!;
@@ -110,5 +122,7 @@ namespace CraftingList.Utility
 
             return true;
         }
+
+        public static IconCache IconCache { get; private set; } = new();
     }
 }

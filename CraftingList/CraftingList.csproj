@@ -21,6 +21,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
@@ -30,10 +34,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BitFaster.Caching" Version="2.1.1" />
     <PackageReference Include="DalamudPackager" Version="2.1.10" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(AppData)\XivLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>
+    </Reference>
+    <Reference Include="BitFaster.Caching">
+      <HintPath>C:\Users\Kyle\.nuget\packages\bitfaster.caching\2.1.1\lib\netstandard2.0</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>

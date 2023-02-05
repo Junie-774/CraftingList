@@ -6,6 +6,7 @@ using Dalamud.Game.Command;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
+using Lumina.Excel.GeneratedSheets;
 using System.Threading.Tasks;
 
 namespace CraftingList
@@ -23,26 +24,18 @@ namespace CraftingList
 
         public static void InitializeSingletons()
         {
-            Singleton<OpenRecipebyRecipeId>.Set(Service.SigScanner);
-            Singleton<GetBaseUiObject>.Set(Service.SigScanner);
-            Singleton<GetUiObjectByName>.Set(Service.SigScanner);
-            Singleton<OpenRecipeByItemId>.Set(Service.SigScanner);
             Singleton<UseAction>.Set(Service.SigScanner);
-            Singleton<OpenContextMenuForAddon>.Set(Service.SigScanner);
-            Singleton<AgentRepairReceiveEvent>.Set(Service.SigScanner);
             Singleton<AgentRecipeNoteReceiveEvent>.Set(Service.SigScanner);
-            Singleton<AddonRepairReceiveEvent>.Set(Service.SigScanner);
-            Singleton<AddonRecipeNoteReceiveEvent>.Set(Service.SigScanner);
-            Singleton<AgentRecipeNoteHide>.Set(Service.SigScanner);
-            Singleton<AgentRecipeMaterialListReceiveEvent>.Set(Service.SigScanner);
+
         }
 
         public CraftingList(DalamudPluginInterface pluginInterface)
         {
             Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            Service.Initialize(pluginInterface, Configuration);
+
             Configuration.Initialize(pluginInterface);
 
-            Service.Initialize(pluginInterface, Configuration);
             Module.Initialize();
             SignatureHelper.Initialise(this);
 
@@ -102,10 +95,7 @@ namespace CraftingList
 
         private void OnCommand(string command, string args)
         {
-            Configuration.CanaryTestFlag = !Configuration.CanaryTestFlag;
-            PluginLog.Debug($"Canary: {Configuration.CanaryTestFlag}");
-
-            SeInterface.Repair().ClickRepairAll();
+            PluginLog.Debug($"{Service.DataManager.GetExcelSheet<Item>()!.RowCount} items");
         }
 
         private void OnCraftingList(string command, string args)

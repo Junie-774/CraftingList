@@ -245,7 +245,7 @@ namespace CraftingList.UI
         }
         public void FoodSelectionBox(CraftingMacro macro)
         {
-            int selectedFood1 = macro.FoodID != 0 ? foodNames.IndexOf(Service.GetRowFromId(GetBaseFoodID(macro.FoodID))!.Name) : 0;
+            int selectedFood1 = macro.FoodID != 0 ? foodNames.IndexOf(Service.Items[(int) GetBaseFoodID(macro.FoodID)].Name) : 0;
             if (IsItemHQ(macro.FoodID))
                 selectedFood1--;
 
@@ -259,7 +259,7 @@ namespace CraftingList.UI
 
         public void MedicineSelectionBox(CraftingMacro macro)
         {
-            int selectedMeds1 = macro.MedicineID != 0 ? medicineNames.IndexOf(Service.GetRowFromId(GetBaseFoodID(macro.MedicineID))!.Name) : 0;
+            int selectedMeds1 = macro.MedicineID != 0 ? medicineNames.IndexOf(Service.Items[(int) GetBaseFoodID(macro.MedicineID)].Name) : 0;
             if (IsItemHQ(macro.MedicineID))
                 selectedMeds1--;
 

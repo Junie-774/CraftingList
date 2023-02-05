@@ -27,7 +27,7 @@ namespace CraftingList.UI.CraftingListTab
 
     }
 
-    public class MaterialsSummary
+    public class IngredientSummary
     {
         public IEnumerable<IngredientSummaryListing> Ingredients { get; set; } = new List<IngredientSummaryListing>();
 
@@ -47,6 +47,16 @@ namespace CraftingList.UI.CraftingListTab
         public static void DisplayListing(IngredientSummaryListing ingredient)
         {
             int inInventory = SeInterface.GetItemCountInInevntory(ingredient.ItemId, false) + SeInterface.GetItemCountInInevntory(ingredient.ItemId, true);
+            if (inInventory >= ingredient.Amount)
+            {
+                ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, FontAwesomeIcon.Check);
+                ImGui.SameLine();
+            }
+            else
+            {
+                ImGui.Dummy(new Vector2(17, 0));
+                ImGui.SameLine();
+            }
             ImGui.Text($"{ingredient.Name}: {ingredient.Amount}{(ingredient.HasMax ? " + max" : "")}");
             ImGui.SameLine();
             Vector4 color = ImGuiColors.DalamudGrey;
@@ -56,11 +66,7 @@ namespace CraftingList.UI.CraftingListTab
 
             ImGui.TextColored(color, $" ({inInventory} in inventory) ");
 
-            if (inInventory >= ingredient.Amount)
-            {
-                ImGui.SameLine();
-                ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, FontAwesomeIcon.Check);
-            }
+            
         }
 
         public static List<IngredientSummaryListing> GetIngredientListFromRecipe(Recipe recipe)
@@ -78,7 +84,7 @@ namespace CraftingList.UI.CraftingListTab
                 if (ingredient.ItemIngredient <= 0)
                     continue;
 
-                var ingredientItem = Service.GetRowFromId((uint)ingredient.ItemIngredient)!;
+                var ingredientItem = Service.Items[ingredient.ItemIngredient];
 
                 ingredientAmounts.Add(new IngredientSummaryListing
                 {
@@ -97,7 +103,7 @@ namespace CraftingList.UI.CraftingListTab
             Dictionary<string, IngredientSummaryListing> result = new();
             foreach (var entry in list)
             {
-                var recipe = Service.GetRecipeFromResultId(entry.ItemId)!;
+                var recipe = Service.Recipes[entry.RecipeId];
                 foreach (var ingredient in GetIngredientListFromRecipe(recipe))
                 {
                     var copy = ingredient;

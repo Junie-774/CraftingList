@@ -49,19 +49,15 @@ namespace CraftingList.Utility
         //I dunno.
         public FFXIVInternalMacro CloseNoteMacro;
 
-        public Hook<AddonRecipeNoteReceiveEventDelegate>? recipeREHook;
         public Hook<AgentRecipeNoteReceiveEventDelegate>? recipeAgentREHook;
-        public Hook<AgentRecipeMaterialListReceiveEventDelegate>? recipeMaterialREHook;
 
         public static void Dispose()
         {
-            Instance.recipeREHook?.Disable();
-            Instance.recipeREHook?.Dispose();
             Instance.recipeAgentREHook?.Disable();
             Instance.recipeAgentREHook?.Dispose();
             Instance.m_waitlist?.Dispose();
-
         }
+
         public SeInterface()
         {
             SignatureHelper.Initialise(this);

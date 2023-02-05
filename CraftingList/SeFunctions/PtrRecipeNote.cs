@@ -43,13 +43,13 @@ namespace CraftingList.SeFunctions
         public void OpenRecipeByRecipeId(int id)
         {
             if (AgentRecipeNote.Instance() == null) return;
-            Singleton<OpenRecipebyRecipeId>.Get().Invoke((IntPtr)AgentRecipeNote.Instance(), id);
+            AgentRecipeNote.Instance()->OpenRecipeByRecipeId((uint) id);
         }
 
         public void OpenRecipeByItemId(int id)
         {
             if (AgentRecipeNote.Instance() == null) return;
-            Singleton<OpenRecipeByItemId>.Get().Invoke((IntPtr)AgentRecipeNote.Instance(), id);
+            AgentRecipeNote.Instance()->OpenRecipeByItemId((uint)id);
         }
 
         public void ClickButton(int which)

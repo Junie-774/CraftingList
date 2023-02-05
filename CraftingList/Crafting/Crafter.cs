@@ -67,9 +67,7 @@ namespace CraftingList.Crafting
                         && (DateTime.Now - craftStart).TotalMinutes >= Service.Configuration.CraftTimeoutMinutes)
                         break;
 
-                    var job = Service.DataManager.GetExcelSheet<Recipe>()!
-                        .Where(recipe => recipe.ItemResult.Value!.RowId == entry.ItemId)
-                        .First().CraftType.Value!.RowId;             
+                    var job = Service.Recipes[entry.RecipeId].CraftType.Value!.RowId;             
 
                     await CraftHelper.ChangeJobs((int) job);
 
@@ -102,6 +100,7 @@ namespace CraftingList.Crafting
                 Service.Configuration.Save();
                 await Task.Delay(500);
                 TerminationAlert();
+                this.CraftUpdateEvent.Set();
                 m_running = false;
                 return true;
             });
@@ -207,11 +206,9 @@ namespace CraftingList.Crafting
 
         public async Task<bool> CraftOneItem(CListEntry entry, CraftingMacro macro)
         {
-            bool isCollectible = Service.DataManager.GetExcelSheet<Item>()!
-                        .Where(item => item.RowId == entry.ItemId)
-                        .First().IsCollectable;
+            bool isCollectible = Service.Recipes[entry.RecipeId].ItemResult.Value!.IsCollectable;
 
-            if (!await CraftHelper.OpenRecipeByItem((int)entry.ItemId))
+            if (!await CraftHelper.OpenRecipeByItem((int)Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId))
             {
                 Cancel("A problem occurred while trying to open crafting log, cancelling craft...", true);
                 return false;
@@ -299,7 +296,7 @@ namespace CraftingList.Crafting
             else
                 numToQuickSynth = Math.Min(int.Parse(entry.NumCrafts), 99);
 
-            if (!await CraftHelper.OpenRecipeByItem((int)entry.ItemId))
+            if (!await CraftHelper.OpenRecipeByItem((int) Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId))
             {
                 CraftHelper.CancelEntry(entry, $"A problem occured while opening the crafting log to '{entry.Name}'. Moving to next entry...", true);
                 entry.running = false;

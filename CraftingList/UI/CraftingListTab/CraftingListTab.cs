@@ -49,22 +49,17 @@ namespace CraftingList.UI.CraftingListTab
         }
         public void Draw()
         {
-            EntryListTable.DrawEntryTable();
-            EntryListTable.DrawNewListEntry();
-            //DrawHQMatSelection();
-            ImGui.NewLine();
-            ImGui.Columns(2);
-            if (ImGui.Button("Craft!"))
-            {
-                plugin.Crafter.CraftAllItems();
-            }
-            ImGui.SameLine();
+            EntryListTable.DrawEntries();
+            EntryListTable.DrawNewEntry();
 
-            if (ImGui.Button("Cancel"))
-            {
-                plugin.Crafter.Cancel("Cancelling craft...", false);
-            }
             ImGui.NewLine();
+
+            ImGui.Columns(2, "Craft-IngedientSummary", false);
+            ImGui.SetColumnWidth(0, (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) * 0.4f);
+            ImGui.SetColumnWidth(1, (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) * 0.6f);
+
+            ImGuiAddons.BeginGroupPanel("Craft", new Vector2(-1, -1));
+
             ImGui.Checkbox("##HasCraftTimeout", ref plugin.Configuration.HasCraftTimeout);
             ImGui.SameLine();
             ImGui.Text(" Stop after ");
@@ -74,17 +69,29 @@ namespace CraftingList.UI.CraftingListTab
             ImGui.SameLine();
             ImGui.Text(" Minutes");
 
+            ImGui.Text($"Estimated time to complete list:\n~{EntryListTable.EstimatedTime.Hours}h, {EntryListTable.EstimatedTime.Minutes}m, {EntryListTable.EstimatedTime.Seconds}s.");
 
-            ImGui.Text($"{EntryListTable.EstimatedTime.Hours} hours, {EntryListTable.EstimatedTime.Minutes} minutes, {EntryListTable.EstimatedTime.Seconds} seconds.");
+            ImGui.NewLine();
+            if (ImGui.Button("Craft!"))
+                plugin.Crafter.CraftAllItems();
+            
+            ImGui.SameLine();
+
+            if (ImGui.Button("Cancel"))
+                plugin.Crafter.Cancel("Cancelling craft...", false);
+            ImGuiAddons.EndGroupPanel();
+
 
             ImGui.NextColumn();
 
             if (!plugin.Crafter.IsRunning())
             {
+                ImGuiAddons.BeginGroupPanel("Ingredient Summary", new Vector2(-1, -1));
                 EntryListTable.IngredientSummary.DisplayListings();
+                ImGuiAddons.EndGroupPanel();
             }
-
             ImGui.Columns(1);
+            
         }
 
    

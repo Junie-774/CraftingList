@@ -24,6 +24,26 @@ namespace CraftingList.Crafting
             return 0;
         }
 
+        public static async Task<bool> OpenRecipeByRecipe(int recipeId)
+        {
+            if (SeInterface.RecipeNote().IsVisible())
+            {
+                await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
+                return true;
+            }
+
+            //We close the recipe note when the job starts, so if it's open, it's open because
+            // we opened it to the right item.
+            PluginLog.Debug($"[CraftHelper.OpenRecipeByRecipe()] Opening crafting log to recipe {recipeId}");
+            SeInterface.RecipeNote().OpenRecipeByRecipeId(recipeId);
+
+            if (!await WaitForAddon("RecipeNote", true, Service.Configuration.AddonTimeout))
+                return false;
+
+            await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
+
+            return true;
+        }
         public static async Task<bool> OpenRecipeByItem(int itemId)
         {
 

@@ -1,4 +1,7 @@
 ﻿using CraftingList.Utility;
+using Dalamud.Logging;
+using Newtonsoft.Json;
+using System.Linq;
 
 namespace CraftingList.Crafting
 {
@@ -7,26 +10,32 @@ namespace CraftingList.Crafting
         public bool Complete { get; set; } = false;
 
         public string Name;
-        public uint ItemId;
+        public int EntryId;
+
+        public int RecipeId;
         public string NumCrafts;
         
         public bool running = false;
         public int[] HQSelection = new int[6];
+        public bool SpecifiedHQ = false;
 
         //Dummy variables to store stuff for the UI
 
         public string MacroName;
 
-        public CListEntry(string name, uint itemId, string numCrafts, string macroName)
+        [JsonConstructor]
+
+        public CListEntry(int recipeId, string numCrafts, string macroName, bool specifiedHq, int[] hqSelection)
         {
-            this.Name = name;
-            this.ItemId = itemId;
+
+            this.Name = (recipeId >= 0 && Service.Recipes != null) ? Service.Recipes[recipeId].ItemResult.Value!.Name : "???";
+            this.RecipeId = recipeId;
             this.NumCrafts = numCrafts == "max" || int.TryParse(numCrafts, out _) ? numCrafts : "0";
             
-
             this.MacroName = macroName;
+            this.SpecifiedHQ = specifiedHq;
+            this.HQSelection = hqSelection;
         }
-
         public void Decrement()
         {
             if (!int.TryParse(NumCrafts, out int numCrafts))
@@ -46,25 +55,10 @@ namespace CraftingList.Crafting
             Service.Configuration.Save();
         }
 
-        public override string ToString()
+        public static int[] EmptyHQSelection()
         {
-            return $"[Name: \"{Name}\", ItemId: {ItemId}, NumCrafts: {NumCrafts}, Macro name: \"{MacroName}\"]";
+            return new int[] { 0, 0, 0, 0, 0, 0 };
         }
 
-        public static CListEntry Clone(CListEntry other)
-        {
-            return new CListEntry(other.Name, other.ItemId, other.NumCrafts, other.Name);
-        }
-        /*
-        public CListEntry(CListEntry other)
-        {
-            this.Name = other.Name;
-            this.ItemId = other.ItemId;
-            this.NumCrafts = other.NumCrafts;
-            this.Macro = other.Macro;
-            this.FoodId = other.FoodId;
-            this.HQMats = other.HQMats;
-            this.HQSelection = other.HQSelection;
-        }*/
     }
 }

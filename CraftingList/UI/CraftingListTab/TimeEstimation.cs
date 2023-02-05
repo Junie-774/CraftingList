@@ -46,14 +46,14 @@ namespace CraftingList.UI.CraftingListTab
         {
             
             int setupTime = 6000;
-            int timePerCraft = 0;
-            int numRestarts = 0;
-            int numCrafts = 0;
+            int timePerCraft;
+            int numRestarts;
+            int numCrafts;
             if (entry.NumCrafts.ToLower() == "max")
             {
-                
-                var recipe = Service.DataManager.GetExcelSheet<Recipe>()!.Where(r => r.ItemResult!.Value!.RowId == entry.ItemId).FirstOrDefault()!;
-                var ingredients = MaterialsSummary.GetIngredientListFromRecipe(recipe);
+
+                var recipe = Service.Recipes[entry.RecipeId];
+                var ingredients = IngredientSummary.GetIngredientListFromRecipe(recipe);
                 List<int> nItemsCraftablePerIngredient = new();
                 for(int i = 0; i < ingredients.Count; i++)
                 {

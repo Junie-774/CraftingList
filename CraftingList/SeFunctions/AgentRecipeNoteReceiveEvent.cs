@@ -4,6 +4,7 @@ using System;
 namespace CraftingList.SeFunctions
 {
     public delegate long AgentRecipeNoteReceiveEventDelegate(IntPtr a1, long a2, long a3, long a4, long a5);
+
     internal class AgentRecipeNoteReceiveEvent : SeFunction<AgentRecipeNoteReceiveEventDelegate>
     {
 
