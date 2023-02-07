@@ -133,7 +133,6 @@ namespace CraftingList.Crafting.Macro
             }
 
             MacroNames[index] = newName;
-
         }
 
 

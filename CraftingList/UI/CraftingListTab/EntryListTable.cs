@@ -66,8 +66,6 @@ namespace CraftingList.UI.CraftingListTab
         {
             ImGuiAddons.BeginGroupPanel("Crafting List", new Vector2(-1, -1));
 
-            //ImGui.BeginGroup();
-
             if (ImGui.BeginTable("##EntryList", 4, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg,
                 new Vector2(ImGui.GetContentRegionAvail().X * .98f, // scale to prevent it from leaving the border.
                             ImGui.GetFrameHeight() * (EntryListManager.Entries.Count + 1))))
@@ -97,7 +95,9 @@ namespace CraftingList.UI.CraftingListTab
 
                     if (expanded)
                     {
+                        ImGui.PushItemWidth(-1);
                         DrawEntry(entry);
+                        ImGui.PopItemWidth();
                         ImGui.TreePop();
                     }
 
@@ -123,7 +123,11 @@ namespace CraftingList.UI.CraftingListTab
             }
             ImGui.EndTable();
             if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add a new entry"))
+            {
+                ImGui.SetNextWindowSize(new Vector2(400, 0));
+
                 ImGui.OpenPopup("New Entry");
+            }
             ImGuiAddons.EndGroupPanel();
 
             RemoveFlaggedEntries();
@@ -138,7 +142,6 @@ namespace CraftingList.UI.CraftingListTab
 
         public void DrawEntry(CListEntry entry)
         {
-            ImGui.SetNextItemWidth(-1);
             if (RecipeSelectionBox(entry))
             {
                 
@@ -163,26 +166,24 @@ namespace CraftingList.UI.CraftingListTab
             }
             ImGuiAddons.TextTooltip("Number of crafts. Enter \"max\" to craft until you run out of materials or inventory space.");
 
-            if (ImGui.Checkbox($"Specify HQ ingredients?##{entry.EntryId}", ref entry.SpecifiedHQ)) { }
-
-            if (entry.SpecifiedHQ)
+            if (ImGui.CollapsingHeader($"Specify HQ ingredients##{entry.EntryId}"))
             {
                 DrawIngredientsForEntry(entry);
             }
-            
 
+            ImGui.NewLine();
         }
 
         public void DrawNewEntry()
         {
             if (ImGui.BeginPopup("New Entry"))
             {
-                ImGui.Text("New Entry");
-                //ImGuiAddons.BeginGroupPanel("New Entry", new Vector2(-1, 0));
-                
-                DrawEntry(newEntry);
+                ImGuiAddons.BeginGroupPanel("New Entry", new Vector2(-1, 0));
 
-                ImGui.NewLine();
+                ImGui.PushItemWidth(500);
+                DrawEntry(newEntry);
+                ImGui.PopItemWidth();
+
                 if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add Entry", "NewEntry"))
                 {
                     if (newEntry.RecipeId >= 0 &&
@@ -208,7 +209,7 @@ namespace CraftingList.UI.CraftingListTab
                     }
                 }
 
-                //ImGuiAddons.EndGroupPanel();
+                ImGuiAddons.EndGroupPanel();
                 ImGui.EndPopup();
             }
         }
@@ -227,7 +228,7 @@ namespace CraftingList.UI.CraftingListTab
             bool hasHqItem = false;
             for (int i = 0; i < recipe.UnkData5.Length; i++)
             {
-                PluginLog.Debug($"{i}: {recipe.UnkData5[i].ItemIngredient}, {Service.Items[recipe.UnkData5[i].ItemIngredient].Name}");
+                //PluginLog.Debug($"{i}: {recipe.UnkData5[i].ItemIngredient}, {Service.Items[recipe.UnkData5[i].ItemIngredient].Name}");
                 if (recipe.UnkData5[i].ItemIngredient <= 0)
                     continue;
 
@@ -254,7 +255,6 @@ namespace CraftingList.UI.CraftingListTab
                 }
 
             }
-            PluginLog.Debug("--");
 
             if (!hasHqItem)
             {
@@ -354,7 +354,7 @@ namespace CraftingList.UI.CraftingListTab
 
         private IEnumerable<IngredientSummaryListing> RegenerateIngredientSummary()
         {
-            return IngredientSummary.GetIngredientListFromEntryList(Service.Configuration.EntryList).OrderBy(i => i.ItemId);
+            return IngredientSummary.GetIngredientListFromEntryList(Service.Configuration.EntryList).Item1.OrderBy(i => i.ItemId);
         }
         public IEnumerable<string> GenerateNewEntrymacroNames()
             => new List<string>() { "" }.Concat(MacroManager.MacroNames);

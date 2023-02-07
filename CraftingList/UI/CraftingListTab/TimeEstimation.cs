@@ -57,7 +57,7 @@ namespace CraftingList.UI.CraftingListTab
                 List<int> nItemsCraftablePerIngredient = new();
                 for(int i = 0; i < ingredients.Count; i++)
                 {
-                    nItemsCraftablePerIngredient.Add(SeInterface.GetItemCountInInevntory(ingredients[i].ItemId) / (ingredients[i].Amount));
+                    nItemsCraftablePerIngredient.Add(SeInterface.GetItemCountInInventory(ingredients[i].ItemId) / (ingredients[i].Amount));
                 }
 
                 numCrafts = nItemsCraftablePerIngredient.Min();

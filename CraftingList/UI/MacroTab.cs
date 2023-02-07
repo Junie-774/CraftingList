@@ -139,12 +139,12 @@ namespace CraftingList.UI
 
         public void DrawIngameMacro(IngameMacro macro, int id)
         {
-            var oldName = macro.Name;
-            if (ImGui.InputText($"##Rename-IngameMacro-{id}", ref macro.Name, 100, ImGuiInputTextFlags.AutoSelectAll)
-                && oldName != macro.Name)
+            var name = macro.Name;
+            if (ImGui.InputText($"##RenameIngameMacro-{id}", ref name, 100)
+                && name != macro.Name)
             {
-                EntryListTable.UpdateMacroNameInEntries(oldName, macro.Name);
-                MacroManager.RenameMacro(oldName, macro.Name);
+                EntryListTable.UpdateMacroNameInEntries(macro.Name, name);
+                MacroManager.RenameMacro(macro.Name, name);
 
                 Service.Configuration.Save();
             }
@@ -162,13 +162,13 @@ namespace CraftingList.UI
 
         public void DrawPluginMacro(PluginMacro macro, int id)
         {
-            var oldName = macro.Name;
-            if (ImGui.InputText($"##Rename-PluginMacro-{id}", ref macro.Name, 100, ImGuiInputTextFlags.AutoSelectAll)
-                && oldName != macro.Name)
+            var name = macro.Name;
+            if (ImGui.InputText($"##RenamePluginMacro-{id}", ref name, 100)
+                && name != macro.Name)
             {
-                EntryListTable.UpdateMacroNameInEntries(oldName, macro.Name);
-                MacroManager.RenameMacro(oldName, macro.Name);
-                
+                EntryListTable.UpdateMacroNameInEntries(macro.Name, name);
+                MacroManager.RenameMacro(macro.Name, name);
+
                 Service.Configuration.Save();
             }
             FoodSelectionBox(macro);
@@ -240,9 +240,7 @@ namespace CraftingList.UI
                 return;
             }
 
-
             DrawMacroPage();
-
         }
 
    

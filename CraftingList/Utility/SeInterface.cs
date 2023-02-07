@@ -109,7 +109,7 @@ namespace CraftingList.Utility
             Service.ChatManager.SendMessage("/gearset change " + DoHJobs[job]);
         }
 
-        public static void ToggleRepairWindow() => Service.ChatManager.SendMessage("/gaction repair");
+        public static void ToggleRepairWindow() => Service.ChatManager.SendMessage("/gaction " + Localization.GetRepairString());
 
         public static void UseAction(IntPtr AM, uint actionType, uint actionID, long targetID, uint a4, uint a5, int a6, IntPtr a7)
         {
@@ -129,7 +129,7 @@ namespace CraftingList.Utility
 
         public static void Statusoff(string status) => Service.ChatManager.SendMessage("/statusoff \"" + status + "\"");
 
-        public static int GetItemCountInInevntory(uint itemId, bool isHQ = false, bool checkEquipped = true, bool checkArmory = true, short minCollectability = 0)
+        public static int GetItemCountInInventory(uint itemId, bool isHQ = false, bool checkEquipped = true, bool checkArmory = true, short minCollectability = 0)
             => InventoryManager()->GetInventoryItemCount(itemId, isHQ, checkEquipped, checkArmory, minCollectability);
 
         public static bool HasStatusID(uint statusID)

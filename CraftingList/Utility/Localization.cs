@@ -16,6 +16,12 @@ namespace CraftingList.Utility
             { ClientLanguage.French, "Repu" }
         };
 
+        readonly private static Dictionary<ClientLanguage, string> RepairCommandStrings = new()
+        {
+            { ClientLanguage.English, "repair" },
+            { ClientLanguage.Japanese, "修理" }
+        };
+
         readonly private static Dictionary<ClientLanguage, string> MedicatedStrings = new()
         {
             { ClientLanguage.English, "Medicated" },
@@ -25,12 +31,17 @@ namespace CraftingList.Utility
 
         public static string GetWellFedStatusString()
         {
-            return WellFedStrings[Service.ClientState.ClientLanguage];
+            return WellFedStrings.TryGetValue(Service.ClientState.ClientLanguage, out string? ret) ? ret! : WellFedStrings[ClientLanguage.English];
         }
 
         public static string GetMedicatedString()
         {
-            return MedicatedStrings[Service.ClientState.ClientLanguage];
+            return MedicatedStrings.TryGetValue(Service.ClientState.ClientLanguage, out string? ret) ? ret! : WellFedStrings[ClientLanguage.English];
+        }
+
+        public static string GetRepairString()
+        {
+            return RepairCommandStrings.TryGetValue(Service.ClientState.ClientLanguage, out string? ret) ? ret! : WellFedStrings[ClientLanguage.English];
         }
     }
 }

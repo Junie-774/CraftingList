@@ -1,11 +1,13 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
+using CraftingList.UI.CraftingListTab;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Excel.GeneratedSheets;
 using System.Threading.Tasks;
 
@@ -93,9 +95,10 @@ namespace CraftingList
             //DalamudApi.CommandManager.RemoveHandler("/clconfig");
         }
 
-        private void OnCommand(string command, string args)
+        private unsafe void OnCommand(string command, string args)
         {
-            PluginLog.Debug($"");
+            
+            PluginLog.Debug($"Free slots: {IngredientSummary.GetNumItemThatCanFitInInventory(36079, true)}");
         }
 
         private void OnCraftingList(string command, string args)
