@@ -107,7 +107,6 @@ namespace CraftingList.UI
                     }
 
                 }
-                ImGui.TreePop();
             }
             ImGuiAddons.EndGroupPanel();
         }
@@ -132,7 +131,6 @@ namespace CraftingList.UI
                 {
                     MacroManager.AddEmptyPluginMacro("New Macro");
                 }
-                ImGui.TreePop();
             }
             ImGuiAddons.EndGroupPanel();
         }

@@ -27,21 +27,20 @@ namespace CraftingList.UI
         }
         void ITab.Draw()
         {
-
-            if (ImGui.TreeNode("Crafting Options"))
+            ImGuiAddons.BeginGroupPanel("Options", new Vector2(-1, 0));
+            if (ImGui.TreeNodeEx("Crafting Options", ImGuiTreeNodeFlags.FramePadding))
             {
                 CraftingOptionsSection();
                 ImGui.TreePop();
             }
 
-            if (ImGui.TreeNode("Macro options"))
+            if (ImGui.TreeNodeEx("Macro options", ImGuiTreeNodeFlags.FramePadding))
             {
 
                 MacroOptionsSection();
                 ImGui.TreePop();
             }
-            ImGui.NewLine();
-
+            ImGuiAddons.EndGroupPanel();
         }
 
         public void CraftingOptionsSection()
