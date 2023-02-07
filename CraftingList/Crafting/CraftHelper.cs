@@ -35,7 +35,7 @@ namespace CraftingList.Crafting
             //We close the recipe note when the job starts, so if it's open, it's open because
             // we opened it to the right item.
             PluginLog.Debug($"[CraftHelper.OpenRecipeByRecipe()] Opening crafting log to recipe {recipeId}");
-            SeInterface.RecipeNote().OpenRecipeByRecipeId(recipeId);
+            SeInterface.RecipeNote().OpenRecipeByRecipeId((int) Service.Recipes[recipeId].RowId);
 
             if (!await WaitForAddon("RecipeNote", true, Service.Configuration.AddonTimeout))
                 return false;

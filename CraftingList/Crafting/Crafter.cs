@@ -208,7 +208,8 @@ namespace CraftingList.Crafting
         {
             bool isCollectible = Service.Recipes[entry.RecipeId].ItemResult.Value!.IsCollectable;
 
-            if (!await CraftHelper.OpenRecipeByItem((int)Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId))
+            //if (!await CraftHelper.OpenRecipeByItem((int)Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId))
+            if (!await CraftHelper.OpenRecipeByRecipe(entry.RecipeId))
             {
                 Cancel("A problem occurred while trying to open crafting log, cancelling craft...", true);
                 return false;
@@ -296,7 +297,7 @@ namespace CraftingList.Crafting
             else
                 numToQuickSynth = Math.Min(int.Parse(entry.NumCrafts), 99);
 
-            if (!await CraftHelper.OpenRecipeByItem((int) Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId))
+            if (!await CraftHelper.OpenRecipeByRecipe(entry.RecipeId))
             {
                 CraftHelper.CancelEntry(entry, $"A problem occured while opening the crafting log to '{entry.Name}'. Moving to next entry...", true);
                 entry.running = false;

@@ -8,7 +8,9 @@ using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.GeneratedSheets;
+using System;
 using System.Threading.Tasks;
 
 namespace CraftingList
@@ -97,8 +99,11 @@ namespace CraftingList
 
         private unsafe void OnCommand(string command, string args)
         {
-            
-            PluginLog.Debug($"Free slots: {IngredientSummary.GetNumItemThatCanFitInInventory(36079, true)}");
+
+            //((AgentRecipeNote*) FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.RecipeNote))
+            //    ->OpenRecipeByRecipeId(Service.Recipes[0].RowId);
+            //SeInterface.RecipeNote().OpenRecipeByRecipeId((int) Service.Recipes[52].RowId);
+            PluginLog.Debug($"ID: {Service.Recipes[52].RowId}");
         }
 
         private void OnCraftingList(string command, string args)
