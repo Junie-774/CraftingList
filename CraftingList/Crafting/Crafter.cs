@@ -100,7 +100,7 @@ namespace CraftingList.Crafting
                 Service.Configuration.Save();
                 await Task.Delay(500);
                 TerminationAlert();
-                this.CraftUpdateEvent.Set();
+                CraftUpdateEvent.Set();
                 m_running = false;
                 return true;
             });

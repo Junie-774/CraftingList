@@ -13,6 +13,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace CraftingList.UI.CraftingListTab
 {
@@ -20,7 +21,6 @@ namespace CraftingList.UI.CraftingListTab
     {
         readonly private IEnumerable<Recipe?> craftableItems;
         readonly private List<string> craftableNames;
-        private List<string> newEntryItemNameSearchResults;
         public IngredientSummary IngredientSummary = new();
         public TimeSpan EstimatedTime;
         readonly private List<(int, Recipe)> filteredRecipes = new();
@@ -30,6 +30,7 @@ namespace CraftingList.UI.CraftingListTab
 
         readonly private CListEntry newEntry = new(-1, "", "", false, CListEntry.EmptyHQSelection());
 
+        private Timer updateIngredientsTimer = new(500);
 
         string recipeSearch = "";
 
@@ -37,6 +38,7 @@ namespace CraftingList.UI.CraftingListTab
 
         public EntryListTable(Crafter crafter)
         {
+            
             this.crafter = crafter;
             craftableNames = new List<string>
             {
@@ -56,7 +58,6 @@ namespace CraftingList.UI.CraftingListTab
                 filteredRecipes.Add((index, Service.Recipes[index]));
             }
 
-            newEntryItemNameSearchResults = craftableNames.Where(x => x.Contains(newEntry.Name)).ToList();
             IngredientSummary.UpdateIngredients();
             EntryListManager.ReassignIds();
             newEntry.EntryId = -1;
@@ -154,8 +155,9 @@ namespace CraftingList.UI.CraftingListTab
 
             ImGui.Text("Number of crafts: ");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize(entry.NumCrafts).X + 20);
             var numCrafts = entry.NumCrafts;
+            ImGui.SetNextItemWidth(ImGui.CalcTextSize("max").X + ImGui.CalcTextSize(numCrafts).X + 40);
+
             if (ImGui.InputText($"##NumCrafts-{entry.EntryId}", ref numCrafts, 50)
                 && CListEntry.IsValidNumCrafts(numCrafts))
             {
@@ -197,8 +199,10 @@ namespace CraftingList.UI.CraftingListTab
                         IngredientSummary.UpdateIngredients();
                         EstimateTime();
 
-                        newEntry.Name = "";
+                        newEntry.MacroName = "";
                         newEntry.NumCrafts = "";
+                        newEntry.RecipeId = -1;
+                        newEntry.HQSelection = CListEntry.EmptyHQSelection();
                         Service.Configuration.Save();
                         ImGui.CloseCurrentPopup();
 
@@ -349,16 +353,6 @@ namespace CraftingList.UI.CraftingListTab
             return false;
         }
 
-        public List<string> GetMacroNames()
-            => MacroManager.MacroNames;
-
-        private IEnumerable<IngredientSummaryListing> RegenerateIngredientSummary()
-        {
-            return IngredientSummary.GetIngredientListFromEntryList(Service.Configuration.EntryList).Item1.OrderBy(i => i.ItemId);
-        }
-        public IEnumerable<string> GenerateNewEntrymacroNames()
-            => new List<string>() { "" }.Concat(MacroManager.MacroNames);
-
         public static void RemoveMacroName(string macroName)
         {
 
@@ -423,6 +417,7 @@ namespace CraftingList.UI.CraftingListTab
             }
             return ret;
         }
+
         public void EstimateTime()
         {
             int estimatedTime = 0;
