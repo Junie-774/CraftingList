@@ -22,6 +22,8 @@ namespace CraftingList.UI.CraftingListTab
         readonly private IEnumerable<Recipe?> craftableItems;
         readonly private List<string> craftableNames;
         public IngredientSummary IngredientSummary = new();
+        public TimeEstimation TimeEstimator;
+
         public TimeSpan EstimatedTime;
         readonly private List<(int, Recipe)> filteredRecipes = new();
 
@@ -38,7 +40,7 @@ namespace CraftingList.UI.CraftingListTab
 
         public EntryListTable(Crafter crafter)
         {
-            
+            this.TimeEstimator = new(IngredientSummary);
             this.crafter = crafter;
             craftableNames = new List<string>
             {
@@ -243,8 +245,7 @@ namespace CraftingList.UI.CraftingListTab
                 else
                     hasHqItem = true;
 
-                TextureWrap? texture;
-                if (Service.IconCache.TryGetIcon(item.Icon, true, out texture))
+                if (Service.IconCache.TryGetIcon(item.Icon, true, out TextureWrap? texture))
                 {
                     ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
                     ImGui.SameLine();
@@ -376,7 +377,7 @@ namespace CraftingList.UI.CraftingListTab
             return max;
         }
 
-        public static bool HQMat(string name, int amount, ref int outInt, float size)
+        public bool HQMat(string name, int amount, ref int outInt, float size)
         {
             bool ret = false;
             ImGui.Text(name + ": ");
@@ -394,6 +395,8 @@ namespace CraftingList.UI.CraftingListTab
             {
                 outInt--;
                 ret = true;
+                IngredientSummary.UpdateIngredients();
+                EstimateTime();
                 Service.Configuration.Save();
 
             }
@@ -403,6 +406,7 @@ namespace CraftingList.UI.CraftingListTab
             {
                 outInt++;
                 ret = true;
+                IngredientSummary.UpdateIngredients();
                 Service.Configuration.Save();
 
             }
@@ -421,9 +425,15 @@ namespace CraftingList.UI.CraftingListTab
         public void EstimateTime()
         {
             int estimatedTime = 0;
-            foreach (var entry in Service.Configuration.EntryList)
+            int j = 0;
+            for (int i = 0; i < EntryListManager.Entries.Count; i++)
             {
-                estimatedTime += TimeEstimation.EstimateEntryDurationMS(entry);
+                
+                estimatedTime += TimeEstimator.EstimateEntryDurationMS(EntryListManager.Entries[i],
+                    IngredientSummary.IntermediateListings.Count > j ? IngredientSummary.IntermediateListings[j] : new List<IngredientSummaryListing>());
+
+                if (EntryListManager.Entries[i].NumCrafts.ToLower() == "max")
+                    j++;
             }
             EstimatedTime = TimeSpan.FromMilliseconds(estimatedTime);
         }

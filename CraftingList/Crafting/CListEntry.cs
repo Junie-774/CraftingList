@@ -69,7 +69,7 @@ namespace CraftingList.Crafting
         {
             if (int.TryParse(numCrafts, out int result))
                 return result;
-            return 0;
+            return -1;
         }
 
     }

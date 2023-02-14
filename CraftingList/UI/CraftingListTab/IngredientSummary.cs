@@ -16,6 +16,7 @@ using FFXIVClientStructs.Havok;
 using System.Reflection;
 using ImGuiScene;
 using System.Timers;
+using Dalamud.Logging;
 
 namespace CraftingList.UI.CraftingListTab
 {
@@ -24,7 +25,7 @@ namespace CraftingList.UI.CraftingListTab
     {
         public uint ItemId { get; set; }
         public string Name { get; set; } = "";
-        public int AmountNeeded { get; set; }
+        public int NumCraftsNeeded { get; set; } // -1 represents "max"
         public bool HasMax { get; set; } // Used for aggregate listings for more than one entry. Allows keeping track of the amount needed by other entries
         public bool CanBeHQ { get; set; }
         public bool NeedsHQ { get; set; }
@@ -38,9 +39,8 @@ namespace CraftingList.UI.CraftingListTab
 
         public List<List<IngredientSummaryListing>> IntermediateListings = new();
 
-        private bool ExpectHQResults = false;
-
-        Timer updateTimer = new(1000);
+        public bool ExpectHQResults = false;
+        readonly Timer updateTimer = new(1000);
 
         public IngredientSummary()
         {
@@ -52,6 +52,7 @@ namespace CraftingList.UI.CraftingListTab
         {
             updateTimer.Dispose();
         }
+
         public void UpdateIngredients()
         {
             var result = GetIngredientListFromEntryList(Service.Configuration.EntryList);
@@ -71,14 +72,14 @@ namespace CraftingList.UI.CraftingListTab
             ImGuiAddons.BeginGroupPanel("\"max\" entry expected yields", new Vector2(-1, 0));
             ImGui.Checkbox("Expect that results will be HQ if applicable?", ref ExpectHQResults);
             ImGui.NewLine();
+
             int j = 0;
             foreach (var entry in EntryListManager.Entries)
             {
                 if (entry.NumCrafts != "max")
                     continue;
 
-                TextureWrap? icon;
-                if (Service.IconCache.TryGetIcon(Service.Recipes[entry.RecipeId].ItemResult.Value!.Icon, ExpectHQResults, out icon))
+                if (Service.IconCache.TryGetIcon(Service.Recipes[entry.RecipeId].ItemResult.Value!.Icon, ExpectHQResults, out TextureWrap? icon))
                 {
                     ImGuiAddons.ScaledImageY(icon.ImGuiHandle, icon.Width, icon.Height, ImGui.GetFrameHeight());
                     ImGui.SameLine();
@@ -99,8 +100,8 @@ namespace CraftingList.UI.CraftingListTab
         public static void DisplayListing(IngredientSummaryListing ingredient)
         {
             int inInventory = ingredient.InInventory;// + SeInterface.GetItemCountInInevntory(ingredient.ItemId, true);
-
-            if (inInventory >= ingredient.AmountNeeded && (!ingredient.HasMax || (inInventory > ingredient.PerCraft)))
+            int amountNeeded = ingredient.PerCraft * Math.Max(0, ingredient.NumCraftsNeeded); // if the ingredient is only needed by a 'max' craft,
+            if (inInventory >= amountNeeded && (!ingredient.HasMax || (inInventory > ingredient.PerCraft)))
             {
                 ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, FontAwesomeIcon.Check);
                 ImGui.SameLine();
@@ -110,19 +111,21 @@ namespace CraftingList.UI.CraftingListTab
                 ImGui.Dummy(new Vector2(17, 0));
                 ImGui.SameLine();
             }
-            ImGui.Text($"{ingredient.Name}: {(ingredient.AmountNeeded != 0 ? ingredient.AmountNeeded : string.Empty)}{(ingredient.HasMax ? (ingredient.AmountNeeded != 0 ? " + " : "") + "max" : "")}");
+            ImGui.Text($"{ingredient.Name}: {(amountNeeded != 0 ? amountNeeded : string.Empty)}{(ingredient.HasMax ? (amountNeeded != 0 ? " + " : "") + "max" : "")}");
             ImGui.SameLine();
             Vector4 color = ImGuiColors.DalamudGrey;
 
-            if (inInventory < ingredient.AmountNeeded || (ingredient.HasMax && (inInventory < ingredient.PerCraft)))
+            if (inInventory < amountNeeded || (ingredient.HasMax && (inInventory < ingredient.PerCraft)))
                 color = ImGuiColors.DalamudRed;
 
+            //PluginLog.Debug($"{ingredient.Name} | Amount: {ingredient.AmountNeeded} | PerCraft: {ingredient.PerCraft} | NumCrafts: {ingredient.NumCraftsNeeded}");
             ImGui.TextColored(color, $" ({inInventory} in inventory, {inInventory / ingredient.PerCraft} crafts) ");
 
         }
 
         public static int GetNumCraftsPossible(CListEntry entry, List<IngredientSummaryListing> previouslyUsedMats)
         {
+            //PluginLog.Debug($"prev mats count: {previouslyUsedMats.Count}");
             if (entry.NumCrafts != "max")
                 return CListEntry.GetCraftNum(entry.NumCrafts);
 
@@ -134,18 +137,20 @@ namespace CraftingList.UI.CraftingListTab
 
             foreach (var ingredient in entryIngredients)
             {
+                //PluginLog.Debug($"{ingredient.Name} | PerCraft: {ingredient.PerCraft} | NumCrafts: {ingredient.NumCraftsNeeded}");
                 var matchingListings = previouslyUsedMats.Where(l => l.Name == ingredient.Name);
                 int previouslyUsedAmount = 0;
                 if (matchingListings.Any())
                 {
-                    previouslyUsedAmount = matchingListings.First().AmountNeeded;
+
+                    previouslyUsedAmount = matchingListings.First().PerCraft * matchingListings.First().NumCraftsNeeded;
                 }
 
                 var numUsedPerCraft = ingredient.PerCraft;
                 var numInInventory = ingredient.InInventory;
                 var numAvailable = Math.Max(numInInventory - previouslyUsedAmount, 0);
                 var numCraftsPossible = numAvailable / numUsedPerCraft;
-
+                //PluginLog.Debug($"Available: {numAvailable}");
                 if (numCraftsPossible < leastNumCraftsPossible)
                     leastNumCraftsPossible = numCraftsPossible;
 
@@ -177,7 +182,7 @@ namespace CraftingList.UI.CraftingListTab
                 {
                     ItemId = (uint)ingredient.ItemIngredient,
                     Name = ingredientItem.Name,
-                    AmountNeeded = ingredient.AmountIngredient,
+                    NumCraftsNeeded = 0,
                     CanBeHQ = ingredientItem.CanBeHq,
                     PerCraft = ingredient.AmountIngredient
                 });
@@ -197,10 +202,11 @@ namespace CraftingList.UI.CraftingListTab
             {
                 var copy = entryIngredientList[i];
                 copy.InInventory = SeInterface.GetItemCountInInventory(copy.ItemId, false);
-                if (entry.NumCrafts.ToLower() == "max")
-                {
+                copy.NumCraftsNeeded = CListEntry.GetCraftNum(entry.NumCrafts);
+
+                if (copy.NumCraftsNeeded == -1)
                     copy.HasMax = true;
-                }
+
 
                 if (entryIngredientList[i].CanBeHQ)
                 {
@@ -208,25 +214,24 @@ namespace CraftingList.UI.CraftingListTab
                     {
                         Name = copy.Name,
                         ItemId = copy.ItemId,
+                        NumCraftsNeeded = copy.NumCraftsNeeded,
                         HasMax = copy.HasMax,
                         CanBeHQ = copy.CanBeHQ,
                         PerCraft = copy.PerCraft,
                     };
                     hqIngredientCopy.Name = "" + hqIngredientCopy.Name;
                     hqIngredientCopy.NeedsHQ = true;
-                    hqIngredientCopy.AmountNeeded = entry.HQSelection[i] * CListEntry.GetCraftNum(entry.NumCrafts);
                     hqIngredientCopy.PerCraft = entry.HQSelection[i];
                     hqIngredientCopy.InInventory = SeInterface.GetItemCountInInventory(hqIngredientCopy.ItemId, true);
 
-                    if (hqIngredientCopy.AmountNeeded > 0 || entry.NumCrafts.ToLower() == "max")
+                    if (hqIngredientCopy.NumCraftsNeeded != 0)
                         AddToList(result, hqIngredientCopy);
 
                     copy.PerCraft -= entry.HQSelection[i];
 
                 }
-                copy.AmountNeeded = copy.PerCraft * CListEntry.GetCraftNum(entry.NumCrafts);
 
-                if (copy.AmountNeeded > 0 || entry.NumCrafts.ToLower() == "max")
+                if (copy.NumCraftsNeeded != 0)
                     AddToList(result, copy);
 
             }
@@ -247,7 +252,7 @@ namespace CraftingList.UI.CraftingListTab
 
                 if (entry.NumCrafts.ToLower() == "max")
                 {
-                    intermediateListings.Add(result);
+                    intermediateListings.Add(result.ToList());
                 }
                 AddListToList(result, entryIngredients);
             }
@@ -256,13 +261,17 @@ namespace CraftingList.UI.CraftingListTab
 
         private static void AddToList(List<IngredientSummaryListing> list, IngredientSummaryListing listing)
         {
+            if (listing.NumCraftsNeeded == 0 || listing.PerCraft <= 0)
+            {
+                return;
+            }
             var matches = list.Where(l => l.Name == listing.Name);
             if (matches.Any())
             {
-                matches.First().AmountNeeded += listing.AmountNeeded;
+                matches.First().NumCraftsNeeded += Math.Max(listing.NumCraftsNeeded, 0);
                 matches.First().HasMax |= listing.HasMax;
             }
-            else
+            else 
                 list.Add(listing);
         }
 

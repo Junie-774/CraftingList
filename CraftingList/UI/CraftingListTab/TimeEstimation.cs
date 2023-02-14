@@ -10,9 +10,14 @@ using System.Threading.Tasks;
 
 namespace CraftingList.UI.CraftingListTab
 {
-    internal class TimeEstimation
+    public class TimeEstimation
     {
+        IngredientSummary ingredientSummary;
 
+        public TimeEstimation(IngredientSummary ingredientSummary)
+        {
+            this.ingredientSummary = ingredientSummary;
+        }
         public static int EstimateMacroDurationMS(CraftingMacro macro)
         {
             if (macro == null) return 0;
@@ -42,7 +47,7 @@ namespace CraftingList.UI.CraftingListTab
             return total;
         }
 
-        public static int EstimateEntryDurationMS(CListEntry entry)
+        public int EstimateEntryDurationMS(CListEntry entry, List<IngredientSummaryListing> intermediateListings)
         {
             
             int setupTime = 6000;
@@ -51,17 +56,9 @@ namespace CraftingList.UI.CraftingListTab
             int numCrafts;
             if (entry.NumCrafts.ToLower() == "max")
             {
-
-                var recipe = Service.Recipes[entry.RecipeId];
-                var ingredients = IngredientSummary.GetIngredientListFromRecipe(recipe);
-                List<int> nItemsCraftablePerIngredient = new();
-                for(int i = 0; i < ingredients.Count; i++)
-                {
-                    nItemsCraftablePerIngredient.Add(SeInterface.GetItemCountInInventory(ingredients[i].ItemId) / (ingredients[i].AmountNeeded));
-                }
-
-                numCrafts = nItemsCraftablePerIngredient.Min();
-
+                var numCraftable = IngredientSummary.GetNumCraftsPossible(entry, intermediateListings);
+                var numCanFitInInevntory = IngredientSummary.GetNumItemThatCanFitInInventory((int)Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId, ingredientSummary.ExpectHQResults);
+                numCrafts = Math.Min(numCraftable, numCanFitInInevntory);
             }
             else
             {
