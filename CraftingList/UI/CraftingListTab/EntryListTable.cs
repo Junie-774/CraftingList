@@ -2,6 +2,7 @@
 using CraftingList.Crafting.Macro;
 using CraftingList.Utility;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Logging;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -19,48 +20,32 @@ namespace CraftingList.UI.CraftingListTab
 {
     public class EntryListTable
     {
-        readonly private IEnumerable<Recipe?> craftableItems;
-        readonly private List<string> craftableNames;
         public IngredientSummary IngredientSummary = new();
-        public TimeEstimation TimeEstimator;
-
+        public List<TimeSpan> EntryTimeEstimations = new();
         public TimeSpan EstimatedTime;
         readonly private List<(int, Recipe)> filteredRecipes = new();
 
-        private HashSet<int> entriesToRemove = new(); // We can't remove entries while iterating over them, so we add their id's to a set and remove all of them
+        private readonly HashSet<int> entriesToRemove = new(); // We can't remove entries while iterating over them, so we add their id's to a set and remove all of them
                                                       // after iterating.
-
         readonly private CListEntry newEntry = new(-1, "", "", false, CListEntry.EmptyHQSelection());
 
-        private Timer updateIngredientsTimer = new(500);
-
+        private bool ShowNewEntryAsterisks = false;
         string recipeSearch = "";
 
         public Crafter crafter;
 
+        public void Dispose()
+        {
+            IngredientSummary.Dispose();
+        }
+
         public EntryListTable(Crafter crafter)
         {
-            this.TimeEstimator = new(IngredientSummary);
             this.crafter = crafter;
-            craftableNames = new List<string>
-            {
-                ""
-            };
 
-            craftableItems = Service.DataManager.GetExcelSheet<Recipe>()!
-                .Select(r => r).Where(r => r != null && r.ItemResult.Value != null && r.ItemResult.Value.Name != "");
 
-            foreach (var item in craftableItems)
-            {
-                craftableNames.Add(item!.ItemResult.Value!.Name);
-            }
-
-            for (int index = 0; index < Service.Recipes.Count; index++)
-            {
-                filteredRecipes.Add((index, Service.Recipes[index]));
-            }
-
-            IngredientSummary.UpdateIngredients();
+            IngredientSummary.Update();
+            EstimateTime();
             EntryListManager.ReassignIds();
             newEntry.EntryId = -1;
         }
@@ -69,13 +54,14 @@ namespace CraftingList.UI.CraftingListTab
         {
             ImGuiAddons.BeginGroupPanel("Crafting List", new Vector2(-1, -1));
 
-            if (ImGui.BeginTable("##EntryList", 4, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg,
+            if (ImGui.BeginTable("##EntryList", 5, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg,
                 new Vector2(ImGui.GetContentRegionAvail().X * .98f, // scale to prevent it from leaving the border.
                             ImGui.GetFrameHeight() * (EntryListManager.Entries.Count + 1))))
             {
                 ImGui.TableSetupColumn($"Item##EntryList-Item", ImGuiTableColumnFlags.WidthStretch);
                 ImGui.TableSetupColumn($"Amount##EntryList-Amount", ImGuiTableColumnFlags.WidthFixed);
                 ImGui.TableSetupColumn($"Macro##EntryList-Macro", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"Duration##EntryList-Duration", ImGuiTableColumnFlags.WidthFixed);
                 ImGui.TableSetupColumn($"##EntryList-Delete", ImGuiTableColumnFlags.WidthFixed);
 
                 ImGui.TableSetupScrollFreeze(0, 1);
@@ -86,14 +72,14 @@ namespace CraftingList.UI.CraftingListTab
                     if (entry.RecipeId < 0) continue;
 
                     ImGui.TableSetColumnIndex(0);
-                    if (Service.IconCache.TryGetIcon(Service.Recipes[entry.RecipeId].ItemResult.Value!.Icon, false, out TextureWrap? icon))
+                    if (Service.IconCache.TryGetIcon(entry.Result().Icon, false, out TextureWrap? icon))
                     {
                         ImGuiAddons.ScaledImageY(icon.ImGuiHandle, icon.Width, icon.Height, ImGui.GetFrameHeight());
                         ImGui.SameLine();
                     }
 
                     var expanded = ImGui.TreeNodeEx($"##treenode-{entry.EntryId}", ImGuiTreeNodeFlags.None,
-                        $"{Service.Recipes[entry.RecipeId].ItemResult.Value!.Name}");
+                        $"{entry.Result().Name}");
 
 
                     if (expanded)
@@ -111,7 +97,13 @@ namespace CraftingList.UI.CraftingListTab
                     ImGui.Text(entry.MacroName);
 
                     ImGui.TableSetColumnIndex(3);
+                    lock (IngredientSummary.EntrySummaries)
+                    {
+                        //PluginLog.Debug($"{entry.EntryId}");
+                        ImGui.Text(FormatTime(EntryTimeEstimations[entry.EntryId]));
+                    }
 
+                    ImGui.TableSetColumnIndex(4);
                     if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Remove Entry", $"{entry.Name}-{entry.EntryId}"))
                     {
                         entriesToRemove.Add(entry.EntryId);
@@ -134,45 +126,63 @@ namespace CraftingList.UI.CraftingListTab
             ImGuiAddons.EndGroupPanel();
 
             RemoveFlaggedEntries();
-
-            if (crafter.CraftUpdateEvent.WaitOne(0))
+            
+            if (crafter.CraftUpdateEvent)
             {
-                crafter.CraftUpdateEvent.Reset();
-                IngredientSummary.UpdateIngredients();
+                crafter.CraftUpdateEvent = false;
+                IngredientSummary.Update();
                 EstimateTime();
             }
         }
 
         public void DrawEntry(CListEntry entry)
         {
+            if (ShowNewEntryAsterisks && entry.RecipeId < 0)
+            {
+                ImGui.TextColored(ImGuiColors.DPSRed, "*");
+                ImGui.SameLine();
+            }
             if (RecipeSelectionBox(entry))
             {
-                
+
             }
 
+            if(ShowNewEntryAsterisks && entry.MacroName == "")
+            {
+                ImGui.TextColored(ImGuiColors.DPSRed, "*");
+                ImGui.SameLine();
+            }
             if (MacroSelectionBox(entry))
             {
                 
             }
 
+            if (ShowNewEntryAsterisks && !CListEntry.IsValidNumCrafts(entry.NumCrafts))
+            {
+                ImGui.TextColored(ImGuiColors.DPSRed, "*");
+                ImGui.SameLine();
+            }
             ImGui.Text("Number of crafts: ");
             ImGui.SameLine();
             var numCrafts = entry.NumCrafts;
-            ImGui.SetNextItemWidth(ImGui.CalcTextSize("max").X + ImGui.CalcTextSize(numCrafts).X + 40);
+            ImGui.SetNextItemWidth(Math.Max(ImGui.CalcTextSize(" max ").X, ImGui.CalcTextSize(numCrafts).X) + 20);
 
             if (ImGui.InputText($"##NumCrafts-{entry.EntryId}", ref numCrafts, 50)
                 && CListEntry.IsValidNumCrafts(numCrafts))
             {
                 entry.NumCrafts = numCrafts;
-                IngredientSummary.UpdateIngredients();
+                IngredientSummary.Update();
                 EstimateTime();
                 Service.Configuration.Save();
             }
             ImGuiAddons.TextTooltip("Number of crafts. Enter \"max\" to craft until you run out of materials or inventory space.");
 
-            if (ImGui.CollapsingHeader($"Specify HQ ingredients##{entry.EntryId}"))
-            {
-                DrawIngredientsForEntry(entry);
+            if (entry.MacroName != "<Quick Synth>") {
+                ImGui.Checkbox($"Prioritize HQ ingredients?##-{entry.EntryId}", ref entry.PrioHQMats);
+                if (!entry.PrioHQMats && ImGui.CollapsingHeader($"Specify HQ ingredients##{entry.EntryId}"))
+                {
+                    DrawIngredientsForEntry(entry);
+                }
             }
 
             ImGui.NewLine();
@@ -191,14 +201,14 @@ namespace CraftingList.UI.CraftingListTab
                 if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add Entry", "NewEntry"))
                 {
                     if (newEntry.RecipeId >= 0 &&
-                        (newEntry.NumCrafts.ToLower() == "max" || int.TryParse(newEntry.NumCrafts, out _) && int.Parse(newEntry.NumCrafts) > 0)
-                        && MacroManager.MacroNames.Contains(newEntry.MacroName))
+                        CListEntry.IsValidNumCrafts(newEntry.NumCrafts)
+                        && (MacroManager.MacroNames.Contains(newEntry.MacroName) || newEntry.MacroName == "<Quick Synth>"))
                     {
                         newEntry.NumCrafts = newEntry.NumCrafts.ToLower();
 
-                        EntryListManager.AddEntry(new CListEntry(newEntry.RecipeId, newEntry.NumCrafts, newEntry.MacroName, newEntry.SpecifiedHQ, newEntry.HQSelection));
+                        EntryListManager.AddEntry(new CListEntry(newEntry.RecipeId, newEntry.NumCrafts, newEntry.MacroName, newEntry.PrioHQMats, newEntry.HQSelection));
 
-                        IngredientSummary.UpdateIngredients();
+                        IngredientSummary.Update();
                         EstimateTime();
 
                         newEntry.MacroName = "";
@@ -208,10 +218,13 @@ namespace CraftingList.UI.CraftingListTab
                         Service.Configuration.Save();
                         ImGui.CloseCurrentPopup();
 
+                        ShowNewEntryAsterisks = false;
+
                     }
                     else
                     {
                         PluginLog.Debug("BAD!");
+                        ShowNewEntryAsterisks = true;
                     }
                 }
 
@@ -227,10 +240,10 @@ namespace CraftingList.UI.CraftingListTab
                 ImGui.Text("Select an item to specify HQ ingredients.");
                 return;
             }
-            var recipe = Service.Recipes[entry.RecipeId];
+            var recipe = entry.Recipe();
 
-            var recipeIngredients = IngredientSummary.GetIngredientListFromRecipe(recipe);
-            var maxString = GetLongest(recipeIngredients.Select(i => i.Name));
+            var recipeIngredients = IngredientSummary.IngredientsFromRecipe(recipe);
+            var maxString = GetLongest(recipeIngredients.Select(i => i.Item.Name.RawString));
             bool hasHqItem = false;
             for (int i = 0; i < recipe.UnkData5.Length; i++)
             {
@@ -256,7 +269,7 @@ namespace CraftingList.UI.CraftingListTab
                     ref entry.HQSelection[i],
                     ImGui.CalcTextSize(maxString).X + 40))
                 {
-                    IngredientSummary.UpdateIngredients();
+                    IngredientSummary.Update();
                 }
 
             }
@@ -270,14 +283,24 @@ namespace CraftingList.UI.CraftingListTab
         {
             if (ImGui.BeginCombo($"##macro-list-{entry.EntryId}", entry.MacroName.IsNullOrEmpty() ? "Select a macro..." : entry.MacroName, ImGuiComboFlags.HeightLargest))
             {
+                if (entry.RecipeId >= 0 && entry.Recipe().CanQuickSynth)
+                {
+                    if (ImGui.Selectable($"<Quick Synth>##-{entry.EntryId}"))
+                    {
+                        EstimateTime();
+                        entry.MacroName = "<Quick Synth>";
+                        Service.Configuration.Save();
+                    }
+                }
 
                 for (int i = 0; i < MacroManager.MacroNames.Count; i++)
                 {
+
                     if (ImGui.Selectable($"{MacroManager.MacroNames[i]}##-{i}"))
                     {
                         EstimateTime();
-                        Service.Configuration.Save();
                         entry.MacroName = MacroManager.MacroNames[i];
+                        Service.Configuration.Save();
                     }
                 }
                 ImGui.EndCombo();
@@ -287,7 +310,7 @@ namespace CraftingList.UI.CraftingListTab
         }
         public bool RecipeSelectionBox(CListEntry entry)
         {
-            if (ImGui.BeginCombo($"##recipe-list-{entry.EntryId}", entry.RecipeId > -1 ? Service.Recipes[(int)entry.RecipeId].ItemResult.Value?.Name.RawString ?? "???" : "Select a recipe...", ImGuiComboFlags.HeightLargest))
+            if (ImGui.BeginCombo($"##recipe-list-{entry.EntryId}", entry.RecipeId > -1 ? entry.Result().Name.RawString ?? "???" : "Select a recipe...", ImGuiComboFlags.HeightLargest))
             {
                 if (ImGui.IsWindowAppearing())
                     ImGui.SetKeyboardFocusHere();
@@ -324,7 +347,7 @@ namespace CraftingList.UI.CraftingListTab
                                     entry.HQSelection = CListEntry.EmptyHQSelection();
 
                                 entry.RecipeId = recipeNum;
-                                IngredientSummary.UpdateIngredients();
+                                IngredientSummary.Update();
                                 Service.Configuration.Save();
                                 ImGui.CloseCurrentPopup();
                             }
@@ -395,8 +418,7 @@ namespace CraftingList.UI.CraftingListTab
             {
                 outInt--;
                 ret = true;
-                IngredientSummary.UpdateIngredients();
-                EstimateTime();
+                IngredientSummary.Update();
                 Service.Configuration.Save();
 
             }
@@ -406,7 +428,7 @@ namespace CraftingList.UI.CraftingListTab
             {
                 outInt++;
                 ret = true;
-                IngredientSummary.UpdateIngredients();
+                IngredientSummary.Update();
                 Service.Configuration.Save();
 
             }
@@ -425,15 +447,15 @@ namespace CraftingList.UI.CraftingListTab
         public void EstimateTime()
         {
             int estimatedTime = 0;
-            int j = 0;
-            for (int i = 0; i < EntryListManager.Entries.Count; i++)
+            EntryTimeEstimations.Clear();
+            lock (IngredientSummary.EntrySummaries)
             {
-                
-                estimatedTime += TimeEstimator.EstimateEntryDurationMS(EntryListManager.Entries[i],
-                    IngredientSummary.IntermediateListings.Count > j ? IngredientSummary.IntermediateListings[j] : new List<IngredientSummaryListing>());
-
-                if (EntryListManager.Entries[i].NumCrafts.ToLower() == "max")
-                    j++;
+                for (int i = 0; i < EntryListManager.Entries.Count; i++)
+                {
+                    var entryTime = TimeEstimation.EstimateEntryDurationMS(EntryListManager.Entries[i], IngredientSummary.EntrySummaries[i]);
+                    EntryTimeEstimations.Add(TimeSpan.FromMilliseconds(entryTime));
+                    estimatedTime += entryTime;
+                }
             }
             EstimatedTime = TimeSpan.FromMilliseconds(estimatedTime);
         }
@@ -453,17 +475,28 @@ namespace CraftingList.UI.CraftingListTab
             if (Service.Configuration.EntryList.RemoveAll(e => entriesToRemove.Contains(e.EntryId)) > 0)
             {
                 EntryListManager.ReassignIds();
-                IngredientSummary.UpdateIngredients();
+                IngredientSummary.Update();
                 EstimateTime();
                 Service.Configuration.Save();
             }
             entriesToRemove.Clear();
         }
 
+        public static string FormatTime(TimeSpan time)
+        {
+            bool hasHours = time.Hours > 0;
+            bool hasMinutes = time.Minutes > 0;
+            bool hasSeconds = time.Seconds > 0;
+            return $"~{(hasHours ? $"{time.Hours}h" : "")}{(hasHours && hasMinutes ? ", " : "")}" +
+                $"{(hasMinutes ? $"{time.Minutes}m" : "")}{(hasMinutes && hasSeconds ? ", " : "")}" +
+                $"{(hasSeconds ? $"{time.Seconds}s" : "")}";
+        }
+
         private void FilterRecipes(string str)
         {
             filteredRecipes.Clear();
 
+            /*
             if (str.IsNullOrEmpty())
             {
                 for (int i = 0; i < Service.Recipes.Count; i++)
@@ -472,6 +505,7 @@ namespace CraftingList.UI.CraftingListTab
                 }
                 return;
             }
+            */
 
             str = str.ToLowerInvariant();
             for (int i = 0; i < Service.Recipes.Count; i++)

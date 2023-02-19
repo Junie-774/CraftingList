@@ -1,5 +1,6 @@
 ﻿using CraftingList.Utility;
 using Dalamud.Logging;
+using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
 using System.Linq;
 
@@ -14,28 +15,33 @@ namespace CraftingList.Crafting
 
         public int RecipeId;
         public string NumCrafts;
-        
+
         public bool running = false;
         public int[] HQSelection = new int[6];
-        public bool SpecifiedHQ = false;
-
+        public bool PrioHQMats = false;
         //Dummy variables to store stuff for the UI
 
         public string MacroName;
 
         [JsonConstructor]
-
-        public CListEntry(int recipeId, string numCrafts, string macroName, bool specifiedHq, int[] hqSelection)
+        public CListEntry(int recipeId, string numCrafts, string macroName, bool prioHQ, int[] hqSelection)
         {
 
             this.Name = (recipeId >= 0 && Service.Recipes != null) ? Service.Recipes[recipeId].ItemResult.Value!.Name : "???";
             this.RecipeId = recipeId;
-            this.NumCrafts = numCrafts == "max" || int.TryParse(numCrafts, out _) ? numCrafts : "0";
-            
+            this.NumCrafts = numCrafts;// == "max" || int.TryParse(numCrafts, out _) ? numCrafts : "0";
+
             this.MacroName = macroName;
-            this.SpecifiedHQ = specifiedHq;
+            this.PrioHQMats = prioHQ;
             this.HQSelection = hqSelection;
         }
+
+        public Recipe Recipe()
+            => Service.Recipes[RecipeId];
+
+        public Item Result()
+            => Service.Items[(int) Recipe().ItemResult.Value!.RowId];
+
         public void Decrement()
         {
             if (!int.TryParse(NumCrafts, out int numCrafts))

@@ -18,6 +18,12 @@ namespace CraftingList.SeFunctions
             FunctionDelegate = Marshal.GetDelegateForFunctionPointer<T>(Address);
         }
 
+        public SeFunction(IntPtr address)
+        {
+            Address = address;
+            FunctionDelegate = Marshal.GetDelegateForFunctionPointer<T>(Address);
+        }
+
         public T? Delegate()
         {
             if (FunctionDelegate == null)

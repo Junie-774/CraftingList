@@ -20,7 +20,7 @@ namespace CraftingList.Crafting.Macro
         public static List<IngameMacro> IngameMacros
             => Service.Configuration.IngameMacros;
 
-        public static List<string> MacroNames { get; set; } = new() { "<Quick Synth>" };
+        public static List<string> MacroNames { get; set; } = new() { };// "<Quick Synth>" };
 
         public static void InitializeMacros()
         {
@@ -159,7 +159,7 @@ namespace CraftingList.Crafting.Macro
         private static void RegenerateMacroNames()
         {
             MacroNames.Clear();
-            MacroNames.Add("<Quick Synth>");
+            //MacroNames.Add("<Quick Synth>");
 
             foreach (var macro in PluginMacros)
             {

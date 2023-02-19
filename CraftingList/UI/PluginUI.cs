@@ -56,6 +56,10 @@ namespace CraftingList
 
         public void Dispose()
         {
+            foreach (var tab in Tabs)
+            {
+                tab.Dispose();
+            }
         }
 
         public void Draw()

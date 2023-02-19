@@ -1,50 +1,49 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Utility;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface;
+using Dalamud.Logging;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
+using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Net.NetworkInformation;
-using System.Text;
 using System.Numerics;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.Havok;
-using System.Reflection;
-using ImGuiScene;
+using System.Text;
+using System.Threading.Tasks;
 using System.Timers;
-using Dalamud.Logging;
 
 namespace CraftingList.UI.CraftingListTab
 {
-
-    public class IngredientSummaryListing
+    public class EntryIngredientListing
     {
-        public uint ItemId { get; set; }
-        public string Name { get; set; } = "";
-        public int NumCraftsNeeded { get; set; } // -1 represents "max"
-        public bool HasMax { get; set; } // Used for aggregate listings for more than one entry. Allows keeping track of the amount needed by other entries
-        public bool CanBeHQ { get; set; }
-        public bool NeedsHQ { get; set; }
-        public int PerCraft { get; set; }
-        public int InInventory { get; set; }
+        public Item Item { get; set; } = Service.Items[0];
+        public int NumUsed { get; set; }
+        public bool IsHQ { get; set; }
+        public int NumAvailable { get; set; }
     }
 
+    public class EntryIngredientSummary
+    {
+
+        public CListEntry Entry = new(-1, "", "", false, CListEntry.EmptyHQSelection());
+
+        public List<EntryIngredientListing> Ingredients { get; set; } = new();
+
+        public bool CanCraft = false;
+        public int NumCrafts = 0;
+    }
     public class IngredientSummary : IDisposable
     {
-        public IEnumerable<IngredientSummaryListing> Ingredients { get; set; } = new List<IngredientSummaryListing>();
+        public List<EntryIngredientSummary> EntrySummaries = new();
 
-        public List<List<IngredientSummaryListing>> IntermediateListings = new();
-
-        public bool ExpectHQResults = false;
-        readonly Timer updateTimer = new(1000);
+        readonly Timer updateTimer = new(500);
 
         public IngredientSummary()
         {
-            updateTimer.Elapsed += (sender, e) => UpdateIngredients();
+            updateTimer.Elapsed += (sender, e) => Update();
             updateTimer.Start();
         }
 
@@ -53,120 +52,57 @@ namespace CraftingList.UI.CraftingListTab
             updateTimer.Dispose();
         }
 
-        public void UpdateIngredients()
+        public void Update()
         {
-            var result = GetIngredientListFromEntryList(Service.Configuration.EntryList);
-            Ingredients = result.Item1.OrderBy(i => i.ItemId).ThenBy(i => i.Name);
-            IntermediateListings = result.Item2;
-        }
-
-        public void DisplayListings()
-        {
-            foreach (var ingredient in Ingredients)
+            List<EntryIngredientListing> intermediateListings = new();
+            Dictionary<(Item, bool), int> inInventory = new();
+            lock (EntrySummaries)
             {
-                DisplayListing(ingredient);
-            }
-            ImGui.NewLine();
-
-
-            ImGuiAddons.BeginGroupPanel("\"max\" entry expected yields", new Vector2(-1, 0));
-            ImGui.Checkbox("Expect that results will be HQ if applicable?", ref ExpectHQResults);
-            ImGui.NewLine();
-
-            int j = 0;
-            foreach (var entry in EntryListManager.Entries)
-            {
-                if (entry.NumCrafts != "max")
-                    continue;
-
-                if (Service.IconCache.TryGetIcon(Service.Recipes[entry.RecipeId].ItemResult.Value!.Icon, ExpectHQResults, out TextureWrap? icon))
+                EntrySummaries.Clear();
+                foreach (var entry in EntryListManager.Entries)
                 {
-                    ImGuiAddons.ScaledImageY(icon.ImGuiHandle, icon.Width, icon.Height, ImGui.GetFrameHeight());
-                    ImGui.SameLine();
+                    GetNumCraftsPossible(entry, intermediateListings, inInventory);
+                    EntrySummaries.Add(EntryIngredients(entry, intermediateListings, inInventory));
                 }
-                ImGui.Text($"{Service.Recipes[entry.RecipeId].ItemResult.Value!.Name}: ");
-                ImGui.SameLine();
-
-                var numCraftsAvailalable = GetNumCraftsPossible(entry, IntermediateListings[j]);
-                var numSpacesForItem = GetNumItemThatCanFitInInventory((int) Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId, ExpectHQResults);
-                ImGui.Text(" " + Math.Min(numCraftsAvailalable, numSpacesForItem).ToString());
-
-
-                j++;
             }
-            ImGuiAddons.EndGroupPanel();
         }
 
-        public static void DisplayListing(IngredientSummaryListing ingredient)
+        public void DisplaySummaries()
         {
-            int inInventory = ingredient.InInventory;// + SeInterface.GetItemCountInInevntory(ingredient.ItemId, true);
-            int amountNeeded = ingredient.PerCraft * Math.Max(0, ingredient.NumCraftsNeeded); // if the ingredient is only needed by a 'max' craft,
-            if (inInventory >= amountNeeded && (!ingredient.HasMax || (inInventory > ingredient.PerCraft)))
+            lock (EntrySummaries)
             {
-                ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, FontAwesomeIcon.Check);
-                ImGui.SameLine();
-            }
-            else
-            {
-                ImGui.Dummy(new Vector2(17, 0));
-                ImGui.SameLine();
-            }
-            ImGui.Text($"{ingredient.Name}: {(amountNeeded != 0 ? amountNeeded : string.Empty)}{(ingredient.HasMax ? (amountNeeded != 0 ? " + " : "") + "max" : "")}");
-            ImGui.SameLine();
-            Vector4 color = ImGuiColors.DalamudGrey;
-
-            if (inInventory < amountNeeded || (ingredient.HasMax && (inInventory < ingredient.PerCraft)))
-                color = ImGuiColors.DalamudRed;
-
-            //PluginLog.Debug($"{ingredient.Name} | Amount: {ingredient.AmountNeeded} | PerCraft: {ingredient.PerCraft} | NumCrafts: {ingredient.NumCraftsNeeded}");
-            ImGui.TextColored(color, $" ({inInventory} in inventory, {inInventory / ingredient.PerCraft} crafts) ");
-
-        }
-
-        public static int GetNumCraftsPossible(CListEntry entry, List<IngredientSummaryListing> previouslyUsedMats)
-        {
-            //PluginLog.Debug($"prev mats count: {previouslyUsedMats.Count}");
-            if (entry.NumCrafts != "max")
-                return CListEntry.GetCraftNum(entry.NumCrafts);
-
-            var entryIngredients = GetIngredientListFromEntry(entry);
-            var rawIngData = Service.Recipes[entry.RecipeId].UnkData5.Select(i => i.ItemIngredient).ToList();
-
-            int leastNumCraftsPossible = int.MaxValue;
-
-
-            foreach (var ingredient in entryIngredients)
-            {
-                //PluginLog.Debug($"{ingredient.Name} | PerCraft: {ingredient.PerCraft} | NumCrafts: {ingredient.NumCraftsNeeded}");
-                var matchingListings = previouslyUsedMats.Where(l => l.Name == ingredient.Name);
-                int previouslyUsedAmount = 0;
-                if (matchingListings.Any())
+                if (ImGui.BeginTable("##IngredientSummary", 2, ImGuiTableFlags.None,
+                    new Vector2(ImGui.GetContentRegionAvail().X * .98f, // scale to prevent it from leaving the border.
+                            ImGui.GetFrameHeight() * (EntryListManager.Entries.Count + 1))))
                 {
+                    ImGui.TableSetupColumn("##IS-Check", ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn("##IS-Listing", ImGuiTableColumnFlags.WidthStretch);
 
-                    previouslyUsedAmount = matchingListings.First().PerCraft * matchingListings.First().NumCraftsNeeded;
+                    
+                    foreach (var summary in EntrySummaries)
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        if (!summary.CanCraft)
+                            ImGuiAddons.IconTextColored(ImGuiColors.DPSRed, Dalamud.Interface.FontAwesomeIcon.ExclamationTriangle);
+                        else
+                            ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, Dalamud.Interface.FontAwesomeIcon.Check);
+                        ImGui.SameLine();
+                        ImGui.TableSetColumnIndex(1);
+                        DisplayEntry(summary);
+                    }
+
+
+                    ImGui.EndTable();
                 }
-
-                var numUsedPerCraft = ingredient.PerCraft;
-                var numInInventory = ingredient.InInventory;
-                var numAvailable = Math.Max(numInInventory - previouslyUsedAmount, 0);
-                var numCraftsPossible = numAvailable / numUsedPerCraft;
-                //PluginLog.Debug($"Available: {numAvailable}");
-                if (numCraftsPossible < leastNumCraftsPossible)
-                    leastNumCraftsPossible = numCraftsPossible;
-
             }
-
-            return leastNumCraftsPossible;
         }
-        
 
-        
-        public static List<IngredientSummaryListing> GetIngredientListFromRecipe(Recipe recipe)
+        public static List<EntryIngredientListing> IngredientsFromRecipe(Recipe recipe)
         {
+            List<EntryIngredientListing> ingredientAmounts = new();
 
             var ingredients = recipe.UnkData5;
-
-            List<IngredientSummaryListing> ingredientAmounts = new();
 
 
             for (int i = 0; i < ingredients.Length; i++)
@@ -176,111 +112,230 @@ namespace CraftingList.UI.CraftingListTab
                 if (ingredient.ItemIngredient <= 0)
                     continue;
 
-                var ingredientItem = Service.Items[ingredient.ItemIngredient];
-
-                ingredientAmounts.Add(new IngredientSummaryListing
+                var newListing = new EntryIngredientListing
                 {
-                    ItemId = (uint)ingredient.ItemIngredient,
-                    Name = ingredientItem.Name,
-                    NumCraftsNeeded = 0,
-                    CanBeHQ = ingredientItem.CanBeHq,
-                    PerCraft = ingredient.AmountIngredient
-                });
-            }
+                    Item = Service.Items[ingredient.ItemIngredient],
+                    NumUsed = ingredient.AmountIngredient,
+                    IsHQ = false,
+                    NumAvailable = -1
+                };
 
+
+                ingredientAmounts.Add(newListing);
+            }
             return ingredientAmounts;
         }
 
-        public static List<IngredientSummaryListing> GetIngredientListFromEntry(CListEntry entry)
+        public static List<EntryIngredientListing> GetBaseIngredientsFromEntry(CListEntry entry)
         {
-            List<IngredientSummaryListing> result = new();
 
-            var recipe = Service.Recipes[entry.RecipeId];
-            var entryIngredientList = GetIngredientListFromRecipe(recipe);
+            List<EntryIngredientListing> result = new();
 
-            for (int i = 0; i < entryIngredientList.Count; i++)
+            var recipe = entry.Recipe();
+            var recipeIngredientList = IngredientsFromRecipe(recipe);
+
+            for (int i = 0; i < recipeIngredientList.Count; i++)
             {
-                var copy = entryIngredientList[i];
-                copy.InInventory = SeInterface.GetItemCountInInventory(copy.ItemId, false);
-                copy.NumCraftsNeeded = CListEntry.GetCraftNum(entry.NumCrafts);
-
-                if (copy.NumCraftsNeeded == -1)
-                    copy.HasMax = true;
-
-
-                if (entryIngredientList[i].CanBeHQ)
+                var copy = recipeIngredientList[i];
+                if (copy.Item.CanBeHq)
                 {
-                    IngredientSummaryListing hqIngredientCopy = new()
+                    if (entry.PrioHQMats)
                     {
-                        Name = copy.Name,
-                        ItemId = copy.ItemId,
-                        NumCraftsNeeded = copy.NumCraftsNeeded,
-                        HasMax = copy.HasMax,
-                        CanBeHQ = copy.CanBeHQ,
-                        PerCraft = copy.PerCraft,
-                    };
-                    hqIngredientCopy.Name = "" + hqIngredientCopy.Name;
-                    hqIngredientCopy.NeedsHQ = true;
-                    hqIngredientCopy.PerCraft = entry.HQSelection[i];
-                    hqIngredientCopy.InInventory = SeInterface.GetItemCountInInventory(hqIngredientCopy.ItemId, true);
+                        result.Add(new()
+                        {
+                            Item = copy.Item,
+                            NumUsed = copy.NumUsed,
+                            IsHQ = true,
+                            NumAvailable = -1,
+                        });
+                        result.Add(copy);
+                        continue;
+                    }
+                    else {
+                        EntryIngredientListing hqIngredientCopy = new()
+                        {
+                            Item = copy.Item,
+                            NumUsed = entry.HQSelection[i] * Math.Max(CListEntry.GetCraftNum(entry.NumCrafts), 1),
+                            IsHQ = true,
+                            NumAvailable = -1
+                        };
 
-                    if (hqIngredientCopy.NumCraftsNeeded != 0)
-                        AddToList(result, hqIngredientCopy);
+                        copy.NumUsed -= entry.HQSelection[i];
 
-                    copy.PerCraft -= entry.HQSelection[i];
+                        if (hqIngredientCopy.NumUsed != 0)
+                            result.Add(hqIngredientCopy);
+
+                    }
 
                 }
+                copy.NumUsed *= Math.Max(CListEntry.GetCraftNum(entry.NumCrafts), 1);
 
-                if (copy.NumCraftsNeeded != 0)
-                    AddToList(result, copy);
+                if (copy.NumUsed != 0)
+                    result.Add(copy);
 
             }
-
             return result;
         }
 
-        public static (List<IngredientSummaryListing>, List<List<IngredientSummaryListing>>) GetIngredientListFromEntryList(IEnumerable<CListEntry> list)
+        public static EntryIngredientSummary EntryIngredients(CListEntry entry, List<EntryIngredientListing> previouslyUsedIngredients, Dictionary<(Item, bool), int> itemsInInventory)
         {
-            List<IngredientSummaryListing> result = new();
-            List<List<IngredientSummaryListing>> intermediateListings = new();
-            
+            var entryIngredients = GetBaseIngredientsFromEntry(entry);
+            var recipeIngredients = IngredientsFromRecipe(entry.Recipe());
 
-            foreach (var entry in list)
+            var nCrafts = Math.Min(GetNumCraftsPossible(entry, previouslyUsedIngredients, itemsInInventory),
+                    GetNumItemThatCanFitInInventory((int) entry.Result().RowId, true));
+            bool canCraft = true;
+            foreach (var ingredient in entryIngredients)
             {
 
-                var entryIngredients = GetIngredientListFromEntry(entry);
+                EntryIngredientListing? prevUsedIngredient = previouslyUsedIngredients.Where(i => i.Item.RowId == ingredient.Item.RowId && i.IsHQ == ingredient.IsHQ).FirstOrDefault();
+                int inInventory = itemsInInventory.TryGetValue((ingredient.Item, ingredient.IsHQ), out int var) ? var : SeInterface.GetItemCountInInventory(ingredient.Item.RowId, ingredient.IsHQ, false, false);
+                int numPreviouslyUsed = prevUsedIngredient == null ? 0 : prevUsedIngredient.NumUsed;
+                int numAvail = inInventory - numPreviouslyUsed;
 
-                if (entry.NumCrafts.ToLower() == "max")
+                ingredient.NumAvailable = numAvail;
+                if (entry.PrioHQMats)
                 {
-                    intermediateListings.Add(result.ToList());
+                    if (ingredient.IsHQ)
+                    {
+                        EntryIngredientListing nqIngredient = entryIngredients.Where(i => i.Item.RowId == ingredient.Item.RowId && i.IsHQ == false).First();
+                        var totalUsed = nCrafts * ingredient.NumUsed;
+
+                        ingredient.NumUsed = Math.Min(totalUsed, numAvail);
+                        nqIngredient.NumUsed = Math.Max(0, totalUsed - ingredient.NumUsed);
+
+                    }
+                    else if (!ingredient.Item.CanBeHq)
+                    {
+                        //Cap NumUsed at the starting per-craft amount
+                        ingredient.NumUsed = Math.Max(ingredient.NumUsed, ingredient.NumUsed * nCrafts);
+                    }
                 }
-                AddListToList(result, entryIngredients);
+                else if (entry.NumCrafts.ToLower() == "max")
+                {
+                    ingredient.NumUsed = Math.Max(ingredient.NumUsed, ingredient.NumUsed * nCrafts);
+                }
+                if (prevUsedIngredient == null)
+                {
+                    itemsInInventory.Add((ingredient.Item, ingredient.IsHQ), inInventory);
+
+                    previouslyUsedIngredients.Add(new EntryIngredientListing
+                    {
+                        Item = ingredient.Item,
+                        IsHQ = ingredient.IsHQ,
+                        NumUsed = ingredient.NumUsed,
+                        NumAvailable = -1,
+                    });
+                        
+                }
+                else
+                {
+                    prevUsedIngredient.NumUsed += ingredient.NumUsed;
+                }
+
+                if (ingredient.NumAvailable < ingredient.NumUsed)
+                    canCraft = false;
+                    
             }
-            return (result, intermediateListings);
+
+            return new()
+            {
+                Entry = entry,
+                Ingredients = entryIngredients,
+                CanCraft = canCraft,
+                NumCrafts = nCrafts,
+            };
         }
 
-        private static void AddToList(List<IngredientSummaryListing> list, IngredientSummaryListing listing)
+        public static void DisplayEntry(EntryIngredientSummary entrySummary)
         {
-            if (listing.NumCraftsNeeded == 0 || listing.PerCraft <= 0)
+
+            
+            if (Service.IconCache.TryGetIcon(entrySummary.Entry.Result().Icon, false, out var resultTex)) 
             {
-                return;
+                ImGuiAddons.ScaledImageY(resultTex!.ImGuiHandle, resultTex!.Width, resultTex!.Height, ImGui.GetFrameHeight());
             }
-            var matches = list.Where(l => l.Name == listing.Name);
-            if (matches.Any())
+            ImGui.SameLine();
+            if (ImGui.CollapsingHeader($"{entrySummary.Entry.Name}: {entrySummary.Entry.NumCrafts} {(entrySummary.Entry.NumCrafts.ToLower() == "max" ? $"({entrySummary.NumCrafts})" : "")}##-{entrySummary.Entry.EntryId}"))
             {
-                matches.First().NumCraftsNeeded += Math.Max(listing.NumCraftsNeeded, 0);
-                matches.First().HasMax |= listing.HasMax;
+                if (ImGui.BeginTable($"##Ingredient-Summary-{entrySummary.Entry.EntryId}", 4, ImGuiTableFlags.BordersOuter
+                    )) {
+
+                    ImGui.TableSetupColumn($"##IS-Check-{entrySummary.Entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn($"Name##IS-Name-{entrySummary.Entry.EntryId}", ImGuiTableColumnFlags.WidthStretch);
+                    ImGui.TableSetupColumn($"Used##IS-Needed-{entrySummary.Entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
+                    ImGui.TableSetupColumn($" Available ##IS-Avail-{entrySummary.Entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
+
+                    ImGui.TableSetupScrollFreeze(0, 1);
+                    ImGui.TableHeadersRow();
+                    foreach (var ingredient in entrySummary.Ingredients)
+                    {
+                        if (ingredient.NumUsed == 0)
+                            continue;
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        if (ingredient.NumUsed > ingredient.NumAvailable)
+                            ImGuiAddons.IconTextColored(ImGuiColors.DPSRed, Dalamud.Interface.FontAwesomeIcon.ExclamationTriangle);
+                        else
+                            ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, Dalamud.Interface.FontAwesomeIcon.Check);
+
+                        ImGui.TableSetColumnIndex(1);
+                        if (Service.IconCache.TryGetIcon(ingredient.Item.Icon, ingredient.IsHQ, out TextureWrap? tex))
+                        {
+                            ImGuiAddons.ScaledImageY(tex.ImGuiHandle, tex.Width, tex.Height, ImGui.GetFrameHeight());
+                        }
+                        ImGui.SameLine();
+                        ImGui.Text($"{(ingredient.IsHQ ? "" : "")}{ingredient.Item.Name}");
+
+                        ImGui.TableSetColumnIndex(2);
+                        ImGui.Text($"{ingredient.NumUsed}");
+
+                        ImGui.TableSetColumnIndex(3);
+                        ImGui.TextColored(ingredient.NumUsed > ingredient.NumAvailable ? ImGuiColors.DPSRed : ImGuiColors.HealerGreen, $"{ingredient.NumAvailable}");
+                    }
+                    ImGui.EndTable();
+                }
+                
             }
-            else 
-                list.Add(listing);
         }
 
-        private static void AddListToList(List<IngredientSummaryListing> baseList, List<IngredientSummaryListing> toAdd)
+        public static int GetNumCraftsPossible(CListEntry entry, List<EntryIngredientListing> previouslyUsedIngredients, Dictionary<(Item, bool), int> itemsInInventory)
         {
-            for (int i = 0; i < toAdd.Count; i++)
+            if (entry.NumCrafts != "max")
+                return CListEntry.GetCraftNum(entry.NumCrafts);
+
+            var entryIngredients = GetBaseIngredientsFromEntry(entry);
+
+            int leastNumCraftsPossible = int.MaxValue;
+
+
+            foreach (var ingredient in entryIngredients)
             {
-                AddToList(baseList, toAdd[i]);
+                EntryIngredientListing? prevUsedIngredient = previouslyUsedIngredients.Where(i => i.Item.RowId == ingredient.Item.RowId && i.IsHQ == ingredient.IsHQ).FirstOrDefault();
+                int inInventory = itemsInInventory.TryGetValue((ingredient.Item, ingredient.IsHQ), out int var) ? var : SeInterface.GetItemCountInInventory(ingredient.Item.RowId, ingredient.IsHQ, false, false);
+                int numPreviouslyUsed = prevUsedIngredient == null ? 0 : prevUsedIngredient.NumUsed;
+                int numAvail = inInventory - numPreviouslyUsed;
+
+                ingredient.NumAvailable = numAvail;
+                if (entry.PrioHQMats)
+                {
+                    if (!ingredient.IsHQ)
+                    {
+                        int hqAvail = itemsInInventory.TryGetValue((ingredient.Item, true), out int nhq) ? nhq : SeInterface.GetItemCountInInventory(ingredient.Item.RowId, true, false, false);
+                        numAvail += hqAvail;
+
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                var nCrafts = numAvail / ingredient.NumUsed;
+                if (nCrafts < leastNumCraftsPossible)
+                    leastNumCraftsPossible = nCrafts;
+
             }
+            return leastNumCraftsPossible;
         }
 
         public unsafe static int GetNumItemThatCanFitInInventory(int itemId, bool hq)
@@ -306,11 +361,11 @@ namespace CraftingList.UI.CraftingListTab
                     }
                     if (bags[bag]->Items[i].ItemID == itemId && ((bags[bag]->Items[i].Flags & InventoryItem.ItemFlags.HQ) != 0) == hq)
                     {
-                        quantityHeld += (int) bags[bag]->Items[i].Quantity;
+                        quantityHeld += (int)bags[bag]->Items[i].Quantity;
                     }
                 }
             }
-        
+
             var item = Service.Items[itemId];
             int numInFreeSlots = (int)(numFreeSlots * item.StackSize);
             int numFreeInExistingStacks = (int)((quantityHeld % item.StackSize == 0) ? 0 : item.StackSize - (quantityHeld % item.StackSize));

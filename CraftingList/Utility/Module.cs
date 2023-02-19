@@ -1,4 +1,5 @@
-﻿using Dalamud.Memory;
+﻿using Dalamud.Logging;
+using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
 using System.Diagnostics;
@@ -128,6 +129,7 @@ namespace CraftingList.Utility
         {
             var table = ObtainVTable(addon);
             var ptr = table[2];
+
             return Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(new IntPtr(ptr));
         }
 
@@ -140,6 +142,7 @@ namespace CraftingList.Utility
         public static void ClickAddon(void* addon, void* target, EventType type, int which, void* eventData, void* helper)
         {
             var receiveEvent = ObtainReceiveEventDelegate(addon);
+
             receiveEvent(addon, (ushort)type, which, helper, eventData);
         }
 

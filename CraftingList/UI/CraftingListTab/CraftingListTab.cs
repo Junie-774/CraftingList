@@ -21,31 +21,14 @@ namespace CraftingList.UI.CraftingListTab
     public class CraftingListTab : ITab, IDisposable
     {
         public EntryListTable EntryListTable;
-        readonly private IEnumerable<Recipe?> craftableItems;
-        readonly private List<string> craftableNames;
-
-
-        // Two separate lists because we want to present an empty option for a new list entry, but not present an empty option for an existing entry.
         public string Name => "Crafting";
 
         private readonly CraftingList plugin;
-
 
         public CraftingListTab(CraftingList plugin)
         {
             this.plugin = plugin;
             EntryListTable = new(plugin.Crafter);
-            craftableNames = new List<string>
-            {
-                ""
-            };
-
-            craftableItems = Service.DataManager.GetExcelSheet<Recipe>()!;
-
-            foreach (var item in craftableItems)
-            {
-                craftableNames.Add(item!.ItemResult.Value!.Name);
-            }
         }
         public void Draw()
         {
@@ -69,7 +52,7 @@ namespace CraftingList.UI.CraftingListTab
             ImGui.SameLine();
             ImGui.Text(" Minutes");
 
-            ImGui.Text($"Estimated time to complete list:\n~{EntryListTable.EstimatedTime.Hours}h, {EntryListTable.EstimatedTime.Minutes}m, {EntryListTable.EstimatedTime.Seconds}s.");
+            ImGui.Text($"Estimated time to complete list:\n{EntryListTable.FormatTime(EntryListTable.EstimatedTime)}");
 
             ImGui.NewLine();
             if (ImGui.Button("Craft!"))
@@ -84,12 +67,9 @@ namespace CraftingList.UI.CraftingListTab
 
             ImGui.NextColumn();
 
-            if (!plugin.Crafter.IsRunning())
-            {
-                ImGuiAddons.BeginGroupPanel("Ingredient Summary", new Vector2(-1, -1));
-                EntryListTable.IngredientSummary.DisplayListings();
-                ImGuiAddons.EndGroupPanel();
-            }
+            ImGuiAddons.BeginGroupPanel("Ingredient Summary", new Vector2(-1, -1));
+            EntryListTable.IngredientSummary.DisplaySummaries();
+            ImGuiAddons.EndGroupPanel();
             ImGui.Columns(1);
             
         }
@@ -98,7 +78,7 @@ namespace CraftingList.UI.CraftingListTab
 
         public void Dispose()
         {
-
+            EntryListTable.Dispose();
         }
     }
 }

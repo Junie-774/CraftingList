@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,9 +15,13 @@ namespace CraftingList.SeFunctions
         public IntPtr Pointer;
         public static implicit operator PtrSynthesisSimpleDialog(IntPtr ptr)
             => new() { Pointer = ptr };
+
+        public static explicit operator nint(PtrSynthesisSimpleDialog v)
+            => v.Pointer;
+
         public void ClickButton(int which)
         {
-            Module.ClickAddon((void*)Pointer, null, EventType.Change, which);
+            Utility.Module.ClickAddon((void*)Pointer, null, EventType.Change, which);
         }
 
         public void StartSynthesis()
@@ -30,6 +35,19 @@ namespace CraftingList.SeFunctions
                 return;
             AtkComponentNumericInput* node = (AtkComponentNumericInput*)((AtkUnitBase*)Pointer)->GetNodeById(6)->GetAsAtkComponentNode()->Component;
             node->SetValue(amount);
+        }
+
+        public void SetHQMats(bool useHQ)
+        {
+            AtkComponentCheckBox* node = (AtkComponentCheckBox*)((AtkUnitBase*)Pointer)->GetNodeById(5)->GetAsAtkComponentNode()->Component;
+            if (useHQ)
+            {
+                node->AtkComponentButton.Flags |= (1U << 18);
+            }
+            else
+            {
+                node->AtkComponentButton.Flags &= ~(1U << 18);
+            }
         }
     }
 }

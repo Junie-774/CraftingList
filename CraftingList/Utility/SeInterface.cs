@@ -50,21 +50,35 @@ namespace CraftingList.Utility
         public FFXIVInternalMacro CloseNoteMacro;
 
         public Hook<AgentRecipeNoteReceiveEventDelegate>? recipeAgentREHook;
+        public Hook<SynthesisSimpleDialogReceiveEventDelegate>? dialogREHook;
 
         public static void Dispose()
         {
             Instance.recipeAgentREHook?.Disable();
             Instance.recipeAgentREHook?.Dispose();
+            Instance.dialogREHook?.Disable();
+            Instance.dialogREHook?.Dispose();
             Instance.m_waitlist?.Dispose();
         }
 
+        public void InitializeHooks()
+        {
+            //dialogREHook = Singleton<AddonSynthesisSimpleReceiveEvent>.Get().CreateHook(SynthSimpleREDetour);
+            //dialogREHook?.Enable();
+        }
         public SeInterface()
         {
             SignatureHelper.Initialise(this);
 
             m_useActionDelegate = Singleton<UseAction>.Get().Delegate();
 
-            CloseNoteMacro = new FFXIVInternalMacro(0, 0, "Close", "/closerecipenote");          
+            CloseNoteMacro = new FFXIVInternalMacro(0, 0, "Close", "/closerecipenote");
+            
+        }
+        private static void SynthSimpleREDetour(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused)
+        {
+            PluginLog.Debug($"atkunit: {atkUnit:X16} event type: {eventType}, which: {which}, source: {source:X16}, unused: {unused:X16}");
+            Instance.dialogREHook?.Original(atkUnit, eventType, which, source, unused);
         }
 
         public static IntPtr GetUiObject(string name, int index = 1)

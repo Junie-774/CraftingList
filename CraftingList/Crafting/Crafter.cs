@@ -17,7 +17,7 @@ namespace CraftingList.Crafting
 {
     public class Crafter
     {
-        public ManualResetEvent CraftUpdateEvent = new(false);
+        public bool CraftUpdateEvent = false;
 
         private bool m_running = false;
         uint lastUsedFood = 0;
@@ -67,7 +67,7 @@ namespace CraftingList.Crafting
                         && (DateTime.Now - craftStart).TotalMinutes >= Service.Configuration.CraftTimeoutMinutes)
                         break;
 
-                    var job = Service.Recipes[entry.RecipeId].CraftType.Value!.RowId;             
+                    var job = entry.Recipe().CraftType.Value!.RowId;             
 
                     await CraftHelper.ChangeJobs((int) job);
 
@@ -100,7 +100,7 @@ namespace CraftingList.Crafting
                 Service.Configuration.Save();
                 await Task.Delay(500);
                 TerminationAlert();
-                CraftUpdateEvent.Set();
+                CraftUpdateEvent = true;
                 m_running = false;
                 return true;
             });
@@ -206,7 +206,7 @@ namespace CraftingList.Crafting
 
         public async Task<bool> CraftOneItem(CListEntry entry, CraftingMacro macro)
         {
-            bool isCollectible = Service.Recipes[entry.RecipeId].ItemResult.Value!.IsCollectable;
+            bool isCollectible = entry.Recipe().ItemResult.Value!.IsCollectable;
 
             //if (!await CraftHelper.OpenRecipeByItem((int)Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId))
             if (!await CraftHelper.OpenRecipeByRecipe(entry.RecipeId))
@@ -216,7 +216,7 @@ namespace CraftingList.Crafting
             }
 
 
-            if (!await CraftHelper.FillHQMats(entry.HQSelection))
+            if (!await CraftHelper.FillHQMats(entry))
             {
                 Cancel("A problem occured while trying to fill HQ mats, cancelling craft...", true);
                 return false;
@@ -253,7 +253,7 @@ namespace CraftingList.Crafting
                 return false;
             }
             entry.Decrement();
-            CraftUpdateEvent.Set();
+            CraftUpdateEvent = true;
             return true;
         }
 
@@ -283,7 +283,7 @@ namespace CraftingList.Crafting
                 {
                     entry.running = false;
                 }
-                CraftUpdateEvent.Set();
+                CraftUpdateEvent = true;
             }
             return true;
         }
@@ -304,10 +304,10 @@ namespace CraftingList.Crafting
                 return false;
             }
 
+            
             if (!await CraftHelper.ClickQuickSynthesize())
             {
                 CraftHelper.CancelEntry(entry, $"A problem occured while trying to click Quick Synthesize for '{entry.Name}'. Moving to next entry...", true);
-                entry.running = false;
                 return false;
             }
 
@@ -316,6 +316,14 @@ namespace CraftingList.Crafting
                 CraftHelper.CancelEntry(entry, $"A problem occured while trying to enter quick synth amount for '{entry.Name}'. Moving to next entry...", true);
                 entry.running = false;
                 return false;
+            }
+            if (entry.PrioHQMats)
+            {
+                if (!await CraftHelper.CheckQuickSynthHQMatBox())
+                {
+                    CraftHelper.CancelEntry(entry, $"A problem occurred while checking the 'Use HQ Materials' box for '{entry.Name}'. Moving to next entry...", true);
+                    return false;
+                }
             }
 
             if (!await CraftHelper.StartQuickSynth())
@@ -345,7 +353,7 @@ namespace CraftingList.Crafting
                     lastCompletionTime = DateTime.Now;
                     lastNumCompleted = numCompleted;
                     entry.Decrement();
-                    CraftUpdateEvent.Set();
+                    CraftUpdateEvent = true;
                 }
 
                 if (DateTime.Now.CompareTo(lastCompletionTime.AddSeconds(5)) > 0)

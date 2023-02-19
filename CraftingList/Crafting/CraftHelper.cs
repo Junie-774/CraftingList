@@ -104,21 +104,38 @@ namespace CraftingList.Crafting
         {
             PluginLog.Debug("[CraftHelper.EnterQuickSynthAmount()] Entering Quick Synth amount.");
 
-            var quickSynthDialog = SeInterface.GetUiObject("SynthesisSimpleDialog");
+            var quickSynthDialog = SeInterface.SynthesisSimpleDialog();
 
-            if (!SeInterface.IsAddonAvailable(quickSynthDialog, true))
+            if (!SeInterface.IsAddonAvailable((IntPtr) quickSynthDialog, true))
             {
                 PluginLog.Error("[CraftHelper.EnterQuickSynthAmount()] Called when SynthesisSimpleDialog was not available.");
                 return false;
             }
 
-            ((PtrSynthesisSimpleDialog)quickSynthDialog).SetAmount(amount);
+            quickSynthDialog.SetAmount(amount);
 
             await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
 
             return true;
         }
 
+        public static async Task<bool> CheckQuickSynthHQMatBox()
+        {
+            PluginLog.Debug("[CraftHelper.CheckQuicksynthHQMatBox()] Checking the 'Use HQ materials' box.");
+
+            var quickSynthDialog = SeInterface.SynthesisSimpleDialog();
+            if (!SeInterface.IsAddonAvailable((IntPtr) quickSynthDialog, true))
+            {
+                PluginLog.Error("[CraftHelper.CheckQuicksynthHQMatBox()] Called when SynthesisSimpleDialog was not available.");
+                return false;
+            }
+
+            quickSynthDialog.SetHQMats(true);
+
+            await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
+
+            return true;
+        }
         public static async Task<bool> StartQuickSynth()
         {
             PluginLog.Debug("[CraftHelper.StartQuickSynth()] Starting Quick synth from dialog.");
@@ -207,21 +224,27 @@ namespace CraftingList.Crafting
                 else return !SeInterface.HasStatusID(48);
             }
         }
-        public static async Task<bool> FillHQMats(int[] hqSelection)
+        public static async Task<bool> FillHQMats(CListEntry entry)
         {
             PluginLog.Debug("[CraftHelper.FillHQMats()] Selecting HQ Mats...");
 
-            if (hqSelection.Length != 6)
+            if (entry.PrioHQMats)
             {
-                PluginLog.Debug($"[CraftHelper.FillHQMats()] Bad hqSelection parameter passed to CraftHelper.FillHQMats. Should be length 6, was given length {hqSelection.Length}");
+                SeInterface.RecipeNote().FillHQ(true);
+                await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
+                return true;
+            }
+            if (entry.HQSelection.Length != 6)
+            {
+                PluginLog.Error($"[CraftHelper.FillHQMats()] Bad hqSelection parameter passed to CraftHelper.FillHQMats. Should be length 6, was given length {entry.HQSelection.Length}");
                 return false;
             }
 
             for (int i = 0; i < 6; i++)
             {
-                for (int j = 0; j < hqSelection[i]; j++)
+                for (int j = 0; j < entry.HQSelection[i]; j++)
                 {
-                    await Task.Delay(250);
+                    await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
                     SeInterface.RecipeNote().ClickHQ(i);
                 }
             }

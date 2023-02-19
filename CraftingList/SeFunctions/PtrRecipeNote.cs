@@ -71,6 +71,21 @@ namespace CraftingList.SeFunctions
                 (long)numPtr1, (long)atkValue, 0, 0);
         }
 
+        private void FillHQ(int arg)
+        {
+            AtkValue* atkValuePtr = stackalloc AtkValue[2];
+            atkValuePtr[0].ChangeType(FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int);
+            atkValuePtr[1].ChangeType(FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int);
+            atkValuePtr[0].Int = 6;
+            atkValuePtr[1].Int = arg;
+            byte* numPtr1 = stackalloc byte[16];
+            Singleton<AgentRecipeNoteReceiveEvent>.Get().Invoke((IntPtr)AgentRecipeNote.Instance(),
+                (long)numPtr1, (long)atkValuePtr, 0, 0);
+        }
+
+        public void FillHQ(bool hq) =>
+            FillHQ(hq ? 131071 : ushort.MaxValue);
+
         public void Close()
         {
             if (AgentRecipeNote.Instance() != null && Pointer != null && Pointer->AtkUnitBase.IsVisible)

@@ -12,12 +12,6 @@ namespace CraftingList.UI.CraftingListTab
 {
     public class TimeEstimation
     {
-        IngredientSummary ingredientSummary;
-
-        public TimeEstimation(IngredientSummary ingredientSummary)
-        {
-            this.ingredientSummary = ingredientSummary;
-        }
         public static int EstimateMacroDurationMS(CraftingMacro macro)
         {
             if (macro == null) return 0;
@@ -47,25 +41,22 @@ namespace CraftingList.UI.CraftingListTab
             return total;
         }
 
-        public int EstimateEntryDurationMS(CListEntry entry, List<IngredientSummaryListing> intermediateListings)
+        public static int EstimateEntryDurationMS(CListEntry entry, EntryIngredientSummary summary)
         {
-            
-            int setupTime = 6000;
+            int avgExecMacroDelay = (int) (Service.Configuration.ExecuteMacroDelayMinSeconds + Service.Configuration.ExecuteMacroDelayMaxSeconds) / 2;
+            int avgClickSynthDelay = (int)(Service.Configuration.ClickSynthesizeDelayMinSeconds + Service.Configuration.ClickSynthesizeDelayMaxSeconds) / 2;
+            int setupTime = Service.Configuration.WaitDurations.AfterExitCrafting // exit crafting
+                + Service.Configuration.WaitDurations.AfterEatFood // eat food
+                + Service.Configuration.WaitDurations.AfterOpenCloseMenu * 2 // Open recipenote & click quick synth
+                + avgClickSynthDelay;
+
             int timePerCraft;
             int numRestarts;
-            int numCrafts;
-            if (entry.NumCrafts.ToLower() == "max")
-            {
-                var numCraftable = IngredientSummary.GetNumCraftsPossible(entry, intermediateListings);
-                var numCanFitInInevntory = IngredientSummary.GetNumItemThatCanFitInInventory((int)Service.Recipes[entry.RecipeId].ItemResult.Value!.RowId, ingredientSummary.ExpectHQResults);
-                numCrafts = Math.Min(numCraftable, numCanFitInInevntory);
-            }
-            else
-            {
-                if (!int.TryParse(entry.NumCrafts, out _))
-                    return 0;
-                numCrafts = int.Parse(entry.NumCrafts);
-            }
+            int numCrafts = summary.NumCrafts;
+
+            int betweenCrafts = avgExecMacroDelay
+                + avgClickSynthDelay
+                + Service.Configuration.WaitDurations.AfterOpenCloseMenu;
 
             if (entry.MacroName == "<Quick Synth>")
             {
@@ -78,7 +69,7 @@ namespace CraftingList.UI.CraftingListTab
                 timePerCraft = EstimateMacroDurationMS(MacroManager.GetMacro(entry.MacroName)!);
             }
 
-            return (numRestarts * 3000) + (timePerCraft * numCrafts) + setupTime;
+            return (numRestarts * betweenCrafts) + (timePerCraft * numCrafts) + setupTime;
 
         }
     }

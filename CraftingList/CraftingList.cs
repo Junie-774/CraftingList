@@ -7,6 +7,7 @@ using Dalamud.Game.Command;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.Attributes;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.GeneratedSheets;
@@ -30,7 +31,6 @@ namespace CraftingList
         {
             Singleton<UseAction>.Set(Service.SigScanner);
             Singleton<AgentRecipeNoteReceiveEvent>.Set(Service.SigScanner);
-
         }
 
         public CraftingList(DalamudPluginInterface pluginInterface)
@@ -44,6 +44,7 @@ namespace CraftingList
             SignatureHelper.Initialise(this);
 
             InitializeSingletons();
+            SeInterface.Instance.InitializeHooks();
             MacroManager.InitializeMacros();
 
             Crafter = new Crafter();
@@ -100,10 +101,6 @@ namespace CraftingList
         private unsafe void OnCommand(string command, string args)
         {
 
-            //((AgentRecipeNote*) FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetAgentModule()->GetAgentByInternalId(AgentId.RecipeNote))
-            //    ->OpenRecipeByRecipeId(Service.Recipes[0].RowId);
-            //SeInterface.RecipeNote().OpenRecipeByRecipeId((int) Service.Recipes[52].RowId);
-            PluginLog.Debug($"ID: {Service.Recipes[52].RowId}");
         }
 
         private void OnCraftingList(string command, string args)
@@ -111,7 +108,7 @@ namespace CraftingList
 
             this.PluginUi.Visible = true;
             this.PluginUi.CraftingListTab.EntryListTable.EstimateTime();
-            this.PluginUi.CraftingListTab.EntryListTable.IngredientSummary.UpdateIngredients();
+            this.PluginUi.CraftingListTab.EntryListTable.IngredientSummary.Update();
         }
 
         private void OnCraftAllItems(string command, string args)

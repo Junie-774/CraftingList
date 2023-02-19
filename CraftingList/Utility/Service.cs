@@ -77,17 +77,6 @@ namespace CraftingList.Utility
         [RequiredVersion("1.0")]
         public static Dalamud.Game.ClientState.Conditions.Condition Condition { get; private set; } = null!;
 
-        public static Item? GetRowFromId(uint id)
-        {
-            return DataManager.GetExcelSheet<Item>()!.GetRow(id);
-        }
-
-        public static Recipe? GetRecipeFromResultId(uint id)
-        {
-            var result = DataManager.GetExcelSheet<Recipe>()!.Where(r => r!.ItemResult!.Value!.RowId == id);
-            return result.Any() ? result.First() : null;
-        }
-
         public static List<Recipe> Recipes { get; private set; } = null!;
 
         public static List<ClassJob> Jobs { get; private set; } = null!;
