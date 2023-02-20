@@ -215,10 +215,10 @@ namespace CraftingList.UI.CraftingListTab
                         nqIngredient.NumUsed = Math.Max(0, totalUsed - ingredient.NumUsed);
 
                     }
-                    else if (!ingredient.Item.CanBeHq)
+                    else if (!ingredient.Item.CanBeHq && entry.NumCrafts.ToLower() == "max")
                     {
-                        //Cap NumUsed at the starting per-craft amount
                         ingredient.NumUsed = Math.Max(ingredient.NumUsed, ingredient.NumUsed * nCrafts);
+
                     }
                 }
                 else if (entry.NumCrafts.ToLower() == "max")
