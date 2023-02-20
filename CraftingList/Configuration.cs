@@ -7,6 +7,7 @@ using Dalamud.Plugin;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CraftingList
 {
@@ -42,7 +43,7 @@ namespace CraftingList
         public List<IngameMacro> IngameMacros { get; set; } = new();
         public List<PluginMacro> PluginMacros { get; set; } = new();
 
-        public bool UsePluginMacros = true;
+        public List<CraftingMacro> CraftingMacros { get; set; } = new();
 
         public List<CListEntry> EntryList { get; set; } = new();
 
@@ -77,10 +78,6 @@ namespace CraftingList
 
         public bool CanaryTestFlag = false;
 
-        public IEnumerable<CraftingMacro> GetMacros()
-        {
-            return UsePluginMacros ? PluginMacros : IngameMacros;
-        }
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]
@@ -98,6 +95,24 @@ namespace CraftingList
                 if (toref == 0)
                 {
                     field.SetValue(copy, field.GetValue(waitDurationHelper));
+                }
+            }
+
+            foreach (var macro in MacroManager.PluginMacros)
+            {
+                if (!CraftingMacros.Select(m => m.Name).Contains(macro.Name))
+                {
+                    CraftingMacros.Add(macro);
+
+                }
+            }
+
+            foreach (var macro in MacroManager.IngameMacros)
+            {
+                if (!CraftingMacros.Select(m => m.Name).Contains(macro.Name))
+                {
+                    CraftingMacros.Add(macro);
+
                 }
             }
 

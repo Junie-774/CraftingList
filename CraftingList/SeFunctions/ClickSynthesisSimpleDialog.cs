@@ -15,6 +15,6 @@ namespace CraftingList.SeFunctions
         }
 
         public void ClickUseHQMats()
-            => this.ClickAddonCheckBox((AtkComponentCheckBox*) ((AtkUnitBase*) SeInterface.GetUiObject("SynthesisSimpleDialog"))->GetNodeById(5)->GetAsAtkComponentNode(), 2);
+            => this.ClickAddonCheckBox((AtkComponentCheckBox*) ((AtkUnitBase*) SeInterface.GetUiObject("SynthesisSimpleDialog"))->GetNodeById(5)->GetAsAtkComponentNode()->Component, 2);
     }
 }

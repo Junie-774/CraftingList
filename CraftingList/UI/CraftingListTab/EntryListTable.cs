@@ -15,6 +15,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureMacroModule;
 
 namespace CraftingList.UI.CraftingListTab
 {
@@ -23,8 +24,10 @@ namespace CraftingList.UI.CraftingListTab
         public IngredientSummary IngredientSummary = new();
         public List<TimeSpan> EntryTimeEstimations = new();
         public TimeSpan EstimatedTime;
+
         readonly private List<(int, Recipe)> filteredRecipes = new();
 
+        private CListEntry? draggedEntry = null;
         private readonly HashSet<int> entriesToRemove = new(); // We can't remove entries while iterating over them, so we add their id's to a set and remove all of them
                                                       // after iterating.
         readonly private CListEntry newEntry = new(-1, "", "", false, CListEntry.EmptyHQSelection());
@@ -67,8 +70,9 @@ namespace CraftingList.UI.CraftingListTab
                 ImGui.TableSetupScrollFreeze(0, 1);
                 ImGui.TableHeadersRow();
                 ImGui.TableNextRow();
-                foreach (var entry in EntryListManager.Entries)
+                for (int i = 0; i < EntryListManager.Entries.Count; i++)
                 {
+                    var entry = EntryListManager.Entries[i];
                     if (entry.RecipeId < 0) continue;
 
                     ImGui.TableSetColumnIndex(0);
@@ -78,8 +82,9 @@ namespace CraftingList.UI.CraftingListTab
                         ImGui.SameLine();
                     }
 
-                    var expanded = ImGui.TreeNodeEx($"##treenode-{entry.EntryId}", ImGuiTreeNodeFlags.None,
+                    var expanded = ImGui.TreeNodeEx($"##Entry-Treenode--{entry.EntryId}", ImGuiTreeNodeFlags.None,
                         $"{entry.Result().Name}");
+                    DragDropEntry(entry);
 
 
                     if (expanded)
@@ -99,8 +104,8 @@ namespace CraftingList.UI.CraftingListTab
                     ImGui.TableSetColumnIndex(3);
                     lock (IngredientSummary.EntrySummaries)
                     {
-                        //PluginLog.Debug($"{entry.EntryId}");
-                        ImGui.Text(FormatTime(EntryTimeEstimations[entry.EntryId]));
+                        if (entry.EntryId >= 0 && entry.EntryId < EntryTimeEstimations.Count)//PluginLog.Debug($"{entry.EntryId}");
+                            ImGui.Text(FormatTime(EntryTimeEstimations[entry.EntryId]));
                     }
 
                     ImGui.TableSetColumnIndex(4);
@@ -492,6 +497,37 @@ namespace CraftingList.UI.CraftingListTab
                 $"{(hasSeconds ? $"{time.Seconds}s" : "")}";
         }
 
+        private void DragDropEntry(CListEntry entry)
+        {
+            if (ImGui.BeginDragDropSource())
+            {
+                this.draggedEntry = entry;
+                ImGui.Text(entry.Name);
+                ImGui.SetDragDropPayload("CraftingMacroPayload", IntPtr.Zero, 0);
+                ImGui.EndDragDropSource();
+            }
+
+            if (ImGui.BeginDragDropTarget())
+            {
+                var payload = ImGui.AcceptDragDropPayload("CraftingMacroPayload");
+
+                bool nullPtr;
+                unsafe
+                {
+                    nullPtr = payload.NativePtr == null;
+                }
+
+                if (!nullPtr && payload.IsDelivery() && draggedEntry != null)
+                {
+                    var copy = EntryListManager.Entries[draggedEntry.EntryId];
+                    EntryListManager.Entries.RemoveAt(draggedEntry.EntryId);
+                    EntryListManager.Entries.Insert(entry.EntryId, copy);
+                }
+
+                ImGui.EndDragDropTarget();
+            }
+
+        }
         private void FilterRecipes(string str)
         {
             filteredRecipes.Clear();

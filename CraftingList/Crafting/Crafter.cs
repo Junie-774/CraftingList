@@ -117,11 +117,12 @@ namespace CraftingList.Crafting
             }
             else
             {
+                /*
                 if (macro is IngameMacro && !IngameMacro.IsValidMacro((IngameMacro)macro))
                 {
                     Cancel($"Macro \"{macro.Name}\" was invalid. This is likely an internal error x.x", true);
-                    return false;
-                }
+                    return false;fuc
+                }*/
             }
 
             PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {macro.Name}. FoodId: {macro.FoodID}");

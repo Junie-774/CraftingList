@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.RaptureMacroModule;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace CraftingList.Crafting.Macro
@@ -20,53 +21,28 @@ namespace CraftingList.Crafting.Macro
         public static List<IngameMacro> IngameMacros
             => Service.Configuration.IngameMacros;
 
+        public static List<CraftingMacro> CraftingMacros
+            => Service.Configuration.CraftingMacros;
+
         public static List<string> MacroNames { get; set; } = new() { };// "<Quick Synth>" };
 
         public static void InitializeMacros()
         {
-            foreach (var macro in PluginMacros)
+            foreach (var macro in CraftingMacros)
             {
                 MacroNames.Add(macro.Name);
             }
-            foreach (var macro in IngameMacros)
-            {
-                MacroNames.Add(macro.Name);
-            }
+
         }
         public static CraftingMacro? GetMacro(string macroName)
         {
-            return GetMacroFromList(PluginMacros, macroName) ?? GetMacroFromList(IngameMacros, macroName) ?? null;
-        }
-
-        public static CraftingMacro? GetMacroFromList(IEnumerable<CraftingMacro> macros, string macroName)
-        {
-            foreach (var macro in macros)
+            foreach (var macro in CraftingMacros)
             {
                 if (macro.Name == macroName)
                     return macro;
             }
 
             return null;
-        }
-
-        public static bool ExistsMacro(string macroName)
-        {
-            foreach (var name in MacroNames)
-            {
-                if (macroName == name)
-                    return true;
-            }
-            return false;
-        }
-
-        public static bool ExistsMacroInList(IEnumerable<CraftingMacro> macroList, string macroName)
-        {
-            foreach (var macro in macroList)
-            {
-                if (macro.Name == macroName)
-                    return true;
-            }
-            return false;
         }
 
         public static string GenerateUniqueName(IEnumerable<string> names, string baseNewName)
@@ -81,39 +57,40 @@ namespace CraftingList.Crafting.Macro
             return baseNewName + modifier;
         }
 
-        public static void AddPluginMacro(PluginMacro newMacro)
+        public static void AddCraftingMacro(CraftingMacro newMacro)
         {
             newMacro.Name = GenerateUniqueName(MacroNames, newMacro.Name);
-            PluginMacros.Add(newMacro);
+            CraftingMacros.Add(newMacro);
             RegenerateMacroNames();
         }
 
-        public static void AddIngameMacro(IngameMacro newMacro)
+        public static void AddEmptyCraftingMacro(string newName)
         {
-            newMacro.Name = GenerateUniqueName(MacroNames, newMacro.Name);
-            IngameMacros.Add(newMacro);
-            RegenerateMacroNames();
+            var newMacro = new CraftingMacro(GenerateUniqueName(MacroNames, newName), 0, 0, false, "", -1, -1);
+            AddCraftingMacro(newMacro);
         }
 
-        public static void AddEmptyPluginMacro(string newName)
+
+        public static void MoveCraftingMacro(CraftingMacro macro, int index)
         {
-            var newMacro = new PluginMacro(GenerateUniqueName(MacroNames, newName), 0, 0, "");
-            AddPluginMacro(newMacro);
+            if(index < 0 || index > CraftingMacros.Count)
+                return;
+
+            CraftingMacro copy = CraftingMacros[CraftingMacros.IndexOf(macro)];
+            if (CraftingMacros.Remove(macro))
+            {
+                CraftingMacros.Insert(index, copy);
+            }
         }
 
-        public static void AddEmptyIngameMacro(string newName)
-        {
-            var newMacro = new IngameMacro(newName, -1, -1);
 
-            AddIngameMacro(newMacro);
-        }
+
 
         public static int RemoveMacro(string macroName)
         {
             MacroNames.RemoveAll(m => m == macroName);
 
-            return PluginMacros.RemoveAll(m => m.Name == macroName)
-                    + IngameMacros.RemoveAll(m => m.Name == macroName);
+            return CraftingMacros.RemoveAll(m => m.Name == macroName);
         }
 
         public static void RenameMacro(string currName, string newName)
@@ -161,15 +138,11 @@ namespace CraftingList.Crafting.Macro
             MacroNames.Clear();
             //MacroNames.Add("<Quick Synth>");
 
-            foreach (var macro in PluginMacros)
+            foreach (var macro in CraftingMacros)
             {
                 MacroNames.Add(macro.Name);
             }
 
-            foreach (var macro in IngameMacros)
-            {
-                MacroNames.Add(macro.Name);
-            }
         }
 
         public static async Task<bool> ExecuteMacroCommands(IEnumerable<MacroCommand> commands)

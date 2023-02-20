@@ -13,13 +13,13 @@ using System.Reflection.Metadata.Ecma335;
 
 namespace CraftingList.Crafting.Macro
 {
-    public class MacroCommand
+    public partial class MacroCommand
     {
         private static ManualResetEvent DataWaiter
         => Service.GameEventManager.DataAvailableWaiter;
 
-        private static readonly Regex WaitRegex = new(@"(?<modifier><wait\.(?<wait>\d+(?:\.\d+)?)>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static readonly Regex ActionNameRegex = new(@"^/(?:ac|action)\s+(?<name>.*?)\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex WaitRegex = WaitTimeRegexFunc();
+        private static readonly Regex ActionNameRegex = ActionNameRegexFunc();
 
         private static readonly HashSet<string> CraftingActionNames = new();
         private static readonly HashSet<string> CraftingQualityActionNames = new();
@@ -86,7 +86,7 @@ namespace CraftingList.Crafting.Macro
             if (!IsCraftingAction(actionName))
             {
                 PluginLog.Debug("Not a crafting action");
-                Service.ChatManager.SendMessage(this.Text);
+                Service.ChatManager.SendMessage(Text);
                 await Task.Delay(WaitMS);
                 return true;
             }
@@ -194,5 +194,10 @@ namespace CraftingList.Crafting.Macro
                 CraftingQualityActionNames.Add(name);
             }
         }
+
+        [GeneratedRegex("^/(?:ac|action)\\s+(?<name>.*?)\\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+        private static partial Regex ActionNameRegexFunc();
+        [GeneratedRegex("(?<modifier><wait\\.(?<wait>\\d+(?:\\.\\d+)?)>)", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
+        private static partial Regex WaitTimeRegexFunc();
     }
 }

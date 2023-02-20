@@ -31,6 +31,7 @@ namespace CraftingList
         {
             Singleton<UseAction>.Set(Service.SigScanner);
             Singleton<AgentRecipeNoteReceiveEvent>.Set(Service.SigScanner);
+            //Singleton<AddonSynthesisSimpleReceiveEvent>.Set();
         }
 
         public CraftingList(DalamudPluginInterface pluginInterface)
@@ -100,7 +101,8 @@ namespace CraftingList
 
         private unsafe void OnCommand(string command, string args)
         {
-
+            //ClickSynthesisSimpleDialog click = new();
+            //click.ClickUseHQMats();
         }
 
         private void OnCraftingList(string command, string args)

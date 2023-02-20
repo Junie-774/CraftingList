@@ -24,6 +24,8 @@ namespace CraftingList.UI
         readonly private IEnumerable<Item?> craftingMedicine;
         readonly private List<string> medicineNames;
 
+
+        private CraftingMacro? draggedMacro = null;
         private readonly CraftingList plugin;
 
         private string toDelete = "";
@@ -68,10 +70,7 @@ namespace CraftingList.UI
         public void DrawMacroPage()
         {
             ImGuiAddons.BeginGroupPanel("Macros", new Vector2(-1, 0));
-            DrawPluginMacros();
-            ImGui.NewLine();
-            DrawIngameMacros();
-            ImGui.NewLine();
+            DrawMacros();
             ImGuiAddons.EndGroupPanel();
 
             if (toDelete != "")
@@ -87,53 +86,95 @@ namespace CraftingList.UI
 
         }
 
-        public void DrawIngameMacros()
+        public void DrawMacros()
         {
-            if (ImGuiAddons.BeginGroupPanelCollapsing($"In-Game Macros", new Vector2(-1, -1)))
+            for (int i = 0; i < Service.Configuration.CraftingMacros.Count ; i++)
             {
-                if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add a macro."))
+                if (i == MacroManager.CraftingMacros.Count)
                 {
-                    MacroManager.AddEmptyIngameMacro("New Macro");
+                    var mac = Service.Configuration.IngameMacros[i];
                 }
-                for (int i = 0; i < MacroManager.IngameMacros.Count; i++)
+                var macro = Service.Configuration.CraftingMacros[i];
+                var expanded = ImGui.TreeNodeEx($"##CraftingMacro-{i}", ImGuiTreeNodeFlags.NoAutoOpenOnLog, macro.Name);
+                DrawCraftingMacroPopup(macro);
+                bool dragTarget = CraftingMacroDragDrop(macro);
+                if (expanded)
                 {
-                    var macro = MacroManager.IngameMacros[i];
-                    var expanded = ImGui.TreeNode($"{macro.Name}##tree");
-                    DrawIngameMacroPopup(macro);
-                    if (expanded)
-                    {
-                        DrawIngameMacro(macro, i);
-                        ImGui.TreePop();
-                    }
-
+                    DrawCraftingMacro(macro, i);
+                    ImGui.TreePop();
                 }
             }
-            ImGuiAddons.EndGroupPanel();
+            if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add a macro."))
+            {
+                MacroManager.AddEmptyCraftingMacro("New Macro");
+            }
+
         }
 
-        public void DrawPluginMacros()
+        public void DrawCraftingMacro(CraftingMacro macro, int id)
         {
-            if (ImGuiAddons.BeginGroupPanelCollapsing($"In-Plugin Macros", new Vector2(-1, -1)))
-            {
+            if (!macro.UseIngameMacro)
+                ImGuiAddons.UnderlinedText("In-Plugin macro");
+            else
+                ImGui.Text("In-Plugin macro");
 
-                for (int i = 0; i < MacroManager.PluginMacros.Count; i++)
+            ImGui.SameLine();
+
+            ImGuiAddons.ToggleSwitch("Toooogle", ref macro.UseIngameMacro);
+            ImGui.SameLine();
+
+            if (macro.UseIngameMacro)
+                ImGuiAddons.UnderlinedText("In-Game macro");
+            else
+                ImGui.Text("In-Game macro");
+
+            var name = macro.Name;
+            if (ImGui.InputText($"##RenameCraftingMacro-{id}", ref name, 100)
+                && name != macro.Name)
+            {
+                EntryListTable.UpdateMacroNameInEntries(macro.Name, name);
+                MacroManager.RenameMacro(macro.Name, name);
+
+                Service.Configuration.Save();
+            }
+            FoodSelectionBox(macro);
+            MedicineSelectionBox(macro);
+
+            
+
+            if (macro.UseIngameMacro)
+            {
+                ImGui.PushItemWidth(50 * ImGuiHelpers.GlobalScale);
+                ImGui.InputInt($"1st Macro Number##{macro.Name}-Num1", ref macro.Macro1Num, 0);
+                ImGui.InputInt($"2nd Macro Number##{macro.Name}-Num2", ref macro.Macro2Num, 0);
+                ImGui.PopItemWidth();
+            }
+            else
+            {
+                var contents = macro.Text;
+                if (ImGui.InputTextMultiline($"##{macro.Name}-editor", ref contents, 100_000,
+                    ImGuiHelpers.ScaledVector2(350, 14 * ImGui.CalcTextSize("Z").Y)))
                 {
-                    var macro = MacroManager.PluginMacros[i];
-                    var expanded = ImGui.TreeNodeEx($"##PluginMacro-{i}", ImGuiTreeNodeFlags.None, macro.Name);
-                    DrawPluginMacroPopup(macro);
-                    if (expanded)
-                    {
-                        DrawPluginMacro(macro, i);
-                        ImGui.TreePop();
-                    }
-                }
-                if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add a macro."))
-                {
-                    MacroManager.AddEmptyPluginMacro("New Macro");
+                    macro.Text = contents;
+                    Service.Configuration.Save();
                 }
             }
-            ImGuiAddons.EndGroupPanel();
+
+
+
         }
+
+        public void DrawCraftingMacroPopup(CraftingMacro macro)
+        {
+            if (ImGui.BeginPopupContextItem($"##{macro.Name}-popup"))
+            {
+                DrawMacroPopupContent(macro);
+                ImGui.SameLine();
+
+                ImGui.EndPopup();
+            }
+        }
+
 
         public void DrawIngameMacro(IngameMacro macro, int id)
         {
@@ -158,57 +199,6 @@ namespace CraftingList.UI
         }
 
 
-        public void DrawPluginMacro(PluginMacro macro, int id)
-        {
-            var name = macro.Name;
-            if (ImGui.InputText($"##RenamePluginMacro-{id}", ref name, 100)
-                && name != macro.Name)
-            {
-                EntryListTable.UpdateMacroNameInEntries(macro.Name, name);
-                MacroManager.RenameMacro(macro.Name, name);
-
-                Service.Configuration.Save();
-            }
-            FoodSelectionBox(macro);
-
-            MedicineSelectionBox(macro);
-
-            var contents = macro.Text;
-            if (ImGui.InputTextMultiline($"##{macro.Name}-editor", ref contents, 100_000,
-                ImGuiHelpers.ScaledVector2(350, 14 * ImGui.CalcTextSize("Z").Y)))
-            {
-                PluginLog.Debug(contents);
-                macro.Text = contents;
-                Service.Configuration.Save();
-            }
-
-        }
-        private void DrawPluginMacroPopup(PluginMacro macro)
-        {
-            if (ImGui.BeginPopupContextItem($"##{macro.Name}-popup"))
-            {
-                DrawMacroPopupContent(macro);
-                ImGui.SameLine();
-
-                ImGui.EndPopup();
-            }
-        }
-        private void DrawIngameMacroPopup(IngameMacro macro)
-        {
-            if (ImGui.BeginPopupContextItem($"##{macro.Name}-popup"))
-            {
-                DrawMacroPopupContent(macro);
-                ImGui.SameLine();
-
-                if (ImGuiAddons.IconButton(FontAwesomeIcon.FileImport, "Import to In-Plugin Macros"))
-                {
-                    MacroManager.AddPluginMacro(PluginMacro.FromIngameMacro(macro));
-                    Service.Configuration.Save();
-                }
-                ImGui.EndPopup();
-
-            }
-        }
         private void DrawMacroPopupContent(CraftingMacro macro)
         {
             var name = macro.Name;
@@ -240,8 +230,6 @@ namespace CraftingList.UI
 
             DrawMacroPage();
         }
-
-   
 
         public uint DrawComboBox(string label, string imguiID, ref int selection, string[] names, float width, uint oldResult)
         {
@@ -293,6 +281,39 @@ namespace CraftingList.UI
                 macro.MedicineID = newMeds;
                 Service.Configuration.Save();
             }
+        }
+
+        public bool CraftingMacroDragDrop(CraftingMacro macro)
+        {
+            if (ImGui.BeginDragDropSource())
+            {
+                this.draggedMacro = macro;
+                ImGui.Text(macro.Name);
+                ImGui.SetDragDropPayload("CraftingMacroPayload", IntPtr.Zero, 0);
+                ImGui.EndDragDropSource();
+            }
+
+            if (ImGui.BeginDragDropTarget())
+            {
+                var payload = ImGui.AcceptDragDropPayload("CraftingMacroPayload");
+
+                bool nullPtr;
+                unsafe
+                {
+                    nullPtr = payload.NativePtr == null;
+                }
+
+                if (!nullPtr && payload.IsDelivery() && draggedMacro != null)
+                {
+                    var index = Service.Configuration.CraftingMacros.IndexOf(macro);
+                    MacroManager.MoveCraftingMacro(draggedMacro, index);
+                }
+                
+                ImGui.EndDragDropTarget();
+                return true;
+            }
+
+            return false;
         }
 
         public uint GetBaseFoodID(uint id)

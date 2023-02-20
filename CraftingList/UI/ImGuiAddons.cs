@@ -1,5 +1,6 @@
 ﻿using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Style;
 using ImGuiNET;
 using ImGuiScene;
 using ImPlotNET;
@@ -27,6 +28,17 @@ namespace CraftingList.UI
             ImGui.PushFont(UiBuilder.IconFont);
             ImGui.TextColored(color, icon.ToIconString());
             ImGui.PopFont();
+
+        }
+
+        public static void UnderlinedText(string text)
+        {
+            ImGui.Text(text);
+            Vector2 min = ImGui.GetItemRectMin();
+            Vector2 max = ImGui.GetItemRectMax();
+            min.Y = max.Y;
+
+            ImGui.GetWindowDrawList().AddLine(min, max, ImGui.GetColorU32(ImGuiCol.Text), 1.0f);
         }
 
         public static bool BoundedInputInt(string text, ref int val, int min, int max)
@@ -88,6 +100,30 @@ namespace CraftingList.UI
             float num = scaledHeight / (float)iconHeight;
             float x = (float)iconWidth * num;
             ImGui.Image(handle, new Vector2(x, scaledHeight));
+        }
+
+        internal static unsafe void ToggleSwitch(string id, ref bool val)
+        {
+            Vector2 p = ImGui.GetCursorScreenPos();
+            ImDrawListPtr drawList = ImGui.GetWindowDrawList();
+
+            float height = ImGui.GetFrameHeight();
+            float width = height * 1.55f;
+            float radius = height * 0.50f;
+
+            if (ImGui.InvisibleButton(id, new Vector2(width, height)))
+            {
+                val = !val;
+            }
+
+            uint col_bg;
+            if (ImGui.IsItemHovered())
+                col_bg = val ? ImGui.ColorConvertFloat4ToU32(*ImGui.GetStyleColorVec4(ImGuiCol.FrameBgActive)) : ImGui.ColorConvertFloat4ToU32(*ImGui.GetStyleColorVec4(ImGuiCol.FrameBgActive));
+            else
+                col_bg = val ? ImGui.ColorConvertFloat4ToU32(*ImGui.GetStyleColorVec4(ImGuiCol.FrameBgHovered)) : ImGui.ColorConvertFloat4ToU32(*ImGui.GetStyleColorVec4(ImGuiCol.FrameBgHovered));
+
+            drawList.AddRectFilled(p, new Vector2(p.X + width, p.Y + height), col_bg, height * 0.5f);
+            drawList.AddCircleFilled(new Vector2(val ? (p.X + width - radius) : (p.X + radius), p.Y + radius), radius - 1.5f, ImGui.ColorConvertFloat4ToU32(ImGuiColors.DalamudGrey));
         }
 
         public static void BeginGroupPanel(string name, Vector2 size)

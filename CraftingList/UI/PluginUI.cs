@@ -8,6 +8,7 @@ using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -120,7 +121,17 @@ namespace CraftingList
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();
-
+                ImGui.SameLine();
+                ImGui.PushStyleColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new Vector4(0.65f, 0.02f, 0.02f, 1)));
+                //ImGui.PushStyleColor(ImGuiCol.ButtonHovered, ImGui.ColorConvertFloat4ToU32(new Vector4(255, 100, 100, 255)));
+                if (ImGui.Button("Support"))
+                {
+                    Process.Start(new ProcessStartInfo("https://patreon.com/Juwune")
+                    {
+                        UseShellExecute = true
+                    });
+                }
+                ImGui.PopStyleColor(1);
             }
             ImGui.End();
 

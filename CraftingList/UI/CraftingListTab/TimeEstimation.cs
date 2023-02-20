@@ -12,34 +12,36 @@ namespace CraftingList.UI.CraftingListTab
 {
     public class TimeEstimation
     {
+
         public static int EstimateMacroDurationMS(CraftingMacro macro)
         {
-            if (macro == null) return 0;
-            return (macro is PluginMacro) ? EstimateMacroDurationMS((PluginMacro) macro) : EstimateMacroDurationMS((IngameMacro) macro);
-        }
-
-        public static int EstimateMacroDurationMS(PluginMacro macro)
-        {
-            int total = 0;
-            foreach (var command in MacroManager.Parse(macro.Text))
+            if (macro == null)
+                return 0;
+            if (macro.UseIngameMacro)
             {
-                total += command.WaitMS;
+                int total = 0;
+                foreach (var command in MacroManager.Parse(IngameMacro.GetMacroTextFromNum(macro.Macro1Num)))
+                    total += command.WaitMS;
+
+                foreach (var command in MacroManager.Parse(IngameMacro.GetMacroTextFromNum(macro.Macro2Num)))
+                    total += command.WaitMS;
+
+                return total;
             }
+            else
+            {
+                
 
-            return total;
+                int total = 0;
+                foreach (var command in MacroManager.Parse(macro.Text))
+                {
+                    total += command.WaitMS;
+                }
+
+                return total;
+            }
         }
 
-        public static int EstimateMacroDurationMS(IngameMacro macro)
-        {
-            int total = 0;
-            foreach (var command in MacroManager.Parse(IngameMacro.GetMacroText(macro.Macro1Num)))
-                total += command.WaitMS;
-            
-            foreach (var command in MacroManager.Parse(IngameMacro.GetMacroText(macro.Macro2Num)))
-                total += command.WaitMS;
-
-            return total;
-        }
 
         public static int EstimateEntryDurationMS(CListEntry entry, EntryIngredientSummary summary)
         {
