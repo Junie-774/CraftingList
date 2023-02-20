@@ -522,6 +522,7 @@ namespace CraftingList.UI.CraftingListTab
                     var copy = EntryListManager.Entries[draggedEntry.EntryId];
                     EntryListManager.Entries.RemoveAt(draggedEntry.EntryId);
                     EntryListManager.Entries.Insert(entry.EntryId, copy);
+                    Service.Configuration.Save();
                 }
 
                 ImGui.EndDragDropTarget();

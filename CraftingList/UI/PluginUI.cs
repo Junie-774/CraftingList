@@ -126,7 +126,7 @@ namespace CraftingList
                 //ImGui.PushStyleColor(ImGuiCol.ButtonHovered, ImGui.ColorConvertFloat4ToU32(new Vector4(255, 100, 100, 255)));
                 if (ImGui.Button("Support"))
                 {
-                    Process.Start(new ProcessStartInfo("https://patreon.com/Juwune")
+                    Process.Start(new ProcessStartInfo("https://ko-fi.com/juniec")
                     {
                         UseShellExecute = true
                     });

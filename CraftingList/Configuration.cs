@@ -51,7 +51,10 @@ namespace CraftingList
 
         public bool HasCraftTimeout = false;
         public int CraftTimeoutMinutes = 0;
-        
+
+        public bool IncludeEntryResults = false;
+        public bool PresumeEntryResultsHQ = false;
+
         public bool OnlyRepairIfBelow99 = true;
 
         public WaitDurationHelper WaitDurations = new();

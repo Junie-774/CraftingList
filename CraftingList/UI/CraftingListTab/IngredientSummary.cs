@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
@@ -38,7 +39,7 @@ namespace CraftingList.UI.CraftingListTab
     public class IngredientSummary : IDisposable
     {
         public List<EntryIngredientSummary> EntrySummaries = new();
-
+        
         readonly Timer updateTimer = new(500);
 
         public IngredientSummary()
@@ -95,6 +96,14 @@ namespace CraftingList.UI.CraftingListTab
 
                     ImGui.EndTable();
                 }
+
+                if (ImGui.Checkbox("Include results as available ingredients in later crafts?", ref Service.Configuration.IncludeEntryResults)
+                    || ImGui.Checkbox("Presume results are HQ?", ref Service.Configuration.PresumeEntryResultsHQ))
+                {
+                    Service.Configuration.Save();
+                }
+                
+
             }
         }
 
@@ -177,14 +186,15 @@ namespace CraftingList.UI.CraftingListTab
             return result;
         }
 
-        public static EntryIngredientSummary EntryIngredients(CListEntry entry, List<EntryIngredientListing> previouslyUsedIngredients, Dictionary<(Item, bool), int> itemsInInventory)
+        public EntryIngredientSummary EntryIngredients(CListEntry entry, List<EntryIngredientListing> previouslyUsedIngredients, Dictionary<(Item, bool), int> itemsInInventory)
         {
             var entryIngredients = GetBaseIngredientsFromEntry(entry);
             var recipeIngredients = IngredientsFromRecipe(entry.Recipe());
 
             var nCrafts = Math.Min(GetNumCraftsPossible(entry, previouslyUsedIngredients, itemsInInventory),
-                    GetNumItemThatCanFitInInventory((int) entry.Result().RowId, true));
-            bool canCraft = true;
+                    GetNumItemThatCanFitInInventory((int) entry.Result().RowId, Service.Configuration.PresumeEntryResultsHQ));
+            bool canCraft = nCrafts > 0;
+            // PROBLEM: GetNumItemThatCanFitInInventory doesn't account for entry results
             foreach (var ingredient in entryIngredients)
             {
 
@@ -238,6 +248,24 @@ namespace CraftingList.UI.CraftingListTab
                     
             }
 
+            if (Service.Configuration.IncludeEntryResults && canCraft)
+            {
+                var matchingIngredients = previouslyUsedIngredients.Where(i => i.Item.RowId == entry.Result().RowId && i.IsHQ == Service.Configuration.PresumeEntryResultsHQ);
+                if (matchingIngredients.Any())
+                {
+                    matchingIngredients.First().NumUsed -= nCrafts * entry.Recipe().AmountResult;
+                }
+                else
+                {
+                    previouslyUsedIngredients.Add(new EntryIngredientListing
+                    {
+                        Item = entry.Result(),
+                        IsHQ = Service.Configuration.PresumeEntryResultsHQ,
+                        NumUsed = -nCrafts * entry.Recipe().AmountResult,
+                        NumAvailable = nCrafts * entry.Recipe().AmountResult
+                    }) ;
+                }
+            }
             return new()
             {
                 Entry = entry,
@@ -256,7 +284,7 @@ namespace CraftingList.UI.CraftingListTab
                 ImGuiAddons.ScaledImageY(resultTex!.ImGuiHandle, resultTex!.Width, resultTex!.Height, ImGui.GetFrameHeight());
             }
             ImGui.SameLine();
-            if (ImGui.CollapsingHeader($"{entrySummary.Entry.Name}: {entrySummary.Entry.NumCrafts} {(entrySummary.Entry.NumCrafts.ToLower() == "max" ? $"({entrySummary.NumCrafts})" : "")}##-{entrySummary.Entry.EntryId}"))
+            if (ImGui.TreeNodeEx($"##EntrySummary-{entrySummary.Entry.EntryId}", ImGuiTreeNodeFlags.CollapsingHeader, $"{entrySummary.Entry.Name}: {entrySummary.Entry.NumCrafts} {(entrySummary.Entry.NumCrafts.ToLower() == "max" ? $"({entrySummary.NumCrafts})" : "")}##-{entrySummary.Entry.EntryId}"))
             {
                 if (ImGui.BeginTable($"##Ingredient-Summary-{entrySummary.Entry.EntryId}", 4, ImGuiTableFlags.BordersOuter
                     )) {
@@ -270,7 +298,7 @@ namespace CraftingList.UI.CraftingListTab
                     ImGui.TableHeadersRow();
                     foreach (var ingredient in entrySummary.Ingredients)
                     {
-                        if (ingredient.NumUsed == 0)
+                        if (ingredient.NumUsed <= 0)
                             continue;
                         ImGui.TableNextRow();
                         ImGui.TableSetColumnIndex(0);

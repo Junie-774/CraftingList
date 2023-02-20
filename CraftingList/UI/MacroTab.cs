@@ -307,6 +307,7 @@ namespace CraftingList.UI
                 {
                     var index = Service.Configuration.CraftingMacros.IndexOf(macro);
                     MacroManager.MoveCraftingMacro(draggedMacro, index);
+                    Service.Configuration.Save();
                 }
                 
                 ImGui.EndDragDropTarget();
