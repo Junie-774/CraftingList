@@ -1,4 +1,5 @@
 ﻿using CraftingList.Crafting;
+using CraftingList.SeFunctions;
 using CraftingList.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using System;
@@ -32,6 +33,8 @@ public unsafe struct PtrSynthesis
     public static implicit operator bool(PtrSynthesis ptr)
         => ptr.Pointer != null;
 
+    public static explicit operator nint(PtrSynthesis v)
+            => (IntPtr) v.Pointer;
 
     public int Step
         => _agent == null ? 0 : *(int*)(_agent + OffsetStep);

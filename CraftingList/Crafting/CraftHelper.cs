@@ -76,10 +76,12 @@ namespace CraftingList.Crafting
                 return false;
 
             await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
+            if (!SeInterface.IsAddonAvailable((IntPtr) SeInterface.Synthesis(), true))
+                return false;
 
             await Task.Delay(randomDelay.Next((int)Service.Configuration.ClickSynthesizeDelayMinSeconds * 1000,
                                               (int)Service.Configuration.ClickSynthesizeDelayMaxSeconds * 1000)
-             );
+            );
             return true;
         }
 

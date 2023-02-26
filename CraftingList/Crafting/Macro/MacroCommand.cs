@@ -35,8 +35,6 @@ namespace CraftingList.Crafting.Macro
 
         public int WaitMS { get; }
 
-        //Currently unused.
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "Will be used later.")]
         private string actionName = "";
 
         public MacroCommand(string text, int wait, string actionName)

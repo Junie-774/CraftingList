@@ -26,6 +26,7 @@ namespace CraftingList.UI.CraftingListTab
         public TimeSpan EstimatedTime;
 
         readonly private List<(int, Recipe)> filteredRecipes = new();
+        readonly private List<(int, Recipe)> filteredFavorites = new();
 
         private CListEntry? draggedEntry = null;
         private readonly HashSet<int> entriesToRemove = new(); // We can't remove entries while iterating over them, so we add their id's to a set and remove all of them
@@ -51,6 +52,7 @@ namespace CraftingList.UI.CraftingListTab
             EstimateTime();
             EntryListManager.ReassignIds();
             newEntry.EntryId = -1;
+            FilterRecipes("");
         }
 
         public void DrawEntries()
@@ -216,11 +218,21 @@ namespace CraftingList.UI.CraftingListTab
                         IngredientSummary.Update();
                         EstimateTime();
 
+                        if (Service.Configuration.RecentRecipeIds.Count > 10)
+                            Service.Configuration.RecentRecipeIds.Dequeue();
+
+                        Service.Configuration.RecentRecipeIds.Enqueue(newEntry.RecipeId);
+
                         newEntry.MacroName = "";
                         newEntry.NumCrafts = "";
                         newEntry.RecipeId = -1;
+                        newEntry.Name = "";
+                        newEntry.PrioHQMats = false;
                         newEntry.HQSelection = CListEntry.EmptyHQSelection();
+
                         Service.Configuration.Save();
+
+                        
                         ImGui.CloseCurrentPopup();
 
                         ShowNewEntryAsterisks = false;
@@ -320,68 +332,121 @@ namespace CraftingList.UI.CraftingListTab
                 if (ImGui.IsWindowAppearing())
                     ImGui.SetKeyboardFocusHere();
 
-                if (ImGui.InputTextWithHint($"##recipe-search-{entry.EntryId}", "Search...", ref recipeSearch, 512U, ImGuiInputTextFlags.AutoSelectAll))
-                {
-                    this.recipeSearch = recipeSearch.Trim();
-                    FilterRecipes(recipeSearch);
-                }
-                if (ImGui.BeginChild($"##recipe-list-child-{entry.EntryId}", new Vector2(0.0f, 250f) * ImGuiHelpers.GlobalScale, false, ImGuiWindowFlags.NoScrollbar)
-                    && ImGui.BeginTable($"##recipe-list-table-{entry.EntryId}", 4, ImGuiTableFlags.ScrollY))
-                {
-                    ImGui.TableSetupColumn($"##icon-{entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
-                    ImGui.TableSetupColumn($"Job##job-{entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
-                    ImGui.TableSetupColumn($"rLvl##rlvl-{entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
-                    ImGui.TableSetupColumn($"Name##name-{entry.EntryId}", ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupScrollFreeze(0, 1);
-                    ImGui.TableHeadersRow();
+                if (ImGui.BeginTabBar($"##Recipe-Select-Tabs-{entry.EntryId}")) {
 
-                    ImGuiListClipperPtr guiListClipperPtr = ImGuiAddons.Clipper(filteredRecipes.Count);
-                    while (guiListClipperPtr.Step())
+                    bool recipesTab = ImGui.BeginTabItem($"Recipes##-{entry.EntryId}");
+                    if (recipesTab)
+                        ImGui.EndTabItem();
+
+                    bool favoritesTab = ImGui.BeginTabItem($"Favorites##-{entry.EntryId}");
+                    if (favoritesTab)
+                        ImGui.EndTabItem();
+                    
+                    if (ImGui.InputTextWithHint($"##recipe-search-{entry.EntryId}", "Search...", ref recipeSearch, 512U, ImGuiInputTextFlags.AutoSelectAll))
+                        this.recipeSearch = recipeSearch.Trim();
+                    
+
+                    if (recipesTab)
                     {
-                        for (int i = guiListClipperPtr.DisplayStart; i < guiListClipperPtr.DisplayEnd; i++)
-                        {
-                            ImGui.TableNextRow();
-                            (int recipeNum, Recipe recipe) = filteredRecipes[i];
-                            string jobStr = Service.Jobs[(int) recipe.CraftType.Row + 8].Abbreviation;
-
-                            ImGui.TableSetColumnIndex(0);
-                            Vector2 cursorPos = ImGui.GetCursorPos();
-                            if (ImGui.Selectable($"##recipe-{entry.EntryId}-{recipe.RowId}", recipeNum == entry.RecipeId, ImGuiSelectableFlags.SpanAllColumns))
-                            {
-                                if (recipeNum != entry.RecipeId)
-                                    entry.HQSelection = CListEntry.EmptyHQSelection();
-
-                                entry.RecipeId = recipeNum;
-                                IngredientSummary.Update();
-                                Service.Configuration.Save();
-                                ImGui.CloseCurrentPopup();
-                            }
-                            TextureWrap? texture;
-                            if (Service.IconCache.TryGetIcon(recipe.ItemResult.Value!.Icon, false, out texture))
-                            {
-                                ImGui.SetCursorPos(cursorPos);
-                                ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
-                            }
-
-                            ImGui.TableSetColumnIndex(1);
-                            ImGui.Text(jobStr);
-                            ImGui.TableSetColumnIndex(2);
-                            ImGui.Text($"{recipe.RecipeLevelTable.Row}");
-                            ImGui.TableSetColumnIndex(3);
-                            ImGui.Text(recipe.ItemResult.Value!.Name.RawString);
-                        }
+                        FilterRecipes(recipeSearch);
+                        RecipeSelectionTable(entry, filteredRecipes);
                     }
-                    ImGui.EndTable();
+                    if (favoritesTab)
+                    {
+                        FilterFavorites(recipeSearch);
+                        RecipeSelectionTable(entry, filteredFavorites);
+                    }
 
                 }
-                ImGui.EndChild();
+                ImGui.EndTabBar();
+
+                
                 ImGui.EndCombo();
+
                 return true;
             }
 
             return false;
         }
 
+        public void RecipeSelectionTable(CListEntry entry, List<(int, Recipe)> recipes)
+        {
+            if (ImGui.BeginChild($"##recipe-list-child-{entry.EntryId}", new Vector2(0.0f, 250f) * ImGuiHelpers.GlobalScale, false, ImGuiWindowFlags.NoScrollbar)
+                    && ImGui.BeginTable($"##recipe-list-table-{entry.EntryId}", 4, ImGuiTableFlags.ScrollY))
+            {
+                ImGui.TableSetupColumn($"##icon-{entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"Job##job-{entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"rLvl##rlvl-{entry.EntryId}", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"Name##name-{entry.EntryId}", ImGuiTableColumnFlags.WidthStretch);
+                ImGui.TableSetupScrollFreeze(0, 1);
+                ImGui.TableHeadersRow();
+
+                ImGuiListClipperPtr guiListClipperPtr = ImGuiAddons.Clipper(recipes.Count);
+                while (guiListClipperPtr.Step())
+                {
+                    for (int i = guiListClipperPtr.DisplayStart; i < guiListClipperPtr.DisplayEnd; i++)
+                    {
+                        ImGui.TableNextRow();
+                        (int recipeNum, Recipe recipe) = recipes[i];
+                        string jobStr = Service.Jobs[(int)recipe.CraftType.Row + 8].Abbreviation;
+
+                        ImGui.TableSetColumnIndex(0);
+                        Vector2 cursorPos = ImGui.GetCursorPos();
+                        if (ImGui.Selectable($"##recipe-{entry.EntryId}-{recipe.RowId}", recipeNum == entry.RecipeId, ImGuiSelectableFlags.SpanAllColumns))
+                        {
+                            if (recipeNum != entry.RecipeId)
+                                entry.HQSelection = CListEntry.EmptyHQSelection();
+
+                            entry.RecipeId = recipeNum;
+                            IngredientSummary.Update();
+                            Service.Configuration.Save();
+                            ImGui.CloseCurrentPopup();
+                        }
+                        if (!Service.Configuration.FavoriteRecipeIDs.Contains(recipeNum) && ImGui.BeginPopupContextItem($"##recipe-context-{i}"))
+                        {
+                            if (ImGuiAddons.IconButton(FontAwesomeIcon.Star, "Add to Favorites", $"##favorite-add-button-{i}"))
+                            {
+                                Service.Configuration.FavoriteRecipeIDs.Add(recipeNum);
+                                Service.Configuration.Save();
+
+                                FilterFavorites(recipeSearch);
+                                ImGui.CloseCurrentPopup();
+                            }
+                            ImGui.EndPopup();
+                        }
+                        else if (ImGui.BeginPopupContextItem($"##recipe-context-{i}"))
+                        {
+                            if (ImGuiAddons.IconButton(FontAwesomeIcon.Trash, "Remove from Favorites", $"##favorite-remove-button-{i}"))
+                            {
+                                Service.Configuration.FavoriteRecipeIDs.Remove(recipeNum);
+                                Service.Configuration.Save();
+
+                                ImGui.CloseCurrentPopup();
+                            }
+
+                            ImGui.EndPopup();
+                        }
+                        
+                        if (Service.IconCache.TryGetIcon(recipe.ItemResult.Value!.Icon, false, out TextureWrap? texture))
+                        {
+                            ImGui.SetCursorPos(cursorPos);
+                            ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
+                        }
+
+                        ImGui.TableSetColumnIndex(1);
+                        ImGui.Text(jobStr);
+                        ImGui.TableSetColumnIndex(2);
+                        ImGui.Text($"{recipe.RecipeLevelTable.Row}");
+                        ImGui.TableSetColumnIndex(3);
+                        ImGui.Text(recipe.ItemResult.Value!.Name.RawString);
+                    }
+                }
+                ImGui.EndTable();
+
+            }
+
+            ImGui.EndChild();
+        }
         public static void RemoveMacroName(string macroName)
         {
 
@@ -543,13 +608,37 @@ namespace CraftingList.UI.CraftingListTab
                 return;
             }
             */
-
+            foreach (var recipeId in Service.Configuration.RecentRecipeIds)
+            {
+                if (Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str)) {
+                    filteredRecipes.Add((recipeId, Service.Recipes[recipeId]));
+                }
+            }
             str = str.ToLowerInvariant();
             for (int i = 0; i < Service.Recipes.Count; i++)
             {
-                if (Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str))
+                if (Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str)
+                    && !Service.Configuration.RecentRecipeIds.Contains(i))
                 {
                     filteredRecipes.Add((i, Service.Recipes[i]));
+
+                }
+            }
+        }
+
+        private void FilterFavorites(string str)
+        {
+            filteredFavorites.Clear();
+
+            str = str.ToLowerInvariant();
+
+            for (int i = 0; i < Service.Recipes.Count; i++)
+            {
+                if (Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str)
+                    && Service.Configuration.FavoriteRecipeIDs.Contains(i))
+                {
+                    filteredFavorites.Add((i, Service.Recipes[i]));
+
                 }
             }
         }

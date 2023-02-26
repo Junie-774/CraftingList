@@ -14,8 +14,6 @@ namespace CraftingList
     [Serializable]
     public struct WaitDurationHelper
     {
-        
-        
         public int AfterCompleteMacroHQ = 3500;
         public int AfterCompleteMacroCollectible = 1800;
         
@@ -81,6 +79,8 @@ namespace CraftingList
 
         public bool CanaryTestFlag = false;
 
+        public List<int> FavoriteRecipeIDs = new();
+        public Queue<int> RecentRecipeIds = new();
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

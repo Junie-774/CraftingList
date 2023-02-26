@@ -1,6 +1,7 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Crafting.Macro;
 using CraftingList.Utility;
+using Dalamud.Logging;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
@@ -17,11 +18,16 @@ namespace CraftingList.UI.CraftingListTab
         {
             if (macro == null)
                 return 0;
+
             if (macro.UseIngameMacro)
             {
+                PluginLog.Debug("Meep?");
                 int total = 0;
                 foreach (var command in MacroManager.Parse(IngameMacro.GetMacroTextFromNum(macro.Macro1Num)))
+                {
+                    PluginLog.Debug($"{command.Text}: {command.WaitMS} ms");
                     total += command.WaitMS;
+                }
 
                 foreach (var command in MacroManager.Parse(IngameMacro.GetMacroTextFromNum(macro.Macro2Num)))
                     total += command.WaitMS;
@@ -55,7 +61,7 @@ namespace CraftingList.UI.CraftingListTab
             int timePerCraft;
             int numRestarts;
             int numCrafts = summary.NumCrafts;
-
+            PluginLog.Debug($"Numcrafts: {numCrafts}");
             int betweenCrafts = avgExecMacroDelay
                 + avgClickSynthDelay
                 + Service.Configuration.WaitDurations.AfterOpenCloseMenu;
@@ -69,6 +75,7 @@ namespace CraftingList.UI.CraftingListTab
             {
                 numRestarts = numCrafts;
                 timePerCraft = EstimateMacroDurationMS(MacroManager.GetMacro(entry.MacroName)!);
+                PluginLog.Debug($"Time per craft: {timePerCraft}");
             }
 
             return (numRestarts * betweenCrafts) + (timePerCraft * numCrafts) + setupTime;
