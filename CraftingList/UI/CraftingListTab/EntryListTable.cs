@@ -341,9 +341,9 @@ namespace CraftingList.UI.CraftingListTab
                     bool favoritesTab = ImGui.BeginTabItem($"Favorites##-{entry.EntryId}");
                     if (favoritesTab)
                         ImGui.EndTabItem();
-                    
+
                     if (ImGui.InputTextWithHint($"##recipe-search-{entry.EntryId}", "Search...", ref recipeSearch, 512U, ImGuiInputTextFlags.AutoSelectAll))
-                        this.recipeSearch = recipeSearch.Trim();
+                        this.recipeSearch = recipeSearch.Trim().Replace("", string.Empty);
                     
 
                     if (recipesTab)
