@@ -30,7 +30,7 @@ namespace CraftingList
         public static void InitializeSingletons()
         {
             Singleton<UseAction>.Set(Service.SigScanner);
-            //Singleton<AgentRecipeNoteReceiveEvent>.Set(Service.SigScanner);
+            Singleton<AgentRecipeNoteReceiveEvent>.Set(Service.SigScanner);
             //Singleton<AddonSynthesisSimpleReceiveEvent>.Set();
         }
 
