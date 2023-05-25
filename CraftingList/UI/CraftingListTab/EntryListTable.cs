@@ -597,6 +597,7 @@ namespace CraftingList.UI.CraftingListTab
         private void FilterRecipes(string str)
         {
             filteredRecipes.Clear();
+            str = str.ToLowerInvariant();
 
             /*
             if (str.IsNullOrEmpty())
@@ -611,6 +612,7 @@ namespace CraftingList.UI.CraftingListTab
             foreach (var recipeId in Service.Configuration.RecentRecipeIds)
             {
                 if (Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str)) {
+                    PluginLog.Debug($"{Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant()}");
                     filteredRecipes.Add((recipeId, Service.Recipes[recipeId]));
                 }
             }

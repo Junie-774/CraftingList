@@ -4,6 +4,7 @@ using CraftingList.SeFunctions;
 using CraftingList.UI.CraftingListTab;
 using CraftingList.Utility;
 using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility.Signatures;
@@ -101,6 +102,7 @@ namespace CraftingList
 
         private unsafe void OnCommand(string command, string args)
         {
+            Service.ChatManager.PrintMessage("hello".Contains("hello").ToString());
             //ClickSynthesisSimpleDialog click = new();
             //click.ClickUseHQMats();
         }
