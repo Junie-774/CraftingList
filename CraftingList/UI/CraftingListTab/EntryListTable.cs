@@ -587,12 +587,21 @@ namespace CraftingList.UI.CraftingListTab
                     var copy = EntryListManager.Entries[draggedEntry.EntryId];
                     EntryListManager.Entries.RemoveAt(draggedEntry.EntryId);
                     EntryListManager.Entries.Insert(entry.EntryId, copy);
+                    RegenerateEntryIds();
                     Service.Configuration.Save();
                 }
 
                 ImGui.EndDragDropTarget();
             }
 
+        }
+
+        public void RegenerateEntryIds()
+        {
+            for (int i = 0; i < EntryListManager.Entries.Count; i++)
+            {
+                EntryListManager.Entries[i].EntryId = i;
+            }
         }
         private void FilterRecipes(string str)
         {
