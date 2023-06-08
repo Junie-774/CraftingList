@@ -32,8 +32,24 @@ namespace CraftingList.UI.CraftingListTab
         }
         public void Draw()
         {
-            EntryListTable.DrawEntries();
+            EntryListTable.DrawEntries(EntryListManager.Entries, "MainEntryTable");
             EntryListTable.DrawNewEntry();
+            EntryListTable.DrawImportWindow();
+            if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add a new entry"))
+            {
+                ImGui.SetNextWindowSize(new Vector2(400, 0));
+
+                ImGui.OpenPopup("New Entry");
+            }
+            /*
+            ImGui.SameLine();
+            if (ImGuiAddons.IconButton(FontAwesomeIcon.FileImport, "Import from Teamcraft List"))
+            {
+                ImGui.SetNextWindowSize(new Vector2(400, 0));
+
+                ImGui.OpenPopup("ImportWindow");
+            }
+            */
 
             ImGui.NewLine();
 

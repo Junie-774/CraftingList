@@ -32,6 +32,7 @@ namespace CraftingList.UI.CraftingListTab
         private readonly HashSet<int> entriesToRemove = new(); // We can't remove entries while iterating over them, so we add their id's to a set and remove all of them
                                                       // after iterating.
         readonly private CListEntry newEntry = new(-1, "", "", false, CListEntry.EmptyHQSelection());
+        private List<CListEntry> importEntries = new();
 
         private bool ShowNewEntryAsterisks = false;
         string recipeSearch = "";
@@ -55,26 +56,28 @@ namespace CraftingList.UI.CraftingListTab
             FilterRecipes("");
         }
 
-        public void DrawEntries()
+        public void DrawEntries(List<CListEntry> entries, string tableName)
         {
-            ImGuiAddons.BeginGroupPanel("Crafting List", new Vector2(-1, -1));
+            ImGuiAddons.BeginGroupPanel($"Items", new Vector2(0, 0));
 
-            if (ImGui.BeginTable("##EntryList", 5, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg,
+            if (ImGui.BeginTable($"##EntryList-{tableName}", 5, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg,
                 new Vector2(ImGui.GetContentRegionAvail().X * .98f, // scale to prevent it from leaving the border.
-                            ImGui.GetFrameHeight() * (EntryListManager.Entries.Count + 1))))
+                            ImGui.GetFrameHeight() * (entries.Count + 1))))
             {
-                ImGui.TableSetupColumn($"Item##EntryList-Item", ImGuiTableColumnFlags.WidthStretch);
-                ImGui.TableSetupColumn($"Amount##EntryList-Amount", ImGuiTableColumnFlags.WidthFixed);
-                ImGui.TableSetupColumn($"Macro##EntryList-Macro", ImGuiTableColumnFlags.WidthFixed);
-                ImGui.TableSetupColumn($"Duration##EntryList-Duration", ImGuiTableColumnFlags.WidthFixed);
-                ImGui.TableSetupColumn($"##EntryList-Delete", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"Item##EntryList-{tableName}-Item", ImGuiTableColumnFlags.WidthStretch);
+                ImGui.TableSetupColumn($"Amount##EntryList-{tableName}-Amount", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"Macro##EntryList-{tableName}-Macro", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"Duration##EntryList-{tableName}-Duration", ImGuiTableColumnFlags.WidthFixed);
+                ImGui.TableSetupColumn($"##EntryList-{tableName}-Delete", ImGuiTableColumnFlags.WidthFixed);
 
                 ImGui.TableSetupScrollFreeze(0, 1);
                 ImGui.TableHeadersRow();
                 ImGui.TableNextRow();
-                for (int i = 0; i < EntryListManager.Entries.Count; i++)
+
+
+                for (int i = 0; i < entries.Count; i++)
                 {
-                    var entry = EntryListManager.Entries[i];
+                    var entry = entries[i];
                     if (entry.RecipeId < 0) continue;
 
                     ImGui.TableSetColumnIndex(0);
@@ -84,7 +87,7 @@ namespace CraftingList.UI.CraftingListTab
                         ImGui.SameLine();
                     }
 
-                    var expanded = ImGui.TreeNodeEx($"##Entry-Treenode--{entry.EntryId}", ImGuiTreeNodeFlags.None,
+                    var expanded = ImGui.TreeNodeEx($"##{tableName}-Entry-Treenode-{entry.EntryId}", ImGuiTreeNodeFlags.None,
                         $"{entry.Result().Name}");
                     DragDropEntry(entry);
 
@@ -111,25 +114,19 @@ namespace CraftingList.UI.CraftingListTab
                     }
 
                     ImGui.TableSetColumnIndex(4);
-                    if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Remove Entry", $"{entry.Name}-{entry.EntryId}"))
+                    if (ImGuiAddons.IconButton(FontAwesomeIcon.TrashAlt, "Remove Entry", $"{tableName}-{entry.Name}-{entry.EntryId}"))
                     {
                         entriesToRemove.Add(entry.EntryId);
 
                         continue;
                     }
                     
-
                     ImGui.TableNextRow();
 
                 }
             }
             ImGui.EndTable();
-            if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add a new entry"))
-            {
-                ImGui.SetNextWindowSize(new Vector2(400, 0));
-
-                ImGui.OpenPopup("New Entry");
-            }
+            
             ImGuiAddons.EndGroupPanel();
 
             RemoveFlaggedEntries();
@@ -193,6 +190,16 @@ namespace CraftingList.UI.CraftingListTab
             }
 
             ImGui.NewLine();
+        }
+
+        public void DrawImportWindow()
+        {
+            if (ImGui.BeginPopup("ImportWindow"))
+            {
+                DrawEntries(importEntries, "ImportTable");
+
+                ImGui.EndPopup();
+            }
         }
 
         public void DrawNewEntry()
@@ -473,7 +480,7 @@ namespace CraftingList.UI.CraftingListTab
         public bool HQMat(string name, int amount, ref int outInt, float size)
         {
             bool ret = false;
-            ImGui.Text(name + ": ");
+            ImGui.Text(name + ": ");
             ImGui.SameLine();
             //ImGui.SetCursorPosX(size);
             ImGui.SetNextItemWidth(25);
@@ -493,7 +500,6 @@ namespace CraftingList.UI.CraftingListTab
 
             }
             ImGui.SameLine();
-
             if (ImGui.Button($"+##hq-{name}", new Vector2(22, 22)))
             {
                 outInt++;
@@ -587,7 +593,7 @@ namespace CraftingList.UI.CraftingListTab
                     var copy = EntryListManager.Entries[draggedEntry.EntryId];
                     EntryListManager.Entries.RemoveAt(draggedEntry.EntryId);
                     EntryListManager.Entries.Insert(entry.EntryId, copy);
-                    RegenerateEntryIds();
+                    EntryListManager.ReassignIds();
                     Service.Configuration.Save();
                 }
 
@@ -596,17 +602,17 @@ namespace CraftingList.UI.CraftingListTab
 
         }
 
-        public void RegenerateEntryIds()
+        public static void RegenerateEntryIds(List<CListEntry> entries)
         {
-            for (int i = 0; i < EntryListManager.Entries.Count; i++)
+            for (int i = 0; i < entries.Count; i++)
             {
                 EntryListManager.Entries[i].EntryId = i;
             }
         }
-        private void FilterRecipes(string str)
+        private void FilterRecipes(string searchStr)
         {
             filteredRecipes.Clear();
-            str = str.ToLowerInvariant();
+            var words = searchStr.ToLowerInvariant().Split(' ');
 
             /*
             if (str.IsNullOrEmpty())
@@ -618,17 +624,32 @@ namespace CraftingList.UI.CraftingListTab
                 return;
             }
             */
-            foreach (var recipeId in Service.Configuration.RecentRecipeIds)
+            foreach (var recipeId in Service.Configuration.RecentRecipeIds.Reverse())
             {
-                if (Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str)) {
-                    PluginLog.Debug($"{Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant()}");
+                var recipeName = Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant();
+                var isMatch = true;
+                foreach (var word in words)
+                {
+                    if (!recipeName.Contains(word))
+                        isMatch = false;
+                }
+
+                if (isMatch) {
+                    //PluginLog.Debug($"{Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant()}");
                     filteredRecipes.Add((recipeId, Service.Recipes[recipeId]));
                 }
             }
-            str = str.ToLowerInvariant();
+            searchStr = searchStr.ToLowerInvariant();
             for (int i = 0; i < Service.Recipes.Count; i++)
             {
-                if (Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str)
+                var recipeName = Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant();
+                var isMatch = true;
+                foreach (var word in words)
+                {
+                    if (!recipeName.Contains(word))
+                        isMatch = false;
+                }
+                if (isMatch
                     && !Service.Configuration.RecentRecipeIds.Contains(i))
                 {
                     filteredRecipes.Add((i, Service.Recipes[i]));

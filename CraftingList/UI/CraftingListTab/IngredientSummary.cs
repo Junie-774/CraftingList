@@ -313,7 +313,7 @@ namespace CraftingList.UI.CraftingListTab
                             ImGuiAddons.ScaledImageY(tex.ImGuiHandle, tex.Width, tex.Height, ImGui.GetFrameHeight());
                         }
                         ImGui.SameLine();
-                        ImGui.Text($"{(ingredient.IsHQ ? "" : "")}{ingredient.Item.Name}");
+                        ImGui.Text($"{ingredient.Item.Name}{(ingredient.IsHQ ? "" : "")}");
 
                         ImGui.TableSetColumnIndex(2);
                         ImGui.Text($"{ingredient.NumUsed}");

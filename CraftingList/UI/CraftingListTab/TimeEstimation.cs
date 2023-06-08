@@ -21,11 +21,11 @@ namespace CraftingList.UI.CraftingListTab
 
             if (macro.UseIngameMacro)
             {
-                PluginLog.Debug("Meep?");
+                //PluginLog.Debug("Meep?");
                 int total = 0;
                 foreach (var command in MacroManager.Parse(IngameMacro.GetMacroTextFromNum(macro.Macro1Num)))
                 {
-                    PluginLog.Debug($"{command.Text}: {command.WaitMS} ms");
+                    //PluginLog.Debug($"{command.Text}: {command.WaitMS} ms");
                     total += command.WaitMS;
                 }
 
@@ -61,7 +61,7 @@ namespace CraftingList.UI.CraftingListTab
             int timePerCraft;
             int numRestarts;
             int numCrafts = summary.NumCrafts;
-            PluginLog.Debug($"Numcrafts: {numCrafts}");
+            //PluginLog.Debug($"Numcrafts: {numCrafts}");
             int betweenCrafts = avgExecMacroDelay
                 + avgClickSynthDelay
                 + Service.Configuration.WaitDurations.AfterOpenCloseMenu;
@@ -75,7 +75,7 @@ namespace CraftingList.UI.CraftingListTab
             {
                 numRestarts = numCrafts;
                 timePerCraft = EstimateMacroDurationMS(MacroManager.GetMacro(entry.MacroName)!);
-                PluginLog.Debug($"Time per craft: {timePerCraft}");
+                //PluginLog.Debug($"Time per craft: {timePerCraft}");
             }
 
             return (numRestarts * betweenCrafts) + (timePerCraft * numCrafts) + setupTime;
