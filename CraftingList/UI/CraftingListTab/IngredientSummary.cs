@@ -53,6 +53,16 @@ namespace CraftingList.UI.CraftingListTab
             updateTimer.Dispose();
         }
 
+        public void Pause()
+        {
+            updateTimer.Stop();
+        }
+
+        public void Resume()
+        {
+            updateTimer.Start();
+        }
+
         public void Update()
         {
             List<EntryIngredientListing> intermediateListings = new();
@@ -82,6 +92,8 @@ namespace CraftingList.UI.CraftingListTab
                     
                     foreach (var summary in EntrySummaries)
                     {
+                        if (summary.Entry.Complete)
+                            continue;
                         ImGui.TableNextRow();
                         ImGui.TableSetColumnIndex(0);
                         if (!summary.CanCraft)

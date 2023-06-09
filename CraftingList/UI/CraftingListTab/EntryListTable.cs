@@ -31,7 +31,7 @@ namespace CraftingList.UI.CraftingListTab
         private CListEntry? draggedEntry = null;
         private readonly HashSet<int> entriesToRemove = new(); // We can't remove entries while iterating over them, so we add their id's to a set and remove all of them
                                                       // after iterating.
-        readonly private CListEntry newEntry = new(-1, "", "", false, CListEntry.EmptyHQSelection());
+        readonly private CListEntry newEntry = new(-1, "1", "", false, CListEntry.EmptyHQSelection());
         private List<CListEntry> importEntries = new();
 
         private bool ShowNewEntryAsterisks = false;
@@ -133,6 +133,8 @@ namespace CraftingList.UI.CraftingListTab
             
             if (crafter.CraftUpdateEvent)
             {
+                if (!crafter.IsRunning())
+                    this.IngredientSummary.Resume();
                 crafter.CraftUpdateEvent = false;
                 IngredientSummary.Update();
                 EstimateTime();
@@ -231,7 +233,7 @@ namespace CraftingList.UI.CraftingListTab
                         Service.Configuration.RecentRecipeIds.Enqueue(newEntry.RecipeId);
 
                         newEntry.MacroName = "";
-                        newEntry.NumCrafts = "";
+                        newEntry.NumCrafts = "1";
                         newEntry.RecipeId = -1;
                         newEntry.Name = "";
                         newEntry.PrioHQMats = false;
