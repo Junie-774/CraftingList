@@ -80,7 +80,7 @@ namespace CraftingList
         public bool CanaryTestFlag = false;
 
         public List<int> FavoriteRecipeIDs = new();
-        public Queue<int> RecentRecipeIds = new();
+        public List<int> RecentRecipeIds = new();
 
         // the below exist just to make saving less cumbersome
         [NonSerialized]

@@ -5,7 +5,7 @@
     "Punchline": "Craft stuffs",
     "Description": "Craft your things",
     "InternalName": "CraftingList",
-    "AssemblyVersion": "2.4.1",
+    "AssemblyVersion": "2.4.2",
     "ApplicableVersion": "any",
     "Tags": [
       "craft"

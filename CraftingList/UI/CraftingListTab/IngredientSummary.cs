@@ -72,6 +72,7 @@ namespace CraftingList.UI.CraftingListTab
                 EntrySummaries.Clear();
                 foreach (var entry in EntryListManager.Entries)
                 {
+                    if (entry.Complete) continue;
                     GetNumCraftsPossible(entry, intermediateListings, inInventory);
                     EntrySummaries.Add(EntryIngredients(entry, intermediateListings, inInventory));
                 }

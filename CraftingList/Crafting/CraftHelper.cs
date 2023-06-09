@@ -161,12 +161,17 @@ namespace CraftingList.Crafting
 
         public static bool NeedToChangeConsumable(uint lastFood, uint currEntryFoodId, bool medicine)
         {
+            PluginLog.Debug($"last: {lastFood} | curr {currEntryFoodId}");
             bool hasFood = medicine ? SeInterface.HasStatusID(49) : SeInterface.HasStatusID(48);
 
             // If we need to refresh
             if (lastFood == currEntryFoodId && currEntryFoodId != 0)
             {
-                if (hasFood) return false;
+                if (hasFood)
+                {
+                    PluginLog.Debug("  has food");
+                    return false;
+                }
                 return true;
             }
             // Need to have food, AND lastFood isn't the food we need

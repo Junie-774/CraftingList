@@ -134,7 +134,7 @@ namespace CraftingList.UI.CraftingListTab
             if (crafter.CraftUpdateEvent)
             {
                 if (!crafter.IsRunning())
-                    this.IngredientSummary.Resume();
+                    //this.IngredientSummary.Resume();
                 crafter.CraftUpdateEvent = false;
                 IngredientSummary.Update();
                 EstimateTime();
@@ -228,9 +228,12 @@ namespace CraftingList.UI.CraftingListTab
                         EstimateTime();
 
                         if (Service.Configuration.RecentRecipeIds.Count > 10)
-                            Service.Configuration.RecentRecipeIds.Dequeue();
+                            Service.Configuration.RecentRecipeIds.RemoveAt(Service.Configuration.RecentRecipeIds.Count);
+                        
+                        if (Service.Configuration.RecentRecipeIds.Contains(newEntry.RecipeId))
+                            Service.Configuration.RecentRecipeIds.RemoveAll(x => x == newEntry.RecipeId);
 
-                        Service.Configuration.RecentRecipeIds.Enqueue(newEntry.RecipeId);
+                        Service.Configuration.RecentRecipeIds.Insert(0, newEntry.RecipeId);
 
                         newEntry.MacroName = "";
                         newEntry.NumCrafts = "1";
@@ -528,11 +531,18 @@ namespace CraftingList.UI.CraftingListTab
             EntryTimeEstimations.Clear();
             lock (IngredientSummary.EntrySummaries)
             {
+                int summaryIndex = 0;
                 for (int i = 0; i < EntryListManager.Entries.Count; i++)
                 {
-                    var entryTime = TimeEstimation.EstimateEntryDurationMS(EntryListManager.Entries[i], IngredientSummary.EntrySummaries[i]);
+                    if (EntryListManager.Entries[i].Complete)
+                    {
+                        i++;
+                        continue;
+                    }
+                    var entryTime = TimeEstimation.EstimateEntryDurationMS(EntryListManager.Entries[i], IngredientSummary.EntrySummaries[summaryIndex]);
                     EntryTimeEstimations.Add(TimeSpan.FromMilliseconds(entryTime));
                     estimatedTime += entryTime;
+                    summaryIndex++;
                 }
             }
             EstimatedTime = TimeSpan.FromMilliseconds(estimatedTime);
@@ -626,22 +636,23 @@ namespace CraftingList.UI.CraftingListTab
                 return;
             }
             */
-            foreach (var recipeId in Service.Configuration.RecentRecipeIds.Reverse())
+            for (int i = Service.Configuration.RecentRecipeIds.Count - 1; i >= 0; i--)
             {
+                var recipeId = Service.Configuration.RecentRecipeIds[i];
                 var recipeName = Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant();
                 var isMatch = true;
                 foreach (var word in words)
                 {
                     if (!recipeName.Contains(word))
                         isMatch = false;
+
                 }
 
                 if (isMatch) {
-                    //PluginLog.Debug($"{Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant()}");
                     filteredRecipes.Add((recipeId, Service.Recipes[recipeId]));
                 }
             }
-            searchStr = searchStr.ToLowerInvariant();
+
             for (int i = 0; i < Service.Recipes.Count; i++)
             {
                 var recipeName = Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant();
@@ -654,6 +665,7 @@ namespace CraftingList.UI.CraftingListTab
                 if (isMatch
                     && !Service.Configuration.RecentRecipeIds.Contains(i))
                 {
+
                     filteredRecipes.Add((i, Service.Recipes[i]));
 
                 }

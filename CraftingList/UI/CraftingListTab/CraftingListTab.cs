@@ -73,7 +73,7 @@ namespace CraftingList.UI.CraftingListTab
             ImGui.NewLine();
             if (ImGui.Button("Craft!"))
             {
-                EntryListTable.IngredientSummary.Pause();
+                //EntryListTable.IngredientSummary.Pause();
                 plugin.Crafter.CraftAllItems();
             }
             
