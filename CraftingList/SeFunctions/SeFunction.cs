@@ -1,4 +1,5 @@
-﻿using Dalamud.Game;
+﻿using CraftingList.Utility;
+using Dalamud.Game;
 using Dalamud.Hooking;
 using Dalamud.Logging;
 using System;
@@ -28,7 +29,7 @@ namespace CraftingList.SeFunctions
         {
             if (FunctionDelegate == null)
             {
-                PluginLog.Error($"Trying to generate delegate for {GetType().Name} failed.");
+                Service.PluginLog.Error($"Trying to generate delegate for {GetType().Name} failed.");
                 return null;
             }
 
@@ -39,7 +40,7 @@ namespace CraftingList.SeFunctions
         {
             if (FunctionDelegate == null)
             {
-                PluginLog.Error($"Trying to generate delegate for {GetType().Name} failed.");
+                Service.PluginLog.Error($"Trying to generate delegate for {GetType().Name} failed.");
                 return null;
             }
             try
@@ -48,7 +49,7 @@ namespace CraftingList.SeFunctions
             }
             catch(Exception e)
             {
-                PluginLog.Error(e.ToString());
+                Service.PluginLog.Error(e.ToString());
                 return null;
             }
         }
@@ -57,12 +58,12 @@ namespace CraftingList.SeFunctions
         {
             if (Address != IntPtr.Zero)
             {
-                var hook = Hook<T>.FromAddress(Address, detour);
-                PluginLog.Debug($"Hooking {GetType().Name} at 0x{Address.ToInt64():X16}.");
+                var hook = Service.GameInteropProvider.HookFromAddress(Address, detour);
+                Service.PluginLog.Debug($"Hooking {GetType().Name} at 0x{Address.ToInt64():X16}.");
                 return hook;
             }
 
-            PluginLog.Error($"Unable to create hook for {GetType().Name}, no pointer available.");
+            Service.PluginLog.Error($"Unable to create hook for {GetType().Name}, no pointer available.");
             return null;
         }
     }

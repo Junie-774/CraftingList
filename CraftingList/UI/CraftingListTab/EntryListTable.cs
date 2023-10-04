@@ -3,7 +3,9 @@ using CraftingList.Crafting.Macro;
 using CraftingList.Utility;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Logging;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using ImGuiNET;
 using ImGuiScene;
@@ -81,10 +83,13 @@ namespace CraftingList.UI.CraftingListTab
                     if (entry.RecipeId < 0) continue;
 
                     ImGui.TableSetColumnIndex(0);
-                    if (Service.IconCache.TryGetIcon(entry.Result().Icon, false, out TextureWrap? icon))
                     {
-                        ImGuiAddons.ScaledImageY(icon.ImGuiHandle, icon.Width, icon.Height, ImGui.GetFrameHeight());
-                        ImGui.SameLine();
+                        var icon = (TextureWrap?) Service.TextureProvider.GetIcon(entry.Result().Icon);
+                        if (icon != null)
+                        {
+                            ImGuiAddons.ScaledImageY(icon.ImGuiHandle, icon.Width, icon.Height, ImGui.GetFrameHeight());
+                            ImGui.SameLine();
+                        }
                     }
 
                     var expanded = ImGui.TreeNodeEx($"##{tableName}-Entry-Treenode-{entry.EntryId}", ImGuiTreeNodeFlags.None,
@@ -109,7 +114,7 @@ namespace CraftingList.UI.CraftingListTab
                     ImGui.TableSetColumnIndex(3);
                     lock (IngredientSummary.EntrySummaries)
                     {
-                        if (entry.EntryId >= 0 && entry.EntryId < EntryTimeEstimations.Count)//PluginLog.Debug($"{entry.EntryId}");
+                        if (entry.EntryId >= 0 && entry.EntryId < EntryTimeEstimations.Count)
                             ImGui.Text(FormatTime(EntryTimeEstimations[entry.EntryId]));
                     }
 
@@ -252,7 +257,7 @@ namespace CraftingList.UI.CraftingListTab
                     }
                     else
                     {
-                        PluginLog.Debug("BAD!");
+                        Service.PluginLog.Debug("BAD!");
                         ShowNewEntryAsterisks = true;
                     }
                 }
@@ -276,7 +281,6 @@ namespace CraftingList.UI.CraftingListTab
             bool hasHqItem = false;
             for (int i = 0; i < recipe.UnkData5.Length; i++)
             {
-                //PluginLog.Debug($"{i}: {recipe.UnkData5[i].ItemIngredient}, {Service.Items[recipe.UnkData5[i].ItemIngredient].Name}");
                 if (recipe.UnkData5[i].ItemIngredient <= 0)
                     continue;
 
@@ -287,10 +291,17 @@ namespace CraftingList.UI.CraftingListTab
                 else
                     hasHqItem = true;
 
-                if (Service.IconCache.TryGetIcon(item.Icon, true, out TextureWrap? texture))
                 {
-                    ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
-                    ImGui.SameLine();
+                    TextureWrap? texture = (TextureWrap?) Service.TextureProvider.GetIcon(item.Icon, ITextureProvider.IconFlags.ItemHighQuality);
+                    if (texture != null)
+                    {
+                        ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
+                        ImGui.SameLine();
+                    }
+                }
+                //if (Service.IconCache.TryGetIcon(item.Icon, true, out TextureWrap? texture))
+                {
+                    
                 }
 
                 if (HQMat(item.Name,
@@ -439,10 +450,14 @@ namespace CraftingList.UI.CraftingListTab
                             ImGui.EndPopup();
                         }
                         
-                        if (Service.IconCache.TryGetIcon(recipe.ItemResult.Value!.Icon, false, out TextureWrap? texture))
+                        
                         {
-                            ImGui.SetCursorPos(cursorPos);
-                            ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
+                            var texture = (TextureWrap?) Service.TextureProvider.GetIcon(recipe.ItemResult.Value!.Icon);
+                            if (texture != null)
+                            {
+                                ImGui.SetCursorPos(cursorPos);
+                                ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
+                            }
                         }
 
                         ImGui.TableSetColumnIndex(1);

@@ -78,12 +78,12 @@ namespace CraftingList.Crafting.Macro
             if (!IsMacroNumInBounds(macroNum))
                 return "";
 
-            RaptureMacroModule.Macro* macro = RaptureMacroModule.Instance->GetMacro(0, (uint)macroNum);
+            RaptureMacroModule.Macro* macro = RaptureMacroModule.Instance()->GetMacro(0, (uint)macroNum);
             var text = string.Empty;
 
             for (int i = 0; i <= 14; i++)
             {
-                var line = macro->Line[i]->ToString();
+                var line = macro->LinesSpan[i].ToString();
                 if (line.Length > 0)
                 {
                     text += line;

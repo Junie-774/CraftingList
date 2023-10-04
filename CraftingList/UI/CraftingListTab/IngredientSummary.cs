@@ -1,7 +1,9 @@
 ﻿using CraftingList.Crafting;
 using CraftingList.Utility;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Colors;
 using Dalamud.Logging;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using ImGuiScene;
@@ -291,11 +293,14 @@ namespace CraftingList.UI.CraftingListTab
         public static void DisplayEntry(EntryIngredientSummary entrySummary)
         {
 
-            
-            if (Service.IconCache.TryGetIcon(entrySummary.Entry.Result().Icon, false, out var resultTex)) 
             {
-                ImGuiAddons.ScaledImageY(resultTex!.ImGuiHandle, resultTex!.Width, resultTex!.Height, ImGui.GetFrameHeight());
+                var texture = (TextureWrap?) Service.TextureProvider.GetIcon(entrySummary.Entry.Result().Icon);
+                if (texture != null)
+                {
+                    ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetFrameHeight());
+                }
             }
+            
             ImGui.SameLine();
             if (ImGui.TreeNodeEx($"##EntrySummary-{entrySummary.Entry.EntryId}", ImGuiTreeNodeFlags.CollapsingHeader, $"{entrySummary.Entry.Name}: {entrySummary.Entry.NumCrafts} {(entrySummary.Entry.NumCrafts.ToLower() == "max" ? $"({entrySummary.NumCrafts})" : "")}##-{entrySummary.Entry.EntryId}"))
             {
@@ -321,9 +326,13 @@ namespace CraftingList.UI.CraftingListTab
                             ImGuiAddons.IconTextColored(ImGuiColors.HealerGreen, Dalamud.Interface.FontAwesomeIcon.Check);
 
                         ImGui.TableSetColumnIndex(1);
-                        if (Service.IconCache.TryGetIcon(ingredient.Item.Icon, ingredient.IsHQ, out TextureWrap? tex))
                         {
-                            ImGuiAddons.ScaledImageY(tex.ImGuiHandle, tex.Width, tex.Height, ImGui.GetFrameHeight());
+                            var texture = (TextureWrap?) Service.TextureProvider.GetIcon(ingredient.Item.Icon,
+                                ingredient.IsHQ ? ITextureProvider.IconFlags.ItemHighQuality : ITextureProvider.IconFlags.None);
+                            if (texture != null)
+                            {
+                                ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetFrameHeight());
+                            }
                         }
                         ImGui.SameLine();
                         ImGui.Text($"{ingredient.Item.Name}{(ingredient.IsHQ ? "" : "")}");

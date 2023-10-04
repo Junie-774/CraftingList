@@ -101,24 +101,6 @@ namespace CraftingList
                 }
             }
 
-            foreach (var macro in MacroManager.PluginMacros)
-            {
-                if (!CraftingMacros.Select(m => m.Name).Contains(macro.Name))
-                {
-                    CraftingMacros.Add(macro);
-
-                }
-            }
-
-            foreach (var macro in MacroManager.IngameMacros)
-            {
-                if (!CraftingMacros.Select(m => m.Name).Contains(macro.Name))
-                {
-                    CraftingMacros.Add(macro);
-
-                }
-            }
-
             this.WaitDurations = (WaitDurationHelper) copy;
             Save();
         }

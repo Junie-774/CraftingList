@@ -20,7 +20,7 @@ namespace CraftingList.Utility
 
         public GameEventManager()
         {
-            SignatureHelper.Initialise(this);
+            Service.GameInteropProvider.InitializeFromAttributes(this);
             this.eventFrameworkHook.Enable();
         }
 
@@ -52,7 +52,7 @@ namespace CraftingList.Utility
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, "Don't crash the game.");
+                Service.PluginLog.Error(ex, "Don't crash the game.");
             }
 
             return this.eventFrameworkHook.Original(a1, a2, a3, a4, a5, data, dataSize);

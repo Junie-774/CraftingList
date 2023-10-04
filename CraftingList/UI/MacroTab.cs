@@ -2,6 +2,7 @@
 using CraftingList.UI.CraftingListTab;
 using CraftingList.Utility;
 using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using Dalamud.Logging;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;

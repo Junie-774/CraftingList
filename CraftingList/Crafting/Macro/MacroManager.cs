@@ -104,7 +104,7 @@ namespace CraftingList.Crafting.Macro
             int index = MacroNames.IndexOf(currName);
             if (index == -1)
             {
-                PluginLog.Error($"Name '{currName}' exists in Macro list, but not in MacroNames. Adding to MacroNames, but this should never happen.");
+                Service.PluginLog.Error($"Name '{currName}' exists in Macro list, but not in MacroNames. Adding to MacroNames, but this should never happen.");
                 MacroNames.Add(newName);
                 return;
             }
@@ -153,7 +153,7 @@ namespace CraftingList.Crafting.Macro
                 {
                     if (await command.Execute())
                     {
-                        PluginLog.Debug("Success!");
+                        Service.PluginLog.Debug("Success!");
                         break;
                     }
                     else
@@ -172,7 +172,7 @@ namespace CraftingList.Crafting.Macro
 
             try { recipeNote.Wait(); }
             catch {
-                PluginLog.Error("RecipeNote wait timed out.");
+                Service.PluginLog.Error("RecipeNote wait timed out.");
                 return false;
             }
 

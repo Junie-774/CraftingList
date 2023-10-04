@@ -8,6 +8,7 @@ using Dalamud.Game.Gui;
 using Dalamud.IoC;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -42,41 +43,45 @@ namespace CraftingList.Utility
             Items = DataManager.GetExcelSheet<Item>()!.ToList();
         }
 
+        public static void init2(Configuration config)
+        {
+            
+        }
 
         public static Configuration Configuration { get; set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
         public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
-        public static SigScanner SigScanner { get; private set; } = null!;
+        public static ISigScanner SigScanner { get; private set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
-        private static ChatGui ChatGui { get; set; } = null!;
+        private static IChatGui ChatGui { get; set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
-        public static CommandManager CommandManager { get; private set; } = null!;
+        public static ICommandManager CommandManager { get; private set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
-        public static DataManager DataManager { get; private set; } = null!;
+        public static IDataManager DataManager { get; private set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
-        public static ClientState ClientState { get; private set; } = null!;
+        public static IClientState ClientState { get; private set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
-        public static Framework Framework { get; private set; } = null!;
+        public static IFramework Framework { get; private set; } = null!;
 
         [PluginService]
-        [RequiredVersion("1.0")]
-        public static Dalamud.Game.ClientState.Conditions.Condition Condition { get; private set; } = null!;
+        public static ICondition Condition { get; private set; } = null!;
 
+        [PluginService]
+        public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
+
+        [PluginService]
+        public static IPluginLog PluginLog { get; private set; } = null!;
+
+        [PluginService]
+        public static ITextureProvider TextureProvider { get; private set; } = null!;
         public static List<Recipe> Recipes { get; private set; } = null!;
 
         public static List<ClassJob> Jobs { get; private set; } = null!;
@@ -112,6 +117,6 @@ namespace CraftingList.Utility
             return true;
         }
 
-        public static IconCache IconCache { get; private set; } = new();
+
     }
 }

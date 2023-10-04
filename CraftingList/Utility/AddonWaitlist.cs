@@ -75,7 +75,7 @@ namespace CraftingList.Utility
 
                 if (waitInfo.TimeOut < currTime)
                 {
-                    PluginLog.Error($"Addon {waitInfo.Name} timed out");
+                    Service.PluginLog.Error($"Addon {waitInfo.Name} timed out");
                     waitInfo.TaskCompletionSource.SetCanceled();
                     continue;
                 }

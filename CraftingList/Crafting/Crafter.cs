@@ -50,7 +50,7 @@ namespace CraftingList.Crafting
                 //Enforces a clean
                 if (!await CraftHelper.ExitCrafting())
                 {
-                    PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
+                    Service.PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
                     Cancel("A problem occurred trying to close the crafting log, cancelling...", true);
                     
                 }
@@ -58,7 +58,7 @@ namespace CraftingList.Crafting
                 lastUsedFood = 0;
                 lastUsedMedicine = 0;
 
-                PluginLog.Debug($"Last food: {lastUsedFood}");
+                Service.PluginLog.Debug($"Last food: {lastUsedFood}");
                 foreach (var entry in Service.Configuration.EntryList.ToList())
                 {
                     if (!m_running) break;
@@ -91,7 +91,7 @@ namespace CraftingList.Crafting
                     // but that's a pretty minor gain and this simplifies code flow.
                     if (!await CraftHelper.ExitCrafting())
                     {
-                        PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
+                        Service.PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
                         Cancel("A problem occurred trying to close the crafting log, cancelling...", true);
                         break;
                     }
@@ -111,7 +111,7 @@ namespace CraftingList.Crafting
             CraftingMacro? macro = MacroManager.GetMacro(entry.MacroName);
             if (macro == null)
             {
-                PluginLog.Error($"Entry {entry}'s macro did not match any in the active macro list.");
+                Service.PluginLog.Error($"Entry {entry}'s macro did not match any in the active macro list.");
                 Cancel("An internal error occurred, stopping craft. Check `/xllog` for more details.", true);
                 return false;
             }
@@ -125,7 +125,7 @@ namespace CraftingList.Crafting
                 }*/
             }
 
-            PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {macro.Name}. FoodId: {macro.FoodID}");
+            Service.PluginLog.Debug($"Crafting {entry.NumCrafts} {entry.Name}. Macro: {macro.Name}. FoodId: {macro.FoodID}");
 
             while (entry.running && !entry.Complete)
             {
@@ -156,11 +156,11 @@ namespace CraftingList.Crafting
             bool needToChangeMedicine = CraftHelper.NeedToChangeConsumable(lastUsedMedicine, macro.MedicineID, true);
             bool needToRepair = CraftHelper.NeedsRepair();
 
-            PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {macro.FoodID}");
-            PluginLog.Debug($"Need change food: {needToChangeFood}");
-            PluginLog.Debug($"Last medicine: {lastUsedMedicine}, Curr medicine: {macro.MedicineID}");
-            PluginLog.Debug($"Need change medicine: {needToChangeMedicine}");
-            PluginLog.Debug($"Need repair: {needToRepair}");
+            Service.PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {macro.FoodID}");
+            Service.PluginLog.Debug($"Need change food: {needToChangeFood}");
+            Service.PluginLog.Debug($"Last medicine: {lastUsedMedicine}, Curr medicine: {macro.MedicineID}");
+            Service.PluginLog.Debug($"Need change medicine: {needToChangeMedicine}");
+            Service.PluginLog.Debug($"Need repair: {needToRepair}");
 
             if (needToChangeFood || needToChangeMedicine || needToRepair)
             {
@@ -345,7 +345,7 @@ namespace CraftingList.Crafting
             var lastCompletionTime = DateTime.Now;
             int numCompleted;
 
-            PluginLog.Debug("[WaitForQuickSynthToFinish] Starting loop waiting for quicksynth to finish.");
+            Service.PluginLog.Debug("[WaitForQuickSynthToFinish] Starting loop waiting for quicksynth to finish.");
             for (numCompleted = 0; numCompleted < numToQuickSynth; numCompleted = ((PtrSynthesisSimple)simpleSynthDialog).GetCurrCrafts())
             {
 
@@ -469,7 +469,7 @@ namespace CraftingList.Crafting
         public static bool IsEntryValid(CListEntry entry)
         {
             if (entry.NumCrafts.ToLower() != "max" && (!int.TryParse(entry.NumCrafts, out _) || int.Parse(entry.NumCrafts) <= 0)) {
-                PluginLog.Debug("bad amount");
+                Service.PluginLog.Debug("bad amount");
                 return false;
             }
             return true;

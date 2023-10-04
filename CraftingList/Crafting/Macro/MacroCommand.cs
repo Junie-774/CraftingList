@@ -79,11 +79,11 @@ namespace CraftingList.Crafting.Macro
 
         public async Task<bool> Execute()
         {
-            PluginLog.Debug($"[MacroCommand.Execute()] Executing '{Text}'");
+            Service.PluginLog.Debug($"[MacroCommand.Execute()] Executing '{Text}'");
 
             if (!IsCraftingAction(actionName))
             {
-                PluginLog.Debug("Not a crafting action");
+                Service.PluginLog.Debug("Not a crafting action");
                 Service.ChatManager.SendMessage(Text);
                 await Task.Delay(WaitMS);
                 return true;
@@ -91,7 +91,7 @@ namespace CraftingList.Crafting.Macro
 
             if (!CraftHelper.IsCrafting() && Service.Configuration.SkipCraftingActionsWhenNotCrafting)
             {
-                PluginLog.Debug("[MacroCommand.Execute()] Skipping action because player is not crafting.");
+                Service.PluginLog.Debug("[MacroCommand.Execute()] Skipping action because player is not crafting.");
                 return true;
             }
 
@@ -103,7 +103,7 @@ namespace CraftingList.Crafting.Macro
             {
                 if (!DataWaiter.WaitOne(Service.Configuration.WaitDurations.CraftingActionMaxDelay))
                 {
-                    PluginLog.Error("[MacroCommand.Execute()] Didn't receive a response after using action.");
+                    Service.PluginLog.Error("[MacroCommand.Execute()] Didn't receive a response after using action.");
                     return false;
                 }
 

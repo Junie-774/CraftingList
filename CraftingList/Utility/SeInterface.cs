@@ -69,7 +69,7 @@ namespace CraftingList.Utility
         }
         public SeInterface()
         {
-            SignatureHelper.Initialise(this);
+            Service.GameInteropProvider.InitializeFromAttributes(this);
 
             m_useActionDelegate = Singleton<UseAction>.Get().Delegate();
 
@@ -82,7 +82,7 @@ namespace CraftingList.Utility
         {
             void** Data = (void**) source;
             void** inputData = (void**)unused;
-            PluginLog.Debug($"atkunit: {atkUnit:X16} event type: {eventType}, which: {which}, source: {(IntPtr) Data[1]:X16}, unused: {unused:X16}");
+            Service.PluginLog.Debug($"atkunit: {atkUnit:X16} event type: {eventType}, which: {which}, source: {(IntPtr) Data[1]:X16}, unused: {unused:X16}");
 
             for (int i = 0; i < 8; i++)
             {
@@ -92,10 +92,10 @@ namespace CraftingList.Utility
                     inputPtr = unused;
                 }
 
-                //PluginLog.Debug($"input data[{i}] = {(IntPtr) inputData[i]:x}");
+                //Service.PluginLog.Debug($"input data[{i}] = {(IntPtr) inputData[i]:x}");
 
             }
-            PluginLog.Debug($"{inputPtr:X}");
+            Service.PluginLog.Debug($"{inputPtr:X}");
             Instance.dialogREHook?.Original(atkUnit, eventType, which, source, inputPtr);
         }
 
@@ -106,15 +106,15 @@ namespace CraftingList.Utility
 
         public static IntPtr GetUiObjectSolo(string name) => GetUiObject(name);
 
-        public static void ExecuteFFXivInternalMacroByNumber(int macroNum) => RaptureShellModule.Instance->ExecuteMacro(RaptureMacroModule.Instance->Individual[macroNum]);
-        public static void ExecuteFFXIVInternalMacro(FFXIVInternalMacro m) => RaptureShellModule.Instance->ExecuteMacro((RaptureMacroModule.Macro*)&m);
+        public static void ExecuteFFXivInternalMacroByNumber(int macroNum) => RaptureShellModule.Instance()->ExecuteMacro((RaptureMacroModule.Macro*) RaptureMacroModule.Instance()->Individual[macroNum]);
+        public static void ExecuteFFXIVInternalMacro(FFXIVInternalMacro m) => RaptureShellModule.Instance()->ExecuteMacro((RaptureMacroModule.Macro*)&m);
 
         public static PtrRecipeNote RecipeNote() => GetUiObject("RecipeNote");
         public static PtrSynthesis Synthesis() => GetUiObject("Synthesis");
         public static PtrSynthesisSimpleDialog SynthesisSimpleDialog() => GetUiObject("SynthesisSimpleDialog");
         public static PtrRepair Repair() => GetUiObject("Repair");
         public static PtrSelectYesNo SelectYesNo() => GetUiObject("SelectYesno");
-        public static RaptureMacroModule* RaptureMacroManager() => RaptureMacroModule.Instance;
+        public static RaptureMacroModule* RaptureMacroManager() => RaptureMacroModule.Instance();
         public static InventoryManager* InventoryManager() => FFXIVClientStructs.FFXIV.Client.Game.InventoryManager.Instance();
 
         public static Task<IntPtr> WaitForAddon(string addonName, bool requiresVisible, int timeoutMs)

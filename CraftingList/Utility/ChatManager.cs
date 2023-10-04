@@ -8,10 +8,10 @@ using Dalamud.Game.Gui;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using Lumina.Excel.GeneratedSheets;
-
 namespace CraftingList.Utility;
 
 public enum UiColor
@@ -35,11 +35,10 @@ internal class ChatManager : IDisposable
     [Signature("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9")]
     private readonly ProcessChatBoxDelegate processChatBox = null!;
 
-    private ChatGui ChatGui;
-    public ChatManager(ChatGui chatGui)
+    private IChatGui ChatGui;
+    public ChatManager(IChatGui chatGui)
     {
-        SignatureHelper.Initialise(this);
-        Service.Framework.Update += this.FrameworkUpdate;
+        Utility.Service.Framework.Update += this.FrameworkUpdate;
         this.ChatGui = chatGui;
     }
 
@@ -54,13 +53,13 @@ internal class ChatManager : IDisposable
 
 
     public void PrintMessage(string message)
-        => ChatGui.PrintChat(new XivChatEntry()
+        => ChatGui.Print(new XivChatEntry()
         {
             Message = $"[CraftingList] {message}",
         });
 
     public void PrintColor(string message, UiColor color)
-        => ChatGui.PrintChat(
+        => ChatGui.Print(
             new XivChatEntry()
             {
                 Message = new SeString(
@@ -71,7 +70,7 @@ internal class ChatManager : IDisposable
 
 
     public void PrintError(string message)
-        => ChatGui.PrintChat(new XivChatEntry()
+        => ChatGui.Print(new XivChatEntry()
         {
             Type = XivChatType.Urgent,
             Message = $"[CraftingList] {message}",
@@ -89,7 +88,7 @@ internal class ChatManager : IDisposable
             continue;
     }
 
-    private void FrameworkUpdate(Framework framework)
+    private void FrameworkUpdate(IFramework framework)
     {
         if (this.chatBoxMessages.Reader.TryRead(out var message))
         {

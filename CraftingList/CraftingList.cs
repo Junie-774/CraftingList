@@ -38,15 +38,19 @@ namespace CraftingList
         public CraftingList(DalamudPluginInterface pluginInterface)
         {
             Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            Service.Initialize(pluginInterface, Configuration);
+            
 
             Configuration.Initialize(pluginInterface);
 
             Module.Initialize();
-            SignatureHelper.Initialise(this);
+            Service.Initialize(pluginInterface, Configuration);
+            //Service.init2(Configuration);
+
+            Service.GameInteropProvider.InitializeFromAttributes(this);
 
             InitializeSingletons();
             SeInterface.Instance.InitializeHooks();
+
             MacroManager.InitializeMacros();
 
             Crafter = new Crafter();
