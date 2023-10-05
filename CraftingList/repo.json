@@ -11,7 +11,6 @@
       "craft"
     ],
     "RepoUrl": "https://github.com/Junie-774/CraftingList",
-    "DalamudApiLevel": 8,
     "LoadPriority": 69,
     "IsHide": false,
     "DownloadLinkInstall": "https://raw.githubusercontent.com/Junie-774/CraftingList/main/CraftingList/latest.zip",
