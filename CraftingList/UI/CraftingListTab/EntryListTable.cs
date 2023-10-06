@@ -84,7 +84,7 @@ namespace CraftingList.UI.CraftingListTab
 
                     ImGui.TableSetColumnIndex(0);
                     {
-                        var icon = (TextureWrap?) Service.TextureProvider.GetIcon(entry.Result().Icon);
+                        var icon = Service.TextureProvider.GetIcon(entry.Result().Icon);
                         if (icon != null)
                         {
                             ImGuiAddons.ScaledImageY(icon.ImGuiHandle, icon.Width, icon.Height, ImGui.GetFrameHeight());
@@ -292,7 +292,7 @@ namespace CraftingList.UI.CraftingListTab
                     hasHqItem = true;
 
                 {
-                    TextureWrap? texture = (TextureWrap?) Service.TextureProvider.GetIcon(item.Icon, ITextureProvider.IconFlags.ItemHighQuality);
+                    var texture = Service.TextureProvider.GetIcon(item.Icon, ITextureProvider.IconFlags.ItemHighQuality);
                     if (texture != null)
                     {
                         ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
@@ -452,7 +452,7 @@ namespace CraftingList.UI.CraftingListTab
                         
                         
                         {
-                            var texture = (TextureWrap?) Service.TextureProvider.GetIcon(recipe.ItemResult.Value!.Icon);
+                            var texture = Service.TextureProvider.GetIcon(recipe.ItemResult.Value!.Icon);
                             if (texture != null)
                             {
                                 ImGui.SetCursorPos(cursorPos);

@@ -294,7 +294,7 @@ namespace CraftingList.UI.CraftingListTab
         {
 
             {
-                var texture = (TextureWrap?) Service.TextureProvider.GetIcon(entrySummary.Entry.Result().Icon);
+                var texture = Service.TextureProvider.GetIcon(entrySummary.Entry.Result().Icon);
                 if (texture != null)
                 {
                     ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetFrameHeight());
@@ -327,7 +327,7 @@ namespace CraftingList.UI.CraftingListTab
 
                         ImGui.TableSetColumnIndex(1);
                         {
-                            var texture = (TextureWrap?) Service.TextureProvider.GetIcon(ingredient.Item.Icon,
+                            var texture = Service.TextureProvider.GetIcon(ingredient.Item.Icon,
                                 ingredient.IsHQ ? ITextureProvider.IconFlags.ItemHighQuality : ITextureProvider.IconFlags.None);
                             if (texture != null)
                             {
