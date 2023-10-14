@@ -1,4 +1,4 @@
-﻿using CraftingList.Crafting;
+using CraftingList.Crafting;
 using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using CraftingList.UI.CraftingListTab;
@@ -46,7 +46,7 @@ namespace CraftingList
             Service.Initialize(pluginInterface, Configuration);
             //Service.init2(Configuration);
 
-            Service.GameInteropProvider.InitializeFromAttributes(this);
+            Service.GameInteropProvider.InitializeFromAttributes(Service.ChatManager);
 
             InitializeSingletons();
             SeInterface.Instance.InitializeHooks();
