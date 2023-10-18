@@ -46,7 +46,7 @@ namespace CraftingList
             Service.Initialize(pluginInterface, Configuration);
             //Service.init2(Configuration);
 
-            Service.GameInteropProvider.InitializeFromAttributes(this);
+            Service.GameInteropProvider.InitializeFromAttributes(Service.ChatManager);
 
             InitializeSingletons();
             SeInterface.Instance.InitializeHooks();

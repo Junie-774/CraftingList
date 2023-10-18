@@ -21,7 +21,8 @@ namespace CraftingList.SeFunctions
         public void ClickRepairAll()
         {
             if (AddonPointer == null) return;
-            Module.ClickAddon(AddonPointer, AddonPointer->RepairAllButton->AtkComponentBase.OwnerNode, EventType.Change, repairAllButtonId);
+            var repairallbutton = AddonPointer->AtkUnitBase.GetButtonNodeById(16);
+            Module.ClickAddon(AddonPointer, repairallbutton->AtkComponentBase.OwnerNode, EventType.Change, repairAllButtonId);
         }
     }
 }

@@ -233,7 +233,7 @@ namespace CraftingList.UI.CraftingListTab
                         EstimateTime();
 
                         if (Service.Configuration.RecentRecipeIds.Count > 10)
-                            Service.Configuration.RecentRecipeIds.RemoveAt(Service.Configuration.RecentRecipeIds.Count);
+                            Service.Configuration.RecentRecipeIds.RemoveAt(Service.Configuration.RecentRecipeIds.Count - 1);
                         
                         if (Service.Configuration.RecentRecipeIds.Contains(newEntry.RecipeId))
                             Service.Configuration.RecentRecipeIds.RemoveAll(x => x == newEntry.RecipeId);

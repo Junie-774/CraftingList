@@ -83,7 +83,7 @@ namespace CraftingList.Crafting.Macro
 
             if (!IsCraftingAction(actionName))
             {
-                Service.PluginLog.Debug("Not a crafting action");
+                Service.PluginLog.Error("Not a crafting action");
                 Service.ChatManager.SendMessage(Text);
                 await Task.Delay(WaitMS);
                 return true;

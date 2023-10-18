@@ -39,6 +39,7 @@ internal class ChatManager : IDisposable
     public ChatManager(IChatGui chatGui)
     {
         Utility.Service.Framework.Update += this.FrameworkUpdate;
+        processChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(Service.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
         this.ChatGui = chatGui;
     }
 
@@ -100,11 +101,19 @@ internal class ChatManager : IDisposable
     {
         var framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance();
         var uiModule = framework->GetUiModule();
+      
 
         using var payload = new ChatPayload(message);
         var payloadPtr = Marshal.AllocHGlobal(400);
         Marshal.StructureToPtr(payload, payloadPtr, false);
-
+        if (uiModule == null)
+        {
+            Service.PluginLog.Debug("ui module is nullll");
+        }
+        if (payloadPtr == null)
+        {
+            Service.PluginLog.Debug("paylaodPtr is null");
+        }
         this.processChatBox(uiModule, payloadPtr, IntPtr.Zero, 0);
 
         Marshal.FreeHGlobal(payloadPtr);

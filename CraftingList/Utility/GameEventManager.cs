@@ -3,6 +3,7 @@ using Dalamud.Hooking;
 using Dalamud.Logging;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.STD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,8 +43,11 @@ namespace CraftingList.Utility
             {
                 if (dataSize >= 4)
                 {
-                    if (data->ActionType == ActionType.MainCommand || data->ActionType == ActionType.CraftAction)
+                    if (data->ActionType == ActionType.MainCommand
+                        || data->ActionType == ActionType.CraftAction
+                        || data->ActionType == ActionType.Unk_10)
                     {
+                        
                         
                         this.CraftingData = *data;
                         this.DataAvailableWaiter.Set();
