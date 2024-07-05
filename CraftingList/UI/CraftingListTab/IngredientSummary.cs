@@ -294,7 +294,7 @@ namespace CraftingList.UI.CraftingListTab
         {
 
             {
-                var texture = Service.TextureProvider.GetIcon(entrySummary.Entry.Result().Icon);
+                var texture = ImGuiAddons.LookupIcon(entrySummary.Entry.Result().Icon);
                 if (texture != null)
                 {
                     ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetFrameHeight());
@@ -327,8 +327,7 @@ namespace CraftingList.UI.CraftingListTab
 
                         ImGui.TableSetColumnIndex(1);
                         {
-                            var texture = Service.TextureProvider.GetIcon(ingredient.Item.Icon,
-                                ingredient.IsHQ ? ITextureProvider.IconFlags.ItemHighQuality : ITextureProvider.IconFlags.None);
+                            var texture = ImGuiAddons.LookupIcon(ingredient.Item.Icon, ingredient.IsHQ, false);
                             if (texture != null)
                             {
                                 ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetFrameHeight());
@@ -405,11 +404,11 @@ namespace CraftingList.UI.CraftingListTab
             {
                 for (int i = 0; i < bags[bag]->Size; i++)
                 {
-                    if (bags[bag]->Items[i].ItemID == 0)
+                    if (bags[bag]->Items[i].ItemId == 0)
                     {
                         numFreeSlots++;
                     }
-                    if (bags[bag]->Items[i].ItemID == itemId && ((bags[bag]->Items[i].Flags & InventoryItem.ItemFlags.HQ) != 0) == hq)
+                    if (bags[bag]->Items[i].ItemId == itemId && ((bags[bag]->Items[i].Flags & InventoryItem.ItemFlags.HighQuality) != 0) == hq)
                     {
                         quantityHeld += (int)bags[bag]->Items[i].Quantity;
                     }

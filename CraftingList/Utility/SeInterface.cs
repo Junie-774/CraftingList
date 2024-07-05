@@ -1,22 +1,13 @@
 ﻿using ClickLib.Structures;
-using CraftingList.Crafting;
 using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using Dalamud.Hooking;
-using Dalamud.Logging;
-using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.System.String;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace CraftingList.Utility
@@ -74,19 +65,19 @@ namespace CraftingList.Utility
             m_useActionDelegate = Singleton<UseAction>.Get().Delegate();
 
             CloseNoteMacro = new FFXIVInternalMacro(0, 0, "Close", "/closerecipenote");
-            
+
         }
         static InputData staticInput = InputData.Empty();
         static IntPtr inputPtr;
         private static void SynthSimpleREDetour(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused)
         {
-            void** Data = (void**) source;
+            void** Data = (void**)source;
             void** inputData = (void**)unused;
-            Service.PluginLog.Debug($"atkunit: {atkUnit:X16} event type: {eventType}, which: {which}, source: {(IntPtr) Data[1]:X16}, unused: {unused:X16}");
+            Service.PluginLog.Debug($"atkunit: {atkUnit:X16} event type: {eventType}, which: {which}, source: {(IntPtr)Data[1]:X16}, unused: {unused:X16}");
 
             for (int i = 0; i < 8; i++)
             {
-                if (inputData[i] != (void*) 0)
+                if (inputData[i] != (void*)0)
                 {
                     staticInput.Data[i] = inputData[i];
                     inputPtr = unused;
@@ -101,12 +92,12 @@ namespace CraftingList.Utility
 
         public static IntPtr GetUiObject(string name, int index = 1)
         {
-            return (IntPtr) AtkStage.GetSingleton()->RaptureAtkUnitManager->GetAddonByName(name);
+            return (IntPtr)AtkStage.Instance()->RaptureAtkUnitManager->GetAddonByName(name);
         }
 
         public static IntPtr GetUiObjectSolo(string name) => GetUiObject(name);
 
-        public static void ExecuteFFXivInternalMacroByNumber(int macroNum) => RaptureShellModule.Instance()->ExecuteMacro((RaptureMacroModule.Macro*) RaptureMacroModule.Instance()->Individual[macroNum]);
+        public static void ExecuteFFXivInternalMacroByNumber(uint macroNum) => RaptureShellModule.Instance()->ExecuteMacro(RaptureMacroModule.Instance()->GetMacro(0, macroNum));
         public static void ExecuteFFXIVInternalMacro(FFXIVInternalMacro m) => RaptureShellModule.Instance()->ExecuteMacro((RaptureMacroModule.Macro*)&m);
 
         public static PtrRecipeNote RecipeNote() => GetUiObject("RecipeNote");

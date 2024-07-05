@@ -4,14 +4,14 @@
     <Authors></Authors>
     <Company></Company>
     <AssemblyName>CraftingList</AssemblyName>
-    <Version>2.5.3</Version>
+    <Version>2.5.4</Version>
     <Description>Craft things~.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/Junie-774/CraftingList</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net7.0-windows7.0</TargetFramework>
+    <TargetFramework>net8.0-windows8.0</TargetFramework>
     <Platforms>x64</Platforms>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -34,9 +34,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitFaster.Caching" Version="2.1.1" />
     <PackageReference Include="ClickLib" Version="1.2.0.1" />
-    <PackageReference Include="DalamudPackager" Version="2.1.12" />
+    <PackageReference Include="DalamudPackager" Version="2.1.13" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(AppData)\XivLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>
       <Private>false</Private>

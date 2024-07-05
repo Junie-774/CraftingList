@@ -35,7 +35,7 @@ namespace CraftingList
             //Singleton<AddonSynthesisSimpleReceiveEvent>.Set();
         }
 
-        public CraftingList(DalamudPluginInterface pluginInterface)
+        public CraftingList(IDalamudPluginInterface pluginInterface)
         {
             Configuration = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             
@@ -87,7 +87,8 @@ namespace CraftingList
             });
         
             Service.PluginInterface.UiBuilder.Draw += DrawUI;
-            //DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
+            Service.PluginInterface.UiBuilder.OpenMainUi += () => PluginUi.Visible = !PluginUi.Visible;
+            Service.PluginInterface.UiBuilder.OpenConfigUi += () => PluginUi.Visible = !PluginUi.Visible;
         }
 
         public void Dispose()

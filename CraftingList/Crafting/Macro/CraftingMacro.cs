@@ -83,7 +83,7 @@ namespace CraftingList.Crafting.Macro
 
             for (int i = 0; i <= 14; i++)
             {
-                var line = macro->LinesSpan[i].ToString();
+                var line = macro->Lines[i].ToString();
                 if (line.Length > 0)
                 {
                     text += line;

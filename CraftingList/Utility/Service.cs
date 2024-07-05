@@ -1,10 +1,7 @@
 ﻿using CraftingList.Crafting.Macro;
 using Dalamud.Data;
 using Dalamud.Game;
-using Dalamud.Game.ClientState;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
 using Dalamud.IoC;
 using Dalamud.Logging;
 using Dalamud.Plugin;
@@ -12,7 +9,6 @@ using Dalamud.Plugin.Services;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,7 +17,7 @@ namespace CraftingList.Utility
 {
     internal class Service
     {
-        public static void Initialize(DalamudPluginInterface pluginInterface, Configuration config)
+        public static void Initialize(IDalamudPluginInterface pluginInterface, Configuration config)
         {
             pluginInterface.Create<Service>();
             Configuration = config;
@@ -51,7 +47,7 @@ namespace CraftingList.Utility
         public static Configuration Configuration { get; set; } = null!;
 
         [PluginService]
-        public static DalamudPluginInterface PluginInterface { get; private set; } = null!;
+        public static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
 
         [PluginService]
         public static ISigScanner SigScanner { get; private set; } = null!;

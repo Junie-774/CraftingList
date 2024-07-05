@@ -55,7 +55,7 @@ namespace CraftingList.SeFunctions
         public void ClickButton(int which)
         {
             if (Pointer == null) return;
-            Module.ClickAddon(Pointer, Pointer->Unk330->AtkComponentBase.OwnerNode, EventType.Change, which);
+            Module.ClickAddon(Pointer, Pointer->SynthesizeButton->AtkComponentBase.OwnerNode, EventType.Change, which);
         }
 
         public void ClickHQ(int which)

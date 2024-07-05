@@ -100,7 +100,7 @@ internal class ChatManager : IDisposable
     private unsafe void SendMessageInternal(string message)
     {
         var framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance();
-        var uiModule = framework->GetUiModule();
+        var uiModule = framework->UIModule;
       
 
         using var payload = new ChatPayload(message);
@@ -110,10 +110,7 @@ internal class ChatManager : IDisposable
         {
             Service.PluginLog.Debug("ui module is nullll");
         }
-        if (payloadPtr == null)
-        {
-            Service.PluginLog.Debug("paylaodPtr is null");
-        }
+
         this.processChatBox(uiModule, payloadPtr, IntPtr.Zero, 0);
 
         Marshal.FreeHGlobal(payloadPtr);

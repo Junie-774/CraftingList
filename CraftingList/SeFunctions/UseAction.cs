@@ -8,7 +8,7 @@ namespace CraftingList.SeFunctions
     internal class UseAction : SeFunction<UseActionDelegate>
     {
         public UseAction(SigScanner sigScanner)
-            : base(sigScanner, "E8 ?? ?? ?? ?? EB 64 B1 01")
+            : base(sigScanner, "E8 ?? ?? ?? ?? B0 01 EB B6")
         {
 
         }

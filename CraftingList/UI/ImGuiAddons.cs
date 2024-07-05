@@ -1,6 +1,8 @@
-﻿using Dalamud.Interface;
+﻿using CraftingList.Utility;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Style;
+using Dalamud.Interface.Textures.TextureWraps;
 using ImGuiNET;
 using ImGuiScene;
 using ImPlotNET;
@@ -264,6 +266,17 @@ namespace CraftingList.UI
             ImGui.Dummy(new Vector2(0, 0));
             ImGui.EndGroup();
                 
+        }
+
+        public static IDalamudTextureWrap LookupIcon(uint iconId, bool highQ = false, bool hiRes = false)
+        {
+            return Service.TextureProvider.GetFromGameIcon(new Dalamud.Interface.Textures.GameIconLookup
+            {
+                IconId = iconId,
+                ItemHq = highQ,
+                HiRes = hiRes,
+                Language = Service.ClientState.ClientLanguage,
+            }).GetWrapOrEmpty();
         }
     }
 }

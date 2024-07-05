@@ -84,8 +84,8 @@ namespace CraftingList.UI.CraftingListTab
 
                     ImGui.TableSetColumnIndex(0);
                     {
-                        var icon = Service.TextureProvider.GetIcon(entry.Result().Icon);
-                        if (icon != null)
+                        var icon = ImGuiAddons.LookupIcon(entry.Result().Icon);
+                         if (icon != null)
                         {
                             ImGuiAddons.ScaledImageY(icon.ImGuiHandle, icon.Width, icon.Height, ImGui.GetFrameHeight());
                             ImGui.SameLine();
@@ -240,7 +240,6 @@ namespace CraftingList.UI.CraftingListTab
 
                         Service.Configuration.RecentRecipeIds.Insert(0, newEntry.RecipeId);
 
-                        newEntry.MacroName = "";
                         newEntry.NumCrafts = "1";
                         newEntry.RecipeId = -1;
                         newEntry.Name = "";
@@ -292,7 +291,7 @@ namespace CraftingList.UI.CraftingListTab
                     hasHqItem = true;
 
                 {
-                    var texture = Service.TextureProvider.GetIcon(item.Icon, ITextureProvider.IconFlags.ItemHighQuality);
+                    var texture = ImGuiAddons.LookupIcon(item.Icon, true);
                     if (texture != null)
                     {
                         ImGuiAddons.ScaledImageY(texture.ImGuiHandle, texture.Width, texture.Height, ImGui.GetTextLineHeight());
@@ -452,7 +451,7 @@ namespace CraftingList.UI.CraftingListTab
                         
                         
                         {
-                            var texture = Service.TextureProvider.GetIcon(recipe.ItemResult.Value!.Icon);
+                            var texture = ImGuiAddons.LookupIcon(recipe.ItemResult.Value!.Icon);
                             if (texture != null)
                             {
                                 ImGui.SetCursorPos(cursorPos);

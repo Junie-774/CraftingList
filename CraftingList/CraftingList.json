@@ -3,7 +3,9 @@
   "Name": "Crafting List",
   "Punchline": "Crafty craft",
   "Description": "Create a list of items to craft",
+  "DalamudApiLevel": 10,
   "Tags": [
+    "Crafting"
   ],
   "RepoUrl": "https://github.com/Junie-774/CraftingList",
   "IsTestingExclusive": false

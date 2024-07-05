@@ -59,7 +59,7 @@ namespace CraftingList.Utility
         }
 
         public static void** ObtainVTable(void* addon)
-            => ((AtkEventListener*)addon)->vfunc;
+            => (void**)((AtkEventListener*)addon)->VirtualTable;
 
 
         public delegate void ReceiveEventDelegate(void* atkUnit, ushort eventType, int which, void* source, void* unused);
