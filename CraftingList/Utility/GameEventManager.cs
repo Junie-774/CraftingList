@@ -3,6 +3,7 @@ using Dalamud.Hooking;
 using Dalamud.Logging;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.STD;
 using System;
 using System.Collections.Generic;
@@ -37,12 +38,27 @@ namespace CraftingList.Utility
             this.DataAvailableWaiter.Dispose();
         }
 
+        public unsafe bool WaitTillReady(int timeoutMs)
+        {
+            var startTime = DateTime.Now;
+            
+            while (DateTime.Now < startTime.AddMilliseconds(timeoutMs))
+            {
+                if ((EventFramework.Instance()->GetCraftEventHandler()->CraftFlags & CraftFlags.ExecutingAction1) == 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         private unsafe IntPtr EventFrameworkDetour(IntPtr a1, IntPtr a2, uint a3, ushort a4, IntPtr a5, CraftingState* data, byte dataSize)
         {
+            Service.PluginLog.Debug("Event");
             try
             {
                 if (dataSize >= 4)
                 {
+                    Service.PluginLog.Debug($"ActionType: {data->ActionType}");
                     if (data->ActionType == ActionType.MainCommand
                         || data->ActionType == ActionType.CraftAction
                         || data->ActionType == ActionType.Unk_10)

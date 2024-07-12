@@ -99,9 +99,10 @@ namespace CraftingList.Crafting.Macro
 
             Service.ChatManager.SendMessage(Text);
 
+            await Task.Delay(200); // Give the game time to enter crafting state before looking for changes
             if (Service.Configuration.SmartWait)
             {
-                if (!DataWaiter.WaitOne(Service.Configuration.WaitDurations.CraftingActionMaxDelay))
+                if (!Service.GameEventManager.WaitTillReady(Service.Configuration.WaitDurations.CraftingActionMaxDelay))
                 {
                     Service.PluginLog.Error("[MacroCommand.Execute()] Didn't receive a response after using action.");
                     return false;
