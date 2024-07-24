@@ -76,7 +76,7 @@ namespace CraftingList.UI.CraftingListTab
                 ImGui.TableHeadersRow();
                 ImGui.TableNextRow();
 
-
+                int timeEstimation = 0;
                 for (int i = 0; i < entries.Count; i++)
                 {
                     var entry = entries[i];
@@ -115,7 +115,7 @@ namespace CraftingList.UI.CraftingListTab
                     lock (IngredientSummary.EntrySummaries)
                     {
                         if (entry.EntryId >= 0 && entry.EntryId < EntryTimeEstimations.Count)
-                            ImGui.Text(FormatTime(EntryTimeEstimations[entry.EntryId]));
+                            ImGui.Text(FormatTime(EntryTimeEstimations[timeEstimation++]));
                     }
 
                     ImGui.TableSetColumnIndex(4);
