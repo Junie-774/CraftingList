@@ -153,7 +153,7 @@ namespace CraftingList.Crafting.Macro
                 {
                     if (await command.Execute())
                     {
-                        Service.PluginLog.Debug("Success!");
+                        Service.PluginLog.Verbose("Success!");
                         break;
                     }
                     else

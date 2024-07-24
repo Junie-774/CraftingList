@@ -77,8 +77,6 @@ namespace CraftingList
         
         public void DrawExperimentalTab()
         {
-            //Service.Service.Service.Service.Service.Service.Service.PluginLog.Debug($"Crafting: {DalamudApi.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Crafting]}");
-
             ImGui.Text("Wait durations (ms)");
             ImGui.PushItemWidth(ImGui.CalcTextSize("0000000").X);
 

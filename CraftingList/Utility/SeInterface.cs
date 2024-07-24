@@ -1,5 +1,4 @@
-﻿using ClickLib.Structures;
-using CraftingList.Crafting.Macro;
+﻿using CraftingList.Crafting.Macro;
 using CraftingList.SeFunctions;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -66,28 +65,6 @@ namespace CraftingList.Utility
 
             CloseNoteMacro = new FFXIVInternalMacro(0, 0, "Close", "/closerecipenote");
 
-        }
-        static InputData staticInput = InputData.Empty();
-        static IntPtr inputPtr;
-        private static void SynthSimpleREDetour(IntPtr atkUnit, ushort eventType, int which, IntPtr source, IntPtr unused)
-        {
-            void** Data = (void**)source;
-            void** inputData = (void**)unused;
-            Service.PluginLog.Debug($"atkunit: {atkUnit:X16} event type: {eventType}, which: {which}, source: {(IntPtr)Data[1]:X16}, unused: {unused:X16}");
-
-            for (int i = 0; i < 8; i++)
-            {
-                if (inputData[i] != (void*)0)
-                {
-                    staticInput.Data[i] = inputData[i];
-                    inputPtr = unused;
-                }
-
-                //Service.PluginLog.Debug($"input data[{i}] = {(IntPtr) inputData[i]:x}");
-
-            }
-            Service.PluginLog.Debug($"{inputPtr:X}");
-            Instance.dialogREHook?.Original(atkUnit, eventType, which, source, inputPtr);
         }
 
         public static IntPtr GetUiObject(string name, int index = 1)

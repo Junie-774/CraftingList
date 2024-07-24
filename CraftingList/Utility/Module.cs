@@ -1,9 +1,13 @@
-﻿using Dalamud.Logging;
+﻿using Dalamud.Hooking;
+using Dalamud.Logging;
 using Dalamud.Memory;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace CraftingList.Utility
 {
@@ -17,6 +21,7 @@ namespace CraftingList.Utility
         Unk37 = 0x37,
         Unk45 = 0x45,
     }
+
     internal static unsafe class Module
     {
         private const int MaxSize = 0x4800;

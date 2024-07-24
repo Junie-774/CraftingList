@@ -34,6 +34,7 @@ namespace CraftingList.Utility
 
         public void Dispose()
         {
+            this.eventFrameworkHook.Disable();
             this.eventFrameworkHook.Dispose();
             this.DataAvailableWaiter.Dispose();
         }

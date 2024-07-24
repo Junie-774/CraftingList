@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System;
+using System.Runtime.InteropServices;
 
 namespace CraftingList.SeFunctions
 {
@@ -88,9 +89,16 @@ namespace CraftingList.SeFunctions
 
         public void Close()
         {
-            if (AgentRecipeNote.Instance() != null && Pointer != null && Pointer->AtkUnitBase.IsVisible)
+            try
             {
-                AgentRecipeNote.Instance()->AgentInterface.Show();
+                if (Pointer != null
+                    && Pointer->AtkUnitBase.IsVisible)
+                {
+                    Pointer->AtkUnitBase.Hide(false, true, 0);
+                }
+            }
+            catch (Exception ex) {
+                Service.PluginLog.Debug(ex.ToString());
             }
         }
 

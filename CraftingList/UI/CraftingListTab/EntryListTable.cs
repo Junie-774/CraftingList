@@ -195,8 +195,6 @@ namespace CraftingList.UI.CraftingListTab
                     DrawIngredientsForEntry(entry);
                 }
             }
-
-            ImGui.NewLine();
         }
 
         public void DrawImportWindow()
@@ -219,6 +217,9 @@ namespace CraftingList.UI.CraftingListTab
                 DrawEntry(newEntry);
                 ImGui.PopItemWidth();
 
+
+                ImGuiAddons.EndGroupPanel();
+
                 if (ImGuiAddons.IconButton(FontAwesomeIcon.Plus, "Add Entry", "NewEntry"))
                 {
                     if (newEntry.RecipeId >= 0 &&
@@ -234,7 +235,7 @@ namespace CraftingList.UI.CraftingListTab
 
                         if (Service.Configuration.RecentRecipeIds.Count > 10)
                             Service.Configuration.RecentRecipeIds.RemoveAt(Service.Configuration.RecentRecipeIds.Count - 1);
-                        
+
                         if (Service.Configuration.RecentRecipeIds.Contains(newEntry.RecipeId))
                             Service.Configuration.RecentRecipeIds.RemoveAll(x => x == newEntry.RecipeId);
 
@@ -248,7 +249,7 @@ namespace CraftingList.UI.CraftingListTab
 
                         Service.Configuration.Save();
 
-                        
+
                         ImGui.CloseCurrentPopup();
 
                         ShowNewEntryAsterisks = false;
@@ -256,12 +257,11 @@ namespace CraftingList.UI.CraftingListTab
                     }
                     else
                     {
-                        Service.PluginLog.Debug("BAD!");
+                        Service.PluginLog.Error("New Entry is invalid.");
                         ShowNewEntryAsterisks = true;
                     }
                 }
 
-                ImGuiAddons.EndGroupPanel();
                 ImGui.EndPopup();
             }
         }

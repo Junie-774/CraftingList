@@ -4,7 +4,7 @@
     <Authors></Authors>
     <Company></Company>
     <AssemblyName>CraftingList</AssemblyName>
-    <Version>2.5.5</Version>
+    <Version>2.5.6</Version>
     <Description>Craft things~.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/Junie-774/CraftingList</PackageProjectUrl>
@@ -34,7 +34,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClickLib" Version="1.2.0.1" />
     <PackageReference Include="DalamudPackager" Version="2.1.13" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(AppData)\XivLauncher\addon\Hooks\dev\FFXIVClientStructs.dll</HintPath>

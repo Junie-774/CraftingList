@@ -18,7 +18,7 @@ namespace CraftingList.Crafting
 
         public static async Task<int> ChangeJobs(int job)
         {
-            Service.PluginLog.Debug($"[CraftHelper.ChangeJobs()] Changing jobs to {SeInterface.DoHJobs[job]}");
+            Service.PluginLog.Verbose($"[CraftHelper.ChangeJobs()] Changing jobs to {SeInterface.DoHJobs[job]}");
             SeInterface.SwapToDOHJob(job);
             await Task.Delay(Service.Configuration.WaitDurations.AfterChangeJobs);
             return 0;
@@ -34,7 +34,7 @@ namespace CraftingList.Crafting
 
             //We close the recipe note when the job starts, so if it's open, it's open because
             // we opened it to the right item.
-            Service.PluginLog.Debug($"[CraftHelper.OpenRecipeByRecipe()] Opening crafting log to recipe {recipeId}");
+            Service.PluginLog.Verbose($"[CraftHelper.OpenRecipeByRecipe()] Opening crafting log to recipe {recipeId}");
             SeInterface.RecipeNote().OpenRecipeByRecipeId((int) Service.Recipes[recipeId].RowId);
 
             if (!await WaitForAddon("RecipeNote", true, Service.Configuration.AddonTimeout))
@@ -55,7 +55,7 @@ namespace CraftingList.Crafting
                 return true;
             }
 
-            Service.PluginLog.Debug($"[CraftHelper.OpenRecipeByItem()] Opening crafting log to item {itemId}");
+            Service.PluginLog.Verbose($"[CraftHelper.OpenRecipeByItem()] Opening crafting log to item {itemId}");
             SeInterface.RecipeNote().OpenRecipeByItemId(itemId);
 
             if (!await WaitForAddon("RecipeNote", true, Service.Configuration.AddonTimeout))
@@ -68,7 +68,7 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> ClickSynthesize()
         {
-            Service.PluginLog.Debug($"[CraftHelper.ClickSynthesize()] Clicking Synthesize...");
+            Service.PluginLog.Verbose($"[CraftHelper.ClickSynthesize()] Clicking Synthesize...");
 
             SeInterface.RecipeNote().Synthesize();
 
@@ -87,7 +87,7 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> ClickQuickSynthesize()
         {
-            Service.PluginLog.Debug($"[CraftHelper.ClickQuickSynthesize()] Clicking Quick Synthesize...");
+            Service.PluginLog.Verbose($"[CraftHelper.ClickQuickSynthesize()] Clicking Quick Synthesize...");
 
             SeInterface.RecipeNote().QuickSynthesize();
 
@@ -104,7 +104,7 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> EnterQuickSynthAmount(int amount)
         {
-            Service.PluginLog.Debug("[CraftHelper.EnterQuickSynthAmount()] Entering Quick Synth amount.");
+            Service.PluginLog.Verbose("[CraftHelper.EnterQuickSynthAmount()] Entering Quick Synth amount.");
 
             var quickSynthDialog = SeInterface.SynthesisSimpleDialog();
 
@@ -123,7 +123,7 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> CheckQuickSynthHQMatBox()
         {
-            Service.PluginLog.Debug("[CraftHelper.CheckQuicksynthHQMatBox()] Checking the 'Use HQ materials' box.");
+            Service.PluginLog.Verbose("[CraftHelper.CheckQuicksynthHQMatBox()] Checking the 'Use HQ materials' box.");
 
             var quickSynthDialog = SeInterface.SynthesisSimpleDialog();
             if (!SeInterface.IsAddonAvailable((IntPtr) quickSynthDialog, true))
@@ -140,7 +140,7 @@ namespace CraftingList.Crafting
         }
         public static async Task<bool> StartQuickSynth()
         {
-            Service.PluginLog.Debug("[CraftHelper.StartQuickSynth()] Starting Quick synth from dialog.");
+            Service.PluginLog.Verbose("[CraftHelper.StartQuickSynth()] Starting Quick synth from dialog.");
 
             var quickSynthDialog = SeInterface.GetUiObject("SynthesisSimpleDialog");
 
@@ -161,7 +161,7 @@ namespace CraftingList.Crafting
 
         public static bool NeedToChangeConsumable(uint lastFood, uint currEntryFoodId, bool medicine)
         {
-            Service.PluginLog.Debug($"last: {lastFood} | curr {currEntryFoodId}");
+            Service.PluginLog.Verbose($"last: {lastFood} | curr {currEntryFoodId}");
             bool hasFood = medicine ? SeInterface.HasStatusID(49) : SeInterface.HasStatusID(48);
 
             // If we need to refresh
@@ -169,7 +169,7 @@ namespace CraftingList.Crafting
             {
                 if (hasFood)
                 {
-                    Service.PluginLog.Debug("  has food");
+                    Service.PluginLog.Verbose("  has food");
                     return false;
                 }
                 return true;
@@ -191,13 +191,13 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> ExitCrafting()
         {
-            Service.PluginLog.Debug($"[CraftHelper.ExitCrafting()] Closing Recipe Note...");
+            Service.PluginLog.Verbose($"[CraftHelper.ExitCrafting()] Closing Recipe Note...");
 
-            SeInterface.ExecuteFFXIVInternalMacro(SeInterface.Instance.CloseNoteMacro);
+            SeInterface.RecipeNote().Close();
             if (!await WaitForCloseAddon("RecipeNote", true, Service.Configuration.AddonTimeout))
                 return false;
 
-            if (!await Service.WaitForCondition(Dalamud.Game.ClientState.Conditions.ConditionFlag.Crafting, false, 5000))
+            if (!await Service.WaitForCondition(ConditionFlag.Crafting, false, 5000))
             {
                 Service.PluginLog.Error("[CraftHelper.ExitCrafting()] Took too long to exit crafting stance");
                 return false;
@@ -207,7 +207,7 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> ChangeFood(uint newFoodId, bool medication)
         {
-            Service.PluginLog.Debug($"[CraftHelper.ChangeFood()] Changing food/medication to {newFoodId}");
+            Service.PluginLog.Verbose($"[CraftHelper.ChangeFood()] Changing food/medication to {newFoodId}");
             string relevantStatus = medication ? Localization.GetMedicatedString() : Localization.GetWellFedStatusString();
 
             SeInterface.Statusoff(relevantStatus);
@@ -215,7 +215,7 @@ namespace CraftingList.Crafting
             await Task.Delay(Service.Configuration.WaitDurations.AfterClickOffFood);
             if (newFoodId != 0)
             {
-                Service.PluginLog.Debug($"[CraftHelper.ChangeFood()] Consuming food/medication {newFoodId}...");
+                Service.PluginLog.Verbose($"[CraftHelper.ChangeFood()] Consuming food/medication {newFoodId}...");
 
                 SeInterface.UseItem(newFoodId);
 
@@ -233,7 +233,7 @@ namespace CraftingList.Crafting
         }
         public static async Task<bool> FillHQMats(CListEntry entry)
         {
-            Service.PluginLog.Debug("[CraftHelper.FillHQMats()] Selecting HQ Mats...");
+            Service.PluginLog.Verbose("[CraftHelper.FillHQMats()] Selecting HQ Mats...");
 
             if (entry.PrioHQMats)
             {
@@ -260,7 +260,7 @@ namespace CraftingList.Crafting
 
         public static async Task<bool> Repair()
         {
-            Service.PluginLog.Debug($"[CraftHelper.Repair()] Repairing...");
+            Service.PluginLog.Verbose($"[CraftHelper.Repair()] Repairing...");
 
             if (!SeInterface.IsAddonAvailable(SeInterface.GetUiObject("Repair"), true)) {
                 SeInterface.ToggleRepairWindow();
@@ -271,7 +271,7 @@ namespace CraftingList.Crafting
 
             await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);
 
-            Service.PluginLog.Debug("[CraftHelper.Repair()] Clicking repair all...");
+            Service.PluginLog.Verbose("[CraftHelper.Repair()] Clicking repair all...");
             SeInterface.Repair().ClickRepairAll();
             if (!await WaitForAddon("SelectYesno", true, Service.Configuration.AddonTimeout))
                 return false;
@@ -280,7 +280,7 @@ namespace CraftingList.Crafting
 
 
             //Occupied39, conveniently, signals that the player is busy repairing. Or at least it flags as on while the player repairs
-            Service.PluginLog.Debug("[CraftHelper.Repair()] Clicking confirm...");
+            Service.PluginLog.Verbose("[CraftHelper.Repair()] Clicking confirm...");
             SeInterface.SelectYesNo().ClickYes();
 
             if (!await Service.WaitForCondition(ConditionFlag.Occupied39, false, 5000))
@@ -288,12 +288,12 @@ namespace CraftingList.Crafting
                 Service.PluginLog.Error($"[CraftHelper.Repair()] Waiting for repair to finish timed out.");
             }
 
-            Service.PluginLog.Debug("[CraftHelper.Repair()] Closing repair window...");
+            Service.PluginLog.Verbose("[CraftHelper.Repair()] Closing repair window...");
             SeInterface.ToggleRepairWindow();
             if (!await WaitForCloseAddon("Repair", true, Service.Configuration.AddonTimeout))
                 return false;
 
-            Service.PluginLog.Debug("[CraftHelper.Repair()] Repaired!");
+            Service.PluginLog.Verbose("[CraftHelper.Repair()] Repaired!");
             return true;
         }
         public static void CancelEntry(CListEntry entry, string cancelMessage, bool error)
@@ -308,28 +308,28 @@ namespace CraftingList.Crafting
 
         public static Task<bool> WaitForAddon(string addonName, bool requiresVisible, int timeoutMS)
         {
-            Service.PluginLog.Debug($"[WaitForAddon] Waiting for addon '{addonName}'.");
+            Service.PluginLog.Verbose($"[WaitForAddon] Waiting for addon '{addonName}'.");
             try { SeInterface.WaitForAddon(addonName, requiresVisible, timeoutMS).Wait(); }
             catch
             {
-                Service.PluginLog.Debug($"[WaitForAddon] Waiting for addon '{addonName}' to open timed out.");
+                Service.PluginLog.Warning($"[WaitForAddon] Waiting for addon '{addonName}' to open timed out.");
                 return Task.FromResult(false);
             }
-            Service.PluginLog.Debug("[WaitForAddon] Waiting done!");
+            Service.PluginLog.Verbose("[WaitForAddon] Waiting done!");
             return Task.FromResult(true);
         }
 
         public static Task<bool> WaitForCloseAddon(string addonName, bool requiresVisible, int timeoutMS)
         {
-            Service.PluginLog.Debug($"[WaitForAddon] Waiting for addon '{addonName}' to close.");
+            Service.PluginLog.Verbose($"[WaitForAddon] Waiting for addon '{addonName}' to close.");
 
             try { SeInterface.WaitForCloseAddon(addonName, requiresVisible, timeoutMS).Wait(); }
             catch
             {
-                Service.PluginLog.Debug($"[WaitForAddon] Waiting for addon '{{addonName}}' to open timed out.");
+                Service.PluginLog.Warning($"[WaitForAddon] Waiting for addon '{{addonName}}' to open timed out.");
                 return Task.FromResult(false);
             }
-            Service.PluginLog.Debug($"[WaitForAddon] Wait completed for '{addonName}'");
+            Service.PluginLog.Verbose($"[WaitForAddon] Wait completed for '{addonName}'");
             return Task.FromResult(true);
         }
 
@@ -340,7 +340,7 @@ namespace CraftingList.Crafting
             // Add 3500 to allow for a full quick synth to complete because the game waits for that synth to finish before closing.
             if (!await CraftHelper.WaitForCloseAddon("SynthesisSimple", true, Service.Configuration.AddonTimeout + 3500))
             {
-                Service.PluginLog.Debug($"[CraftHelper.CloseQuickSynthWindow()] A problem occured while trying to exit the Quick Synth window for entryk.", true);
+                Service.PluginLog.Warning($"[CraftHelper.CloseQuickSynthWindow()] A problem occured while trying to exit the Quick Synth window for entryk.", true);
                 return false;
             }
             await Task.Delay(Service.Configuration.WaitDurations.AfterOpenCloseMenu);

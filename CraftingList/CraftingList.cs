@@ -42,8 +42,9 @@ namespace CraftingList
 
             Configuration.Initialize(pluginInterface);
 
-            Module.Initialize();
             Service.Initialize(pluginInterface, Configuration);
+            Module.Initialize();
+
             //Service.init2(Configuration);
 
             Service.GameInteropProvider.InitializeFromAttributes(Service.ChatManager);

@@ -108,7 +108,7 @@ internal class ChatManager : IDisposable
         Marshal.StructureToPtr(payload, payloadPtr, false);
         if (uiModule == null)
         {
-            Service.PluginLog.Debug("ui module is nullll");
+            Service.PluginLog.Error("ui module is null");
         }
 
         this.processChatBox(uiModule, payloadPtr, IntPtr.Zero, 0);

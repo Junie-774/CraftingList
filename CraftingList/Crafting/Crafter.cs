@@ -50,7 +50,7 @@ namespace CraftingList.Crafting
                 //Enforces a clean
                 if (!await CraftHelper.ExitCrafting())
                 {
-                    Service.PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
+                    Service.PluginLog.Warning($"Failed to exit crafting stance, stopping craft...");
                     Cancel("A problem occurred trying to close the crafting log, cancelling...", true);
                     
                 }
@@ -58,7 +58,7 @@ namespace CraftingList.Crafting
                 lastUsedFood = 0;
                 lastUsedMedicine = 0;
 
-                Service.PluginLog.Debug($"Last food: {lastUsedFood}");
+                Service.PluginLog.Verbose($"Last food: {lastUsedFood}");
                 foreach (var entry in Service.Configuration.EntryList.ToList())
                 {
                     if (!m_running) break;
@@ -87,17 +87,20 @@ namespace CraftingList.Crafting
                         break;
                     }
 
+                    Service.Configuration.EntryList.RemoveAll(x => x.Complete);
+                    Service.Configuration.Save();
+                    CraftUpdateEvent = true;
+
                     // Leave crafting stance after each entry in case we need to switch jobs. Could hypothetically stay in crafting stance if next entry uses the same job,
                     // but that's a pretty minor gain and this simplifies code flow.
                     if (!await CraftHelper.ExitCrafting())
                     {
-                        Service.PluginLog.Debug($"Failed to exit crafting stance, stopping craft...");
+                        Service.PluginLog.Warning($"Failed to exit crafting stance, stopping craft...");
                         Cancel("A problem occurred trying to close the crafting log, cancelling...", true);
                         break;
                     }
                 }
-                Service.Configuration.EntryList.RemoveAll(x => x.Complete);
-                Service.Configuration.Save();
+                
                 await Task.Delay(500);
                 TerminationAlert();
                 CraftUpdateEvent = true;
@@ -156,11 +159,11 @@ namespace CraftingList.Crafting
             bool needToChangeMedicine = CraftHelper.NeedToChangeConsumable(lastUsedMedicine, macro.MedicineID, true);
             bool needToRepair = CraftHelper.NeedsRepair();
 
-            Service.PluginLog.Debug($"Last food: {lastUsedFood}, Curr food: {macro.FoodID}");
-            Service.PluginLog.Debug($"Need change food: {needToChangeFood}");
-            Service.PluginLog.Debug($"Last medicine: {lastUsedMedicine}, Curr medicine: {macro.MedicineID}");
-            Service.PluginLog.Debug($"Need change medicine: {needToChangeMedicine}");
-            Service.PluginLog.Debug($"Need repair: {needToRepair}");
+            Service.PluginLog.Verbose($"Last food: {lastUsedFood}, Curr food: {macro.FoodID}");
+            Service.PluginLog.Verbose($"Need change food: {needToChangeFood}");
+            Service.PluginLog.Verbose($"Last medicine: {lastUsedMedicine}, Curr medicine: {macro.MedicineID}");
+            Service.PluginLog.Verbose($"Need change medicine: {needToChangeMedicine}");
+            Service.PluginLog.Verbose($"Need repair: {needToRepair}");
 
             if (needToChangeFood || needToChangeMedicine || needToRepair)
             {
@@ -345,7 +348,7 @@ namespace CraftingList.Crafting
             var lastCompletionTime = DateTime.Now;
             int numCompleted;
 
-            Service.PluginLog.Debug("[WaitForQuickSynthToFinish] Starting loop waiting for quicksynth to finish.");
+            Service.PluginLog.Verbose("[WaitForQuickSynthToFinish] Starting loop waiting for quicksynth to finish.");
             for (numCompleted = 0; numCompleted < numToQuickSynth; numCompleted = ((PtrSynthesisSimple)simpleSynthDialog).GetCurrCrafts())
             {
 
@@ -469,7 +472,7 @@ namespace CraftingList.Crafting
         public static bool IsEntryValid(CListEntry entry)
         {
             if (entry.NumCrafts.ToLower() != "max" && (!int.TryParse(entry.NumCrafts, out _) || int.Parse(entry.NumCrafts) <= 0)) {
-                Service.PluginLog.Debug("bad amount");
+                Service.PluginLog.Warning("bad amount");
                 return false;
             }
             return true;
