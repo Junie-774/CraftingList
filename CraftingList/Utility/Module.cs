@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace CraftingList.Utility
 {
@@ -29,11 +30,87 @@ namespace CraftingList.Utility
         public static byte** GlobalData;
         public static int Offset;
 
+        private static readonly string Sig = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 0F B7 81";
+        internal delegate byte AtkUnitBase_FireCallbackDelegate(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState);
+        internal static AtkUnitBase_FireCallbackDelegate FireCallback = null;
+
         public static void Initialize()
         {
+            var ptr = Service.SigScanner.ScanText(Sig);
+            FireCallback = Marshal.GetDelegateForFunctionPointer<AtkUnitBase_FireCallbackDelegate>(ptr);
             GlobalData = (byte**)Marshal.AllocHGlobal(MaxSize).ToPointer();
             Offset = 0;
         }
+
+        public static void FireRaw(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState = 0)
+        {
+            if (FireCallback == null) Initialize();
+            FireCallback(Base, valueCount, values, updateState);
+        }
+
+        public static void Fire(AtkUnitBase* Base, bool updateState, params object[] values)
+        {
+            if (Base == null) throw new Exception("Null UnitBase");
+            var atkValues = (AtkValue*)Marshal.AllocHGlobal(values.Length * sizeof(AtkValue));
+            if (atkValues == null) return;
+            try
+            {
+                for (var i = 0; i < values.Length; i++)
+                {
+                    var v = values[i];
+                    switch (v)
+                    {
+                        case uint uintValue:
+                            atkValues[i].Type = ValueType.UInt;
+                            atkValues[i].UInt = uintValue;
+                            break;
+                        case int intValue:
+                            atkValues[i].Type = ValueType.Int;
+                            atkValues[i].Int = intValue;
+                            break;
+                        case float floatValue:
+                            atkValues[i].Type = ValueType.Float;
+                            atkValues[i].Float = floatValue;
+                            break;
+                        case bool boolValue:
+                            atkValues[i].Type = ValueType.Bool;
+                            atkValues[i].Byte = (byte)(boolValue ? 1 : 0);
+                            break;
+                        case string stringValue:
+                            {
+                                atkValues[i].Type = ValueType.String;
+                                var stringBytes = Encoding.UTF8.GetBytes(stringValue);
+                                var stringAlloc = Marshal.AllocHGlobal(stringBytes.Length + 1);
+                                Marshal.Copy(stringBytes, 0, stringAlloc, stringBytes.Length);
+                                Marshal.WriteByte(stringAlloc, stringBytes.Length, 0);
+                                atkValues[i].String = (byte*)stringAlloc;
+                                break;
+                            }
+                        case AtkValue rawValue:
+                            {
+                                atkValues[i] = rawValue;
+                                break;
+                            }
+                        default:
+                            throw new ArgumentException($"Unable to convert type {v.GetType()} to AtkValue");
+                    }
+                }
+
+                FireRaw(Base, values.Length, atkValues, (byte)(updateState ? 1 : 0));
+            }
+            finally
+            {
+                for (var i = 0; i < values.Length; i++)
+                {
+                    if (atkValues[i].Type == ValueType.String)
+                    {
+                        Marshal.FreeHGlobal(new IntPtr(atkValues[i].String));
+                    }
+                }
+                Marshal.FreeHGlobal(new IntPtr(atkValues));
+            }
+        }
+
 
         private static byte** GetLocalData()
         {

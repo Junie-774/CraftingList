@@ -1,6 +1,7 @@
 ﻿using CraftingList.Crafting;
 using Dalamud.Hooking;
 using Dalamud.Logging;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
@@ -45,7 +46,8 @@ namespace CraftingList.Utility
             
             while (DateTime.Now < startTime.AddMilliseconds(timeoutMs))
             {
-                if ((EventFramework.Instance()->GetCraftEventHandler()->CraftFlags & CraftFlags.ExecutingAction1) == 0)
+       
+                if (Service.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Crafting40])
                 {
                     return true;
                 }

@@ -94,7 +94,7 @@ namespace CraftingList.SeFunctions
                 if (Pointer != null
                     && Pointer->AtkUnitBase.IsVisible)
                 {
-                    Pointer->AtkUnitBase.Hide(false, true, 0);
+                    Module.Fire(&Pointer->AtkUnitBase, true, -1);
                 }
             }
             catch (Exception ex) {
