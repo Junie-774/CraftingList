@@ -194,8 +194,20 @@ namespace CraftingList.Crafting
         {
             Service.PluginLog.Verbose($"[CraftHelper.ExitCrafting()] Closing Recipe Note...");
 
-            await Task.Delay(500);
-            SeInterface.RecipeNote().Close();
+            //await Task.Delay(500);
+            if (SeInterface.IsAddonTypeOpen("RecipeNote") && Service.CheckConditionStateNow(ConditionFlag.Crafting, true))
+            {
+                SeInterface.ExecuteFFXIVInternalMacro(SeInterface.Instance.CloseNoteMacro);
+            }
+            else if (SeInterface.IsAddonTypeOpen("RecipeNote"))
+            {
+                SeInterface.RecipeNote().Close();
+            }
+            else
+            {
+                return true;
+            }
+
             if (!await WaitForCloseAddon("RecipeNote", true, Service.Configuration.AddonTimeout))
                 return false;
 

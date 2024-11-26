@@ -112,6 +112,10 @@ namespace CraftingList.Utility
             return true;
         }
 
+        public static bool CheckConditionStateNow(ConditionFlag condition, bool value)
+        {
+            return Condition[condition] == value;
+        }
 
     }
 }
