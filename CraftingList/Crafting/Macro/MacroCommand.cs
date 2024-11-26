@@ -106,28 +106,28 @@ namespace CraftingList.Crafting.Macro
 
         private static void PopulateCraftingNames()
         {
-            var actions = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>()!;
+            var actions = Service.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Action>()!;
             foreach (var row in actions)
             {
-                var job = row.ClassJob?.Value?.ClassJobCategory?.Value;
-                if (job == null || !job.CRP)
+                var job = row.ClassJob.ValueNullable?.ClassJobCategory.ValueNullable;
+                if (job == null || !job.Value.CRP)
                     continue;
 
-                var name = row.Name.RawString.ToLowerInvariant();
+                var name = row.Name.ToString().ToLowerInvariant();
                 if (name.Length == 0)
                     continue;
 
                 CraftingActionNames.Add(name);           
             }
 
-            var craftActions = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.CraftAction>()!;
+            var craftActions = Service.DataManager.GetExcelSheet<Lumina.Excel.Sheets.CraftAction>()!;
             foreach (var row in craftActions)
             {
-                if (row.ClassJob.Value == null) {
+                if (row.ClassJob.ValueNullable == null) {
                     continue;
                 }
 
-                var name = row.Name.RawString.ToLowerInvariant();
+                var name = row.Name.ToString().ToLowerInvariant();
                 if (name.Length == 0)
                     continue;
                 CraftingActionNames.Add(name);
@@ -159,17 +159,17 @@ namespace CraftingList.Crafting.Macro
             260, 261, 262, 263, 264, 265, 266, 267, // Great Strides
             };
 
-            var actions = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>()!;
+            var actions = Service.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Action>()!;
             foreach (var actionID in actionIDs)
             {
-                var name = actions.GetRow(actionID)!.Name.RawString.ToLowerInvariant();
+                var name = actions.GetRow(actionID)!.Name.ToString().ToLowerInvariant();
                 CraftingQualityActionNames.Add(name);
             }
 
-            var craftActions = Service.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.CraftAction>()!;
+            var craftActions = Service.DataManager.GetExcelSheet<Lumina.Excel.Sheets.CraftAction>()!;
             foreach (var craftID in craftIDs)
             {
-                var name = craftActions.GetRow(craftID)!.Name.RawString.ToLowerInvariant();
+                var name = craftActions.GetRow(craftID)!.Name.ToString().ToLowerInvariant();
                 CraftingQualityActionNames.Add(name);
             }
         }

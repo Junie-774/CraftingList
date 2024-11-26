@@ -9,7 +9,7 @@ using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using ImGuiNET;
 using ImGuiScene;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -276,14 +276,14 @@ namespace CraftingList.UI.CraftingListTab
             var recipe = entry.Recipe();
 
             var recipeIngredients = IngredientSummary.IngredientsFromRecipe(recipe);
-            var maxString = GetLongest(recipeIngredients.Select(i => i.Item.Name.RawString));
+            var maxString = GetLongest(recipeIngredients.Select(i => i.Item.Name.ToString()));
             bool hasHqItem = false;
-            for (int i = 0; i < recipe.UnkData5.Length; i++)
+            for (int i = 0; i < recipe.Ingredient.Count; i++)
             {
-                if (recipe.UnkData5[i].ItemIngredient <= 0)
+                if (recipe.Ingredient[i].Value.RowId <= 0)
                     continue;
 
-                var item = Service.Items[recipe.UnkData5[i].ItemIngredient];
+                var item = recipe.Ingredient[i].Value;
 
                 if (!item.CanBeHq)
                     continue;
@@ -303,8 +303,8 @@ namespace CraftingList.UI.CraftingListTab
                     
                 }
 
-                if (HQMat(item.Name,
-                    recipe.UnkData5[i].AmountIngredient,
+                if (HQMat(item.Name.ToString(),
+                    recipe.AmountIngredient[i],
                     ref entry.HQSelection[i],
                     ImGui.CalcTextSize(maxString).X + 40))
                 {
@@ -349,7 +349,7 @@ namespace CraftingList.UI.CraftingListTab
         }
         public bool RecipeSelectionBox(CListEntry entry)
         {
-            if (ImGui.BeginCombo($"##recipe-list-{entry.EntryId}", entry.RecipeId > -1 ? entry.Result().Name.RawString ?? "???" : "Select a recipe...", ImGuiComboFlags.HeightLargest))
+            if (ImGui.BeginCombo($"##recipe-list-{entry.EntryId}", entry.RecipeId > -1 ? entry.Result().Name.ToString() ?? "???" : "Select a recipe...", ImGuiComboFlags.HeightLargest))
             {
                 if (ImGui.IsWindowAppearing())
                     ImGui.SetKeyboardFocusHere();
@@ -410,7 +410,7 @@ namespace CraftingList.UI.CraftingListTab
                     {
                         ImGui.TableNextRow();
                         (int recipeNum, Recipe recipe) = recipes[i];
-                        string jobStr = Service.Jobs[(int)recipe.CraftType.Row + 8].Abbreviation;
+                        string jobStr = Service.Jobs[(int)recipe.CraftType.RowId + 8].Abbreviation.ToString();
 
                         ImGui.TableSetColumnIndex(0);
                         Vector2 cursorPos = ImGui.GetCursorPos();
@@ -462,9 +462,9 @@ namespace CraftingList.UI.CraftingListTab
                         ImGui.TableSetColumnIndex(1);
                         ImGui.Text(jobStr);
                         ImGui.TableSetColumnIndex(2);
-                        ImGui.Text($"{recipe.RecipeLevelTable.Row}");
+                        ImGui.Text($"{recipe.RecipeLevelTable.RowId}");
                         ImGui.TableSetColumnIndex(3);
-                        ImGui.Text(recipe.ItemResult.Value!.Name.RawString);
+                        ImGui.Text(recipe.ItemResult.Value!.Name.ToString());
                     }
                 }
                 ImGui.EndTable();
@@ -653,7 +653,7 @@ namespace CraftingList.UI.CraftingListTab
             for (int i = Service.Configuration.RecentRecipeIds.Count - 1; i >= 0; i--)
             {
                 var recipeId = Service.Configuration.RecentRecipeIds[i];
-                var recipeName = Service.Recipes[recipeId].ItemResult.Value!.Name.RawString.ToLowerInvariant();
+                var recipeName = Service.Recipes[recipeId].ItemResult.Value!.Name.ToString().ToLowerInvariant();
                 var isMatch = true;
                 foreach (var word in words)
                 {
@@ -669,7 +669,7 @@ namespace CraftingList.UI.CraftingListTab
 
             for (int i = 0; i < Service.Recipes.Count; i++)
             {
-                var recipeName = Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant();
+                var recipeName = Service.Recipes[i].ItemResult.Value!.Name.ToString().ToLowerInvariant();
                 var isMatch = true;
                 foreach (var word in words)
                 {
@@ -694,7 +694,7 @@ namespace CraftingList.UI.CraftingListTab
 
             for (int i = 0; i < Service.Recipes.Count; i++)
             {
-                if (Service.Recipes[i].ItemResult.Value!.Name.RawString.ToLowerInvariant().Contains(str)
+                if (Service.Recipes[i].ItemResult.Value!.Name.ToString().ToLowerInvariant().Contains(str)
                     && Service.Configuration.FavoriteRecipeIDs.Contains(i))
                 {
                     filteredFavorites.Add((i, Service.Recipes[i]));

@@ -5,7 +5,7 @@ using CraftingList.Utility;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

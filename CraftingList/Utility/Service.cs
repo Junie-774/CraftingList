@@ -7,7 +7,7 @@ using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,15 +26,15 @@ namespace CraftingList.Utility
                 .Where(item => item.ItemAction.Value!.DataHQ[1] != 0 && DataManager.GetExcelSheet<ItemFood>()!.Select(m => m.RowId).Contains(item.ItemAction.Value.DataHQ[1]))
                 .Where(meal =>
                 {
-                    int param = Service.DataManager.GetExcelSheet<ItemFood>()!
-                        .GetRow(meal.ItemAction.Value!.DataHQ[1])!.UnkData1[0].BaseParam;
+                    int param = (int)Service.DataManager.GetExcelSheet<ItemFood>()!
+                        .GetRow(meal.ItemAction.Value!.DataHQ[1])!.Params.First().BaseParam.Value.RowId;
                     return param == 11 || param == 70 || param == 71;
                 });
 
             GameEventManager = new();
             ChatManager = new(ChatGui);
 
-            Recipes = DataManager.GetExcelSheet<Recipe>()!.Where(r => r.RowId != 0 && r.ItemResult.Row > 0).ToList();
+            Recipes = DataManager.GetExcelSheet<Recipe>()!.Where(r => r.RowId != 0 && r.ItemResult.RowId > 0).ToList();
             Jobs = DataManager.GetExcelSheet<ClassJob>()!.ToList();
             Items = DataManager.GetExcelSheet<Item>()!.ToList();
         }

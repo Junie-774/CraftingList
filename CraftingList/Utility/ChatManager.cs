@@ -11,7 +11,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 namespace CraftingList.Utility;
 
 public enum UiColor
@@ -32,14 +32,14 @@ internal class ChatManager : IDisposable
 {
     private readonly Channel<string> chatBoxMessages = Channel.CreateUnbounded<string>();
 
-    [Signature("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9")]
+    [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B F2 48 8B F9 45 84 C9")]
     private readonly ProcessChatBoxDelegate processChatBox = null!;
 
     private IChatGui ChatGui;
     public ChatManager(IChatGui chatGui)
     {
         Utility.Service.Framework.Update += this.FrameworkUpdate;
-        processChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(Service.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
+        processChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(Service.SigScanner.ScanText("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B F2 48 8B F9 45 84 C9"));
         this.ChatGui = chatGui;
     }
 

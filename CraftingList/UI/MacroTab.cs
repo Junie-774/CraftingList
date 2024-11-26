@@ -5,7 +5,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Logging;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +20,9 @@ namespace CraftingList.UI
     {
         public string Name => "Macros";
 
-        readonly private IEnumerable<Item?> craftingFoods;
+        readonly private IEnumerable<Item> craftingFoods;
         readonly private List<string> foodNames;
-        readonly private IEnumerable<Item?> craftingMedicine;
+        readonly private IEnumerable<Item> craftingMedicine;
         readonly private List<string> medicineNames;
 
 
@@ -44,11 +44,11 @@ namespace CraftingList.UI
 
             foreach (var item in craftingFoods)
             {
-                foodNames.Add(item!.Name);
+                foodNames.Add(item!.Name.ToString());
             }
             foreach (var item in craftingMedicine)
             {
-                medicineNames.Add(item!.Name);
+                medicineNames.Add(item!.Name.ToString());
             }
             foodNames.Add("None");
             foodNames.Reverse();
@@ -258,7 +258,7 @@ namespace CraftingList.UI
         }
         public void FoodSelectionBox(CraftingMacro macro)
         {
-            int selectedFood1 = macro.FoodID != 0 ? foodNames.IndexOf(Service.Items[(int) GetBaseFoodID(macro.FoodID)].Name) : 0;
+            int selectedFood1 = macro.FoodID != 0 ? foodNames.IndexOf(Service.Items[(int) GetBaseFoodID(macro.FoodID)].Name.ToString()) : 0;
             if (IsItemHQ(macro.FoodID))
                 selectedFood1--;
 
@@ -272,7 +272,7 @@ namespace CraftingList.UI
 
         public void MedicineSelectionBox(CraftingMacro macro)
         {
-            int selectedMeds1 = macro.MedicineID != 0 ? medicineNames.IndexOf(Service.Items[(int) GetBaseFoodID(macro.MedicineID)].Name) : 0;
+            int selectedMeds1 = macro.MedicineID != 0 ? medicineNames.IndexOf(Service.Items[(int) GetBaseFoodID(macro.MedicineID)].Name.ToString()) : 0;
             if (IsItemHQ(macro.MedicineID))
                 selectedMeds1--;
 

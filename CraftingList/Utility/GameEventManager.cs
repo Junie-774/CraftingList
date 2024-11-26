@@ -18,7 +18,7 @@ namespace CraftingList.Utility
 {
     public class GameEventManager
     {
-        [Signature("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 54 24 ?? 56 57 41 56 48 83 EC 50", DetourName = nameof(EventFrameworkDetour))]
+        [Signature("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 54 24 ?? 56 57 41 56 48 83 EC 20", DetourName = nameof(EventFrameworkDetour))]
         private readonly Hook<EventFrameworkDelegate> eventFrameworkHook = null!;
 
         public GameEventManager()

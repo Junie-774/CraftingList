@@ -3,7 +3,7 @@ using CraftingList.Utility;
 using Dalamud.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Dalamud.Game.ClientState.Conditions;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -184,8 +184,9 @@ namespace CraftingList.Crafting
                         .Where(x => x.RowId == Service.DataManager.GetExcelSheet<Item>()!.Where(x => x.RowId == lastFood || x.RowId == lastFood - 1000000).First().ItemAction.Value!.DataHQ[1])
                         .First();
 
-            var stat1 = foodEntry.UnkData1[0].BaseParam;
-            var stat2 = foodEntry.UnkData1[1].BaseParam;
+            //Needs testing for 7.1 changes
+            var stat1 = foodEntry.Params[0].BaseParam.RowId;
+            var stat2 = foodEntry.Params[1].BaseParam.RowId;
             return stat1 == 70 || stat2 == 70;
         }
 

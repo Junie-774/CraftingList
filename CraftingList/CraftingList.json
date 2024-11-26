@@ -3,7 +3,7 @@
   "Name": "Crafting List",
   "Punchline": "Crafty craft",
   "Description": "Create a list of items to craft",
-  "DalamudApiLevel": 10,
+  "DalamudApiLevel": 11,
   "Tags": [
     "Crafting"
   ],

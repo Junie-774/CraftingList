@@ -2,7 +2,7 @@
 using CraftingList.Crafting.Macro;
 using CraftingList.Utility;
 using Dalamud.Logging;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
