@@ -7,7 +7,7 @@ using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using ImGuiScene;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -126,20 +126,20 @@ namespace CraftingList.UI.CraftingListTab
         {
             List<EntryIngredientListing> ingredientAmounts = new();
 
-            var ingredients = recipe.UnkData5;
+            var ingredients = recipe.Ingredient;
 
 
-            for (int i = 0; i < ingredients.Length; i++)
+            for (int i = 0; i < ingredients.Count; i++)
             {
                 var ingredient = ingredients[i];
 
-                if (ingredient.ItemIngredient <= 0)
+                if (ingredient.Value.RowId <= 0)
                     continue;
 
                 var newListing = new EntryIngredientListing
                 {
-                    Item = Service.Items[ingredient.ItemIngredient],
-                    NumUsed = ingredient.AmountIngredient,
+                    Item = ingredient.Value,
+                    NumUsed = recipe.AmountIngredient[i],
                     IsHQ = false,
                     NumAvailable = -1
                 };

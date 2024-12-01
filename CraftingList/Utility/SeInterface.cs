@@ -100,6 +100,18 @@ namespace CraftingList.Utility
             return addon != IntPtr.Zero && (!needsTobeVisible || ((AtkUnitBase*)addon.ToPointer())->IsVisible);
         }
 
+        public static bool IsAddonTypeOpen(string addonType)
+        {
+            bool addonState = false;
+            IntPtr addonPtr = (IntPtr)AtkStage.Instance()->RaptureAtkUnitManager->GetAddonByName(addonType);
+            if (addonPtr != IntPtr.Zero)
+            {
+                addonState = ((AtkUnitBase*)addonPtr)->IsVisible;
+            }
+            Service.PluginLog.Info($"Addon {addonType} visible: {addonState}");
+            return addonState;
+        }
+
         public static bool IsAddonUnavailable(IntPtr addon, bool needsToBeVisible)
         {
             return addon == IntPtr.Zero || needsToBeVisible && !((AtkUnitBase*)addon.ToPointer())->IsVisible;

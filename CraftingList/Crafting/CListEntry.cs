@@ -1,6 +1,6 @@
 ﻿using CraftingList.Utility;
 using Dalamud.Logging;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using System.Linq;
 
@@ -27,7 +27,7 @@ namespace CraftingList.Crafting
         public CListEntry(int recipeId, string numCrafts, string macroName, bool prioHQ, int[] hqSelection)
         {
 
-            this.Name = (recipeId >= 0 && Service.Recipes != null) ? Service.Recipes[recipeId].ItemResult.Value!.Name : "???";
+            this.Name = (recipeId >= 0 && Service.Recipes != null) ? Service.Recipes[recipeId].ItemResult.Value!.Name.ToString() : "???";
             this.RecipeId = recipeId;
             this.NumCrafts = numCrafts;// == "max" || int.TryParse(numCrafts, out _) ? numCrafts : "0";
 
